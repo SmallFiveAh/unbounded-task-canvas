@@ -1,0 +1,23 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 600 200" width="600" height="200" role="img" aria-labelledby="title desc">
+  <title id="title">无限任务画布 · Unbounded Task Canvas</title>
+  <desc id="desc">左侧为开放式取景框与橙色任务卡标志，右侧为中文与英文标准字</desc>
+
+  <!-- 标志：开放式取景框 + 任务卡 + 越界光标 -->
+  <g transform="translate(20 12) scale(0.7333)">
+    <g fill="none" stroke="#1C1B17" stroke-width="13" stroke-linecap="round">
+      <path d="M22 84 L22 48 Q22 22 48 22 L84 22" />
+      <path d="M156 22 L192 22 Q218 22 218 48 L218 84" />
+      <path d="M22 156 L22 192 Q22 218 48 218 L84 218" />
+      <path d="M156 218 L192 218 Q218 218 218 192 L218 156" />
+    </g>
+    <rect x="72" y="86" width="96" height="68" rx="18" fill="#FF4D00" />
+    <rect x="88" y="105" width="44" height="8" rx="4" fill="#FDFCF9" />
+    <rect x="88" y="121" width="26" height="8" rx="4" fill="#FDFCF9" opacity="0.8" />
+    <path d="M168 120 H220" fill="none" stroke="#FF4D00" stroke-width="5" stroke-linecap="round" stroke-dasharray="2 12" opacity="0.7" />
+    <circle cx="228" cy="120" r="7" fill="#FF4D00" />
+  </g>
+
+  <!-- 标准字：textLength 锁定宽度，缺失字体时也不会破坏版式 -->
+  <text x="226" y="94" font-family="Sora, 'Noto Sans SC', 'PingFang SC', 'Microsoft YaHei', 'Segoe UI', sans-serif" font-size="50" font-weight="700" letter-spacing="4" fill="#1C1B17" textLength="324" lengthAdjust="spacingAndGlyphs">无限任务画布</text>
+  <text x="226" y="130" font-family="Sora, 'Noto Sans SC', 'PingFang SC', 'Microsoft YaHei', 'Segoe UI', sans-serif" font-size="17" font-weight="600" letter-spacing="4" fill="#65615A" textLength="324" lengthAdjust="spacingAndGlyphs">UNBOUNDED TASK CANVAS</text>
+</svg>

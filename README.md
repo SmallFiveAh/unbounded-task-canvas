@@ -1,19 +1,17 @@
 <div align="center">
 
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="public/images/logo-mark-dark.svg">
+  <img src="public/images/logo-mark.svg" width="104" height="104" alt="无限任务画布 Logo">
+</picture>
+
 # 无限任务画布 · Unbounded Task Canvas
 
 **把任务摊开在一张无限大的画布上 —— 节点、连线、Excel 风格表格，随想随画，本地即存。**
 
 [功能特性](#-功能特性) · [快速开始](#-快速开始) · [交互与快捷键](#-交互与快捷键) · [配置说明](#-配置说明) · [参与贡献](#-参与贡献)
 
-![React](https://img.shields.io/badge/React-19-61dafb?logo=react&logoColor=white)
-![Vite](https://img.shields.io/badge/Vite-8-646cff?logo=vite&logoColor=white)
-![License](https://img.shields.io/badge/License-MIT-green)
-![PRs Welcome](https://img.shields.io/badge/PRs-welcome-ff4d00)
-
-<!-- TODO: 建议在这里放一张画布的截图或 GIF（拖动节点 / 插入表格 / 框选缩放），
-     这是热门项目 README 转化率最高的一块内容。
-     例如： ![demo](docs/images/demo.gif) -->
+<img alt="React 19" src="https://img.shields.io/badge/React-19-61dafb?logo=react&amp;logoColor=white"> <img alt="Vite 8" src="https://img.shields.io/badge/Vite-8-646cff?logo=vite&amp;logoColor=white"> <img alt="License MIT" src="https://img.shields.io/badge/License-MIT-green"> <img alt="PRs Welcome" src="https://img.shields.io/badge/PRs-welcome-ff4d00">
 
 </div>
 
@@ -51,16 +49,16 @@
 
 ## 🖱️ 交互与快捷键
 
-| 操作 | 画布 | 表格 |
-| --- | --- | --- |
-| 新建 | 双击空白处添加节点 | 左侧工具栏「插入表格」 |
-| 移动 | 拖拽空白处 / 滚轮 / `Space` + 拖拽 | 按住表头或空白区拖拽 |
-| 缩放 | `Ctrl/⌘ + 滚轮`（光标为中心） | 拖动四角控制点 = 调整行高列宽 |
-| 选择 | 单击选中，拖拽框选多选 | 单击 / `Ctrl+单击` / `Shift+单击` / 拖拽框选 |
-| 编辑 | 双击节点编辑文字 | 双击或直接输入字符 |
-| 删除 | `Delete` 删除选中元素 | `Delete` / `Backspace` 清空选区内容 |
-| 取消 | `Esc` 取消选中 | `Esc` 取消单元格选区（再按取消表格选中） |
-| 剪贴板 | — | `Ctrl/⌘ + C` 复制 · `X` 剪切 · `V` 粘贴（TSV） |
+| 操作  | 画布                        | 表格                                     |
+| --- | ------------------------- | -------------------------------------- |
+| 新建  | 双击空白处添加节点                 | 左侧工具栏「插入表格」                            |
+| 移动  | 拖拽空白处 / 滚轮 / `Space` + 拖拽 | 按住表头或空白区拖拽                             |
+| 缩放  | `Ctrl/⌘ + 滚轮`（光标为中心）      | 拖动四角控制点 = 调整行高列宽                       |
+| 选择  | 单击选中，拖拽框选多选               | 单击 / `Ctrl+单击` / `Shift+单击` / 拖拽框选     |
+| 编辑  | 双击节点编辑文字                  | 双击或直接输入字符                              |
+| 删除  | `Delete` 删除选中元素           | `Delete` / `Backspace` 清空选区内容          |
+| 取消  | `Esc` 取消选中                | `Esc` 取消单元格选区（再按取消表格选中）                |
+| 剪贴板 | —                         | `Ctrl/⌘ + C` 复制 · `X` 剪切 · `V` 粘贴（TSV） |
 
 ## 🚀 快速开始
 
@@ -100,15 +98,15 @@ npm run lint      # ESLint 检查
 
 项目当前**零配置、开箱即用**。所有可调参数以常量形式集中在源码中：
 
-| 想改什么 | 位置 | 默认值 |
-| --- | --- | --- |
-| 缩放范围 | `src/utils/canvasStore.js` | 20% – 500% |
-| 网格间距（细 / 主） | `src/pages/canvas/lib/constants.js` | 24 / 120 |
-| 节点默认尺寸 / 最小尺寸 | `src/pages/canvas/lib/constants.js` | 176×76 / 96×48 |
-| 表格单元格尺寸范围 | `src/constants/canvasTable.js` | 宽 48–320，高 20–120 |
-| 种子任务数据 | `src/constants/tasks.js` | 6 条示例任务 |
-| 主题与设计令牌 | `src/assets/styles/tokens.css` | 暖纸白 / 暖墨 / 信号橙 |
-| 本地存储键名 | `src/utils/canvasStore.js` | `unbounded-canvas:doc:<taskId>` |
+| 想改什么          | 位置                                  | 默认值                             |
+| ------------- | ----------------------------------- | ------------------------------- |
+| 缩放范围          | `src/utils/canvasStore.js`          | 20% – 500%                      |
+| 网格间距（细 / 主）   | `src/pages/canvas/lib/constants.js` | 24 / 120                        |
+| 节点默认尺寸 / 最小尺寸 | `src/pages/canvas/lib/constants.js` | 176×76 / 96×48                  |
+| 表格单元格尺寸范围     | `src/constants/canvasTable.js`      | 宽 48–320，高 20–120               |
+| 种子任务数据        | `src/constants/tasks.js`            | 6 条示例任务                         |
+| 主题与设计令牌 | `src/styles/tokens.css` | 暖纸白 / 暖墨 / 信号橙 |
+| 本地存储键名        | `src/utils/canvasStore.js`          | `unbounded-canvas:doc:<taskId>` |
 
 明暗主题跟随系统 `prefers-color-scheme`，无需手动切换。
 
@@ -116,6 +114,7 @@ npm run lint      # ESLint 检查
 
 ```text
 src/
+├── assets/                   # 参与构建的图片资源（import 后交给 Vite 处理）
 ├── components/               # 通用组件（一个组件一个目录：jsx + module.css + index.js）
 │   ├── CanvasTable/          #   Excel 风格画布表格（选区 / 键盘 / 剪贴板各自独立 hook）
 │   ├── CanvasThumbnail/      #   任务卡片的画布结构缩略图（SVG）
@@ -131,11 +130,18 @@ src/
 │   │   └── lib/              #   纯函数与常量（不依赖 React）
 │   ├── CanvasPage.jsx        #   无限画布页（编排层，只做组装）
 │   └── TasksListPage.jsx     #   任务列表页
-├── utils/                    # canvasStore：localStorage 读写 / 节流保存 / 跨标签页广播
-└── assets/styles/            # 设计令牌（tokens.css）与全局基础样式
+├── styles/                   # 设计令牌（tokens.css）与全局基础样式
+└── utils/                    # canvasStore：localStorage 读写 / 节流保存 / 跨标签页广播
+
+public/
+├── favicon.svg               # 标签页图标（与 logo 同源）
+├── icons.svg                 # 公共图标
+└── images/                   # 原样发布的静态图片（README / 分享图 / logo）
+    ├── logo.svg · logo-dark.svg
+    └── logo-mark.svg · logo-mark-dark.svg
 ```
 
-分层约定：**行为进 hooks、展示进 components、纯计算进 lib**，页面文件只做编排。
+目录约定：**图片按用途分流**——参与构建、需要被 `import` 的资源放 `src/assets/`；README、分享图等原样发布的静态图片放 `public/images/`。全局样式统一放 `src/styles/`，组件样式仍用 CSS Modules 就近维护。
 
 ## 🗺️ Roadmap
 
