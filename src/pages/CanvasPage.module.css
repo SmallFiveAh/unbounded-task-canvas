@@ -336,15 +336,6 @@
   pointer-events: none;
 }
 
-/* 表格单元格多选覆盖层（位于世界层内，跟随缩放/平移） */
-.cellSelectionOverlay {
-  position: absolute;
-  background: var(--color-selection);
-  border: 1px solid rgba(255, 77, 0, 0.35);
-  pointer-events: none;
-  z-index: 3;
-}
-
 /* 连线层：1×1 但允许溢出绘制，坐标即世界坐标 */
 .edgeLayer {
   position: absolute;

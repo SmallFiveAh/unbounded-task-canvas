@@ -74,16 +74,6 @@
   outline-offset: -1px;
 }
 
-/* 多选选中但非活动格：仅橙色背景，不添加额外边框 */
-.cell.cellSelected {
-  background: var(--color-selection);
-}
-
-/* 表格进入框选态时改为 crosshair */
-.table.selecting {
-  cursor: crosshair;
-}
-
 /* 单元格编辑输入框 */
 .cellInput {
   position: absolute;

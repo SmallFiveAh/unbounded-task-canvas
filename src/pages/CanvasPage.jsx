@@ -2,7 +2,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { CATEGORIES, TASKS, buildCanvas } from '../constants/tasks'
 import InsertTablePanel from '../components/InsertTablePanel/InsertTablePanel'
 import CanvasTable from '../components/CanvasTable/CanvasTable'
-import { getTableSize, TABLE_ROW_HEADER_W, TABLE_COL_HEADER_H, TABLE_CELL_W, TABLE_CELL_H } from '../constants/canvasTable'
+import { getTableSize } from '../constants/canvasTable'
 import styles from './CanvasPage.module.css'
 
 /**

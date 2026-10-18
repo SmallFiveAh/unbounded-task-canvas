@@ -7,7 +7,6 @@
     "dev": "vite",
     "build": "vite build",
     "lint": "eslint .",
-    "test": "node src/utils/cellSelection.test.js",
     "preview": "vite preview"
   },
   "dependencies": {
