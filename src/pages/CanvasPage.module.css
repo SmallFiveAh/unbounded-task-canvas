@@ -1,6 +1,7 @@
 /* ============================================
-   CanvasPage —— 无限画布
+   CanvasPage —— 无限画布的页面外壳与视口
    全屏视口 + 浮动顶栏 + 世界层（平移/缩放）
+   工具栏 / 节点 / 表格各自的样式在对应组件目录内
    ============================================ */
 
 .canvasPage {
@@ -11,208 +12,7 @@
   color: var(--color-text);
 }
 
-/* ---------- 左侧中间工具栏 ---------- */
-
-.sideToolbar {
-  position: absolute;
-  z-index: 20;
-  left: var(--space-3);
-  top: 50%;
-  transform: translateY(-50%);
-  display: flex;
-  flex-direction: column;
-  gap: var(--space-1);
-  padding: var(--space-2);
-  border: 1px solid var(--color-border);
-  border-radius: var(--radius-lg);
-  background: var(--color-surface);
-  box-shadow: var(--shadow-1);
-  pointer-events: auto;
-}
-
-.sideToolBtn {
-  position: relative;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  width: 38px;
-  height: 38px;
-  border: none;
-  background: transparent;
-  color: var(--color-muted);
-  cursor: pointer;
-  border-radius: var(--radius-md);
-  transition:
-    color var(--dur-fast) var(--ease-out),
-    background-color var(--dur-fast) var(--ease-out);
-}
-
-.sideToolBtn:hover {
-  color: var(--color-accent-ink);
-  background: var(--color-wash);
-}
-
-.sideToolBtn.active {
-  color: var(--color-accent-ink);
-  background: var(--color-selection);
-}
-
-.sideToolBtn .tooltip {
-  position: absolute;
-  left: calc(100% + var(--space-3));
-  top: 50%;
-  transform: translateY(-50%) translateX(-4px);
-  white-space: nowrap;
-  padding: var(--space-1) var(--space-3);
-  border-radius: var(--radius-md);
-  background: var(--color-text);
-  color: var(--color-bg);
-  font-size: var(--text-xs);
-  font-weight: 500;
-  opacity: 0;
-  visibility: hidden;
-  pointer-events: none;
-  transition:
-    opacity var(--dur-fast) var(--ease-out),
-    transform var(--dur-fast) var(--ease-out),
-    visibility var(--dur-fast);
-}
-
-.sideToolBtn:hover .tooltip {
-  opacity: 1;
-  visibility: visible;
-  transform: translateY(-50%) translateX(0);
-}
-
-/* ---------- 顶部中间工具栏 ---------- */
-
-.toolbar {
-  position: absolute;
-  z-index: 20;
-  top: var(--space-4);
-  left: 50%;
-  transform: translateX(-50%);
-  display: flex;
-  align-items: center;
-  gap: var(--space-2);
-  padding: var(--space-2);
-  border: 1px solid var(--color-border);
-  border-radius: var(--radius-lg);
-  background: var(--color-surface);
-  box-shadow: var(--shadow-1);
-  pointer-events: auto;
-}
-
-.toolIconBtn {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  width: 38px;
-  height: 38px;
-  border: none;
-  background: transparent;
-  color: var(--color-muted);
-  cursor: pointer;
-  border-radius: var(--radius-md);
-  transition:
-    color var(--dur-fast) var(--ease-out),
-    background-color var(--dur-fast) var(--ease-out);
-}
-
-.toolIconBtn:hover {
-  color: var(--color-accent-ink);
-  background: var(--color-wash);
-}
-
-.toolIconBtn.active {
-  color: var(--color-accent-ink);
-  background: var(--color-selection);
-}
-
-/* ---------- 右下角浮层 ---------- */
-
-.topbar {
-  position: absolute;
-  z-index: 20;
-  right: var(--space-4);
-  bottom: var(--space-4);
-  display: flex;
-  align-items: flex-start;
-  justify-content: flex-end;
-  gap: var(--space-3);
-  pointer-events: none;
-}
-
-/* ---------- 右上角：本地保存提示 ---------- */
-
-/* 默认隐藏；数据变化时淡入，5 秒无变化后缓慢淡出 */
-.saveHint {
-  position: absolute;
-  z-index: 20;
-  top: var(--space-4);
-  right: var(--space-4);
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  height: 30px;
-  padding: 0 var(--space-3);
-  border: 1px solid var(--color-border);
-  border-radius: 999px;
-  background: color-mix(in srgb, var(--color-surface) 92%, transparent);
-  color: var(--color-muted);
-  font-size: var(--text-xs);
-  white-space: nowrap;
-  box-shadow: var(--shadow-1);
-  backdrop-filter: blur(6px);
-  pointer-events: none;
-  opacity: 0;
-  transform: translateY(-6px);
-  transition:
-    opacity 620ms var(--ease-out),
-    transform 620ms var(--ease-out);
-}
-
-.saveHint i {
-  font-size: 13px;
-  color: var(--color-accent);
-}
-
-.saveHint[data-visible='true'] {
-  opacity: 1;
-  transform: none;
-  transition:
-    opacity 220ms var(--ease-out),
-    transform 220ms var(--ease-out);
-}
-
-@media (prefers-reduced-motion: reduce) {
-  .saveHint,
-  .saveHint[data-visible='true'] {
-    transition: opacity 200ms linear;
-  }
-}
-
-.zoomPercent {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  min-width: 56px;
-  height: 28px;
-  padding: 0 var(--space-2);
-  pointer-events: auto;
-  cursor: pointer;
-  border-radius: 8px;
-  background: var(--color-surface);
-  color: var(--color-text);
-  font-size: var(--text-xs);
-  font-variant-numeric: tabular-nums;
-  box-shadow: var(--shadow-1);
-}
-
-.zoomPercent:hover {
-  color: var(--color-accent-ink);
-  background: var(--color-wash);
-}
+/* 浮动 HUD（保存提示 / 缩放百分比）的样式在 CanvasSaveHint.module.css 与 CanvasZoomBadge.module.css */
 
 .topGroup {
   display: flex;
@@ -270,81 +70,6 @@
   opacity: 0.5;
 }
 
-/* 工具按钮 */
-.toolBtn {
-  display: inline-flex;
-  align-items: center;
-  gap: var(--space-2);
-  height: 38px;
-  padding: 0 var(--space-3);
-  border: 1px solid var(--color-border);
-  border-radius: var(--radius-md);
-  background: var(--color-surface);
-  color: var(--color-text);
-  font-size: var(--text-sm);
-  font-weight: 500;
-  cursor: pointer;
-  box-shadow: var(--shadow-1);
-  transition:
-    border-color var(--dur-fast) var(--ease-out),
-    color var(--dur-fast) var(--ease-out);
-}
-
-.toolBtn:hover {
-  border-color: var(--color-accent);
-  color: var(--color-accent-ink);
-}
-
-.zoomGroup {
-  display: flex;
-  align-items: center;
-  border: 1px solid var(--color-border);
-  border-radius: var(--radius-md);
-  background: var(--color-surface);
-  box-shadow: var(--shadow-1);
-  overflow: hidden;
-}
-
-.iconBtn,
-.zoomValue {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  width: 38px;
-  height: 38px;
-  border: none;
-  background: transparent;
-  color: var(--color-muted);
-  cursor: pointer;
-  transition:
-    color var(--dur-fast) var(--ease-out),
-    background-color var(--dur-fast) var(--ease-out);
-}
-
-.iconBtn + .iconBtn,
-.iconBtn + .zoomValue,
-.zoomValue + .iconBtn {
-  border-left: 1px solid var(--color-border);
-}
-
-.iconBtn:hover {
-  color: var(--color-accent-ink);
-  background: var(--color-wash);
-}
-
-.zoomValue {
-  min-width: 56px;
-  width: auto;
-  padding: 0 var(--space-2);
-  font-size: var(--text-xs);
-  font-variant-numeric: tabular-nums;
-}
-
-.zoomValue:hover {
-  color: var(--color-accent-ink);
-  background: var(--color-wash);
-}
-
 /* ---------- 画布视口 ---------- */
 
 .viewport {
@@ -385,72 +110,6 @@
   pointer-events: none;
 }
 
-/* 连线层：1×1 但允许溢出绘制，坐标即世界坐标 */
-.edgeLayer {
-  position: absolute;
-  top: 0;
-  left: 0;
-  width: 1px;
-  height: 1px;
-  overflow: visible;
-  pointer-events: none;
-}
-
-.edge {
-  stroke: var(--color-muted);
-  stroke-width: 1.5;
-  stroke-dasharray: 6 4;
-  opacity: 0.7;
-}
-
-/* ---------- 节点 ---------- */
-
-/* 默认态：无边框。
-   卡片靠「底色 + 投影」立起来，不靠描边。
-   1px 透明边框只是占位，保证选中 / 未选中切换时盒子尺寸与内容位置纹丝不动。
-   选中态的 1px 橙线由屏幕空间的 SelectionFrame 绘制（见该组件注释），
-   所以画布缩放到 500% 时线宽依然是 1px，不会变粗。 */
-.node {
-  position: absolute;
-  display: flex;
-  align-items: center;
-  padding: var(--space-3);
-  border: 1px solid transparent;
-  border-radius: var(--radius-md);
-  background: var(--color-surface);
-  box-shadow: var(--shadow-1);
-  overflow: hidden;
-  cursor: grab;
-  pointer-events: auto;
-  transition:
-    box-shadow var(--dur-fast) var(--ease-out);
-}
-
-.node:hover {
-  box-shadow: var(--shadow-2);
-}
-
-.node:active {
-  cursor: grabbing;
-}
-
-/* accent 节点：靠橙色底纹 + 深橙文字区分，不再依赖描边 */
-.accent {
-  background: var(--color-selection);
-}
-
-/* 选中态：抬升投影 + 提高层级（选中框与四角控制点由 SelectionFrame 负责） */
-.selected {
-  box-shadow: var(--shadow-2);
-  z-index: 2;
-}
-
-/* 多选里最后点击/命中的主元素：只比普通选中再高一点点层级，
-   视觉区分交给选区框上的四角控制点（只有单选时才出现） */
-.primary {
-  z-index: 3;
-}
-
 /* 框选矩形 */
 .marquee {
   position: absolute;
@@ -459,41 +118,6 @@
   background: rgba(0, 0, 0, 0.06);
   border-radius: 6px;
   z-index: 5;
-}
-
-.nodeText {
-  font-size: var(--text-sm);
-  font-weight: 500;
-  line-height: 1.45;
-  color: var(--color-text);
-  word-break: break-word;
-  overflow-wrap: anywhere;
-  /* 节点高度由用户拖动控制点决定：文字超出就裁掉，不撑破卡片 */
-  max-height: 100%;
-  overflow: hidden;
-}
-
-.accent .nodeText {
-  color: var(--color-accent-ink);
-  font-weight: 600;
-}
-
-.nodeInput {
-  width: 100%;
-  max-height: 100%;
-  overflow-y: auto;
-  border: none;
-  outline: none;
-  resize: none;
-  background: transparent;
-  font: inherit;
-  font-size: var(--text-sm);
-  font-weight: 500;
-  line-height: 1.45;
-  color: var(--color-text);
-  cursor: text;
-  user-select: text;
-  field-sizing: content;
 }
 
 /* ---------- 空状态 ---------- */
@@ -595,14 +219,6 @@
 /* ---------- 响应式 ---------- */
 
 @media (max-width: 768px) {
-  .topbar {
-    flex-direction: column;
-  }
-
-  .toolBtn span {
-    display: none;
-  }
-
   .hintBar {
     display: none;
   }

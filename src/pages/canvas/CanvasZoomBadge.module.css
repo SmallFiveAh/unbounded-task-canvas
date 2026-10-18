@@ -1,0 +1,43 @@
+/* ============================================
+   CanvasZoomBadge —— 右下角缩放百分比浮层
+   ============================================ */
+
+.topbar {
+  position: absolute;
+  z-index: 20;
+  right: var(--space-4);
+  bottom: var(--space-4);
+  display: flex;
+  align-items: flex-start;
+  justify-content: flex-end;
+  gap: var(--space-3);
+  pointer-events: none;
+}
+
+.zoomPercent {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 56px;
+  height: 28px;
+  padding: 0 var(--space-2);
+  pointer-events: auto;
+  cursor: pointer;
+  border-radius: 8px;
+  background: var(--color-surface);
+  color: var(--color-text);
+  font-size: var(--text-xs);
+  font-variant-numeric: tabular-nums;
+  box-shadow: var(--shadow-1);
+}
+
+.zoomPercent:hover {
+  color: var(--color-accent-ink);
+  background: var(--color-wash);
+}
+
+@media (max-width: 768px) {
+  .topbar {
+    flex-direction: column;
+  }
+}

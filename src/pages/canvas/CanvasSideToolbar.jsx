@@ -1,0 +1,70 @@
+import styles from './CanvasSideToolbar.module.css'
+
+/**
+ * 左侧中间工具栏：便签 / 表格 / 思维导图 / 流程图 / 卡片 / 列表卡片
+ * · 除表格外的按钮都是「再点一次取消」的开关，状态由 CanvasPage 持有
+ * · 表格按钮额外控制插入面板显隐，并把它自己的 DOM 节点作为面板锚点
+ * 纯展示组件：只做点击 → 回调，不碰画布数据。
+ */
+export default function CanvasSideToolbar({
+  sideTool,
+  tablePanelOpen,
+  tableBtnRef,
+  toolbarRef,
+  onToggleSideTool,
+  onToggleTablePanel,
+}) {
+  return (
+    <div ref={toolbarRef} className={styles.sideToolbar} role="toolbar" aria-label="元素工具栏">
+      <button
+        type="button"
+        className={`${styles.sideToolBtn}${sideTool === 'note' ? ` ${styles.active}` : ''}`}
+        title="便签"
+        onClick={() => onToggleSideTool('note')}
+      >
+        <i className="bi bi-sticky" aria-hidden="true"></i>
+      </button>
+      <button
+        type="button"
+        ref={tableBtnRef}
+        className={`${styles.sideToolBtn}${tablePanelOpen ? ` ${styles.active}` : ''}`}
+        title="插入表格"
+        onClick={onToggleTablePanel}
+      >
+        <i className="bi bi-table" aria-hidden="true"></i>
+      </button>
+      <button
+        type="button"
+        className={`${styles.sideToolBtn}${sideTool === 'mind' ? ` ${styles.active}` : ''}`}
+        title="思维导图"
+        onClick={() => onToggleSideTool('mind')}
+      >
+        <i className="bi bi-diagram-3" aria-hidden="true"></i>
+      </button>
+      <button
+        type="button"
+        className={`${styles.sideToolBtn}${sideTool === 'flow' ? ` ${styles.active}` : ''}`}
+        title="流程图"
+        onClick={() => onToggleSideTool('flow')}
+      >
+        <i className="bi bi-diagram-2" aria-hidden="true"></i>
+      </button>
+      <button
+        type="button"
+        className={`${styles.sideToolBtn}${sideTool === 'card' ? ` ${styles.active}` : ''}`}
+        title="卡片"
+        onClick={() => onToggleSideTool('card')}
+      >
+        <i className="bi bi-card-checklist" aria-hidden="true"></i>
+      </button>
+      <button
+        type="button"
+        className={`${styles.sideToolBtn}${sideTool === 'list' ? ` ${styles.active}` : ''}`}
+        title="列表卡片"
+        onClick={() => onToggleSideTool('list')}
+      >
+        <i className="bi bi-list-ul" aria-hidden="true"></i>
+      </button>
+    </div>
+  )
+}

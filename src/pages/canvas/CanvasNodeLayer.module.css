@@ -1,0 +1,104 @@
+/* ============================================
+   CanvasNodeLayer —— 世界层的连线 + 节点
+   ============================================ */
+
+/* 连线层：1×1 但允许溢出绘制，坐标即世界坐标 */
+.edgeLayer {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 1px;
+  height: 1px;
+  overflow: visible;
+  pointer-events: none;
+}
+
+.edge {
+  stroke: var(--color-muted);
+  stroke-width: 1.5;
+  stroke-dasharray: 6 4;
+  opacity: 0.7;
+}
+
+/* ---------- 节点 ---------- */
+
+/* 默认态：无边框。
+   卡片靠「底色 + 投影」立起来，不靠描边。
+   1px 透明边框只是占位，保证选中 / 未选中切换时盒子尺寸与内容位置纹丝不动。
+   选中态的 1px 橙线由屏幕空间的 SelectionFrame 绘制（见该组件注释），
+   所以画布缩放到 500% 时线宽依然是 1px，不会变粗。 */
+.node {
+  position: absolute;
+  display: flex;
+  align-items: center;
+  padding: var(--space-3);
+  border: 1px solid transparent;
+  border-radius: var(--radius-md);
+  background: var(--color-surface);
+  box-shadow: var(--shadow-1);
+  overflow: hidden;
+  cursor: grab;
+  pointer-events: auto;
+  transition:
+    box-shadow var(--dur-fast) var(--ease-out);
+}
+
+.node:hover {
+  box-shadow: var(--shadow-2);
+}
+
+.node:active {
+  cursor: grabbing;
+}
+
+/* accent 节点：靠橙色底纹 + 深橙文字区分，不再依赖描边 */
+.accent {
+  background: var(--color-selection);
+}
+
+/* 选中态：抬升投影 + 提高层级（选中框与四角控制点由 SelectionFrame 负责） */
+.selected {
+  box-shadow: var(--shadow-2);
+  z-index: 2;
+}
+
+/* 多选里最后点击/命中的主元素：只比普通选中再高一点点层级，
+   视觉区分交给选区框上的四角控制点（只有单选时才出现） */
+.primary {
+  z-index: 3;
+}
+
+.nodeText {
+  font-size: var(--text-sm);
+  font-weight: 500;
+  line-height: 1.45;
+  color: var(--color-text);
+  word-break: break-word;
+  overflow-wrap: anywhere;
+  /* 节点高度由用户拖动控制点决定：文字超出就裁掉，不撑破卡片 */
+  max-height: 100%;
+  overflow: hidden;
+}
+
+.accent .nodeText {
+  color: var(--color-accent-ink);
+  font-weight: 600;
+}
+
+.nodeInput {
+  width: 100%;
+  max-height: 100%;
+  overflow-y: auto;
+  border: none;
+  outline: none;
+  resize: none;
+  background: transparent;
+  font: inherit;
+  font-size: var(--text-sm);
+  font-weight: 500;
+  line-height: 1.45;
+  color: var(--color-text);
+  cursor: text;
+  user-select: text;
+  field-sizing: content;
+}

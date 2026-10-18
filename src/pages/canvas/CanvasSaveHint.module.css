@@ -1,0 +1,50 @@
+/* ============================================
+   CanvasSaveHint —— 右上角本地保存提示
+   ============================================ */
+
+/* 默认隐藏；数据变化时淡入，5 秒无变化后缓慢淡出 */
+.saveHint {
+  position: absolute;
+  z-index: 20;
+  top: var(--space-4);
+  right: var(--space-4);
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  height: 30px;
+  padding: 0 var(--space-3);
+  border: 1px solid var(--color-border);
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--color-surface) 92%, transparent);
+  color: var(--color-muted);
+  font-size: var(--text-xs);
+  white-space: nowrap;
+  box-shadow: var(--shadow-1);
+  backdrop-filter: blur(6px);
+  pointer-events: none;
+  opacity: 0;
+  transform: translateY(-6px);
+  transition:
+    opacity 620ms var(--ease-out),
+    transform 620ms var(--ease-out);
+}
+
+.saveHint i {
+  font-size: 13px;
+  color: var(--color-accent);
+}
+
+.saveHint[data-visible='true'] {
+  opacity: 1;
+  transform: none;
+  transition:
+    opacity 220ms var(--ease-out),
+    transform 220ms var(--ease-out);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .saveHint,
+  .saveHint[data-visible='true'] {
+    transition: opacity 200ms linear;
+  }
+}
