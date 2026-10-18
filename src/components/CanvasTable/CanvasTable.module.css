@@ -4,14 +4,15 @@
    ============================================ */
 
 /* 默认态：无节点边框。
-   1px 透明边框只用于占位——选中框由屏幕空间的 SelectionFrame 绘制，
-   这里换成实线也不会让盒子尺寸跳动。
+   选中框由屏幕空间的 SelectionFrame 绘制，表格自身不需要占位边框——
+   也不能加：全局 border-box 下 1px 边框会把内容盒挤小 2px，
+   而网格轨道是定宽/定高的，最后一列/行会被 overflow:hidden 裁掉 1px
+   （末列的 border-right 与选区右线正是这样消失的）。
    表格自身的「外形」由网格线表达（见下方 .table::before 的发丝线），
    那是内容结构（行列闭合），不是选中态的边框。 */
 .table {
   position: absolute;
   background: var(--color-surface);
-  border: 1px solid transparent;
   border-radius: 5px;
   overflow: hidden;
   box-shadow: var(--shadow-1);

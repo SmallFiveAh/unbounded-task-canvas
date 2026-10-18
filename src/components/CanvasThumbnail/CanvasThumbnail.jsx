@@ -1,6 +1,5 @@
 import { useId, useMemo } from 'react'
 import {
-  TABLE_COL_HEADER_H,
   TABLE_ROW_HEADER_W,
   getTableSize,
   tableCellH,
@@ -83,7 +82,7 @@ function TableShape({ table }) {
   const { w, h } = getTableSize(table)
   const cellW = tableCellW(table)
   const cellH = tableCellH(table)
-  const headBottom = table.y + TABLE_COL_HEADER_H
+  const headBottom = table.y + cellH // 表头行高与单元格共用 cellH
 
   const colLines = Array.from(
     { length: table.cols + 1 },
@@ -109,7 +108,7 @@ function TableShape({ table }) {
         x={table.x}
         y={table.y}
         width={w}
-        height={TABLE_COL_HEADER_H}
+        height={cellH}
         className={styles.tableHead}
       />
       {colLines.map((x, i) => (

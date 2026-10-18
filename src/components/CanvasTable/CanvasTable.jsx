@@ -1,7 +1,6 @@
 import { useEffect, useRef, useState, Fragment } from 'react'
 import {
   TABLE_ROW_HEADER_W,
-  TABLE_COL_HEADER_H,
   tableCellW,
   tableCellH,
   getTableSize,
@@ -124,6 +123,7 @@ export default function CanvasTable({
   /**
    * 屏幕坐标 → 单元格坐标。
    * 通过 grid 的实测尺寸与设计尺寸之比换算缩放，因此不依赖外部 scale。
+   * 表头行高与单元格共用 cellH，总高 = (rows + 1) * cellH（见 canvasTable.js）。
    * clamp=true 时越界夹到最近边缘（拖拽框选保持扩展到末行/末列）。
    */
   const cellFromPoint = (clientX, clientY, clamp) => {
@@ -131,10 +131,10 @@ export default function CanvasTable({
     if (!grid) return null
     const rect = grid.getBoundingClientRect()
     const kx = rect.width / (TABLE_ROW_HEADER_W + cols * cellW)
-    const ky = rect.height / (TABLE_COL_HEADER_H + rows * cellH)
+    const ky = rect.height / ((rows + 1) * cellH)
     if (!kx || !ky) return null
     const c = Math.floor(((clientX - rect.left) / kx - TABLE_ROW_HEADER_W) / cellW)
-    const r = Math.floor(((clientY - rect.top) / ky - TABLE_COL_HEADER_H) / cellH)
+    const r = Math.floor(((clientY - rect.top) / ky - cellH) / cellH)
     const inside = r >= 0 && r < rows && c >= 0 && c < cols
     if (!inside && !clamp) return null
     return {

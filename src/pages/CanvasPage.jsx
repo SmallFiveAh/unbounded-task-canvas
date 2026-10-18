@@ -4,7 +4,6 @@ import InsertTablePanel from '../components/InsertTablePanel/InsertTablePanel'
 import CanvasTable from '../components/CanvasTable/CanvasTable'
 import SelectionFrame from '../components/SelectionFrame/SelectionFrame'
 import {
-  TABLE_COL_HEADER_H,
   TABLE_MAX_CELL_H,
   TABLE_MAX_CELL_W,
   TABLE_MIN_CELL_H,
@@ -522,10 +521,11 @@ const [sideTool, setSideTool] = useState(null)
     const fromWest = rz.corner.includes('w')
     const fromNorth = rz.corner.includes('n')
 
+    // 表格总高 = 表头行 + rows 行，表头行高与单元格共用 cellH（见 canvasTable.js）
     const minW =
       rz.kind === 'table' ? TABLE_ROW_HEADER_W + rz.cols * TABLE_MIN_CELL_W : NODE_MIN_W
     const minH =
-      rz.kind === 'table' ? TABLE_COL_HEADER_H + rz.rows * TABLE_MIN_CELL_H : NODE_MIN_H
+      rz.kind === 'table' ? (rz.rows + 1) * TABLE_MIN_CELL_H : NODE_MIN_H
 
     // 先算宽高并夹到下限，再由固定边反推左上角 —— 拖过最小尺寸时不会「翻面」
     const w = Math.max(minW, fromWest ? rz.w - dx : rz.w + dx)
@@ -546,10 +546,10 @@ const [sideTool, setSideTool] = useState(null)
       clamp((w - TABLE_ROW_HEADER_W) / rz.cols, TABLE_MIN_CELL_W, TABLE_MAX_CELL_W),
     )
     const cellH = Math.round(
-      clamp((h - TABLE_COL_HEADER_H) / rz.rows, TABLE_MIN_CELL_H, TABLE_MAX_CELL_H),
+      clamp(h / (rz.rows + 1), TABLE_MIN_CELL_H, TABLE_MAX_CELL_H),
     )
     const fittedW = TABLE_ROW_HEADER_W + rz.cols * cellW
-    const fittedH = TABLE_COL_HEADER_H + rz.rows * cellH
+    const fittedH = (rz.rows + 1) * cellH
     setTables((ts) =>
       ts.map((t) =>
         t.id === rz.id
