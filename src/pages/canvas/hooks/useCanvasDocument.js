@@ -8,8 +8,8 @@
    ============================================================ */
 
 import { useCallback, useRef, useState } from 'react'
-import { getTableSize } from '../../constants/canvasTable'
-import { NODE_H, NODE_W } from './constants'
+import { getTableSize } from '../../../constants/canvasTable'
+import { NODE_H, NODE_W } from '../lib/constants'
 
 export function useCanvasDocument({
   initial,

@@ -17,9 +17,9 @@ import {
   TABLE_MIN_CELL_W,
   TABLE_ROW_HEADER_W,
   getTableSize,
-} from '../../constants/canvasTable'
-import { NODE_MIN_H, NODE_MIN_W, NODE_RADIUS } from './constants'
-import { clamp } from './geometry'
+} from '../../../constants/canvasTable'
+import { NODE_MIN_H, NODE_MIN_W, NODE_RADIUS } from '../lib/constants'
+import { clamp } from '../lib/geometry'
 
 export function useSelectionResize({
   selectedIds,

@@ -1,5 +1,5 @@
-import { cornerRadius } from '../../utils/canvasRadius'
-import { NODE_RADIUS } from './constants'
+import { cornerRadius } from '../../../../utils/canvasRadius'
+import { NODE_RADIUS } from '../../lib/constants'
 import styles from './CanvasNodeLayer.module.css'
 
 /**

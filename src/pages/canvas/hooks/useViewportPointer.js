@@ -9,8 +9,8 @@
    ============================================================ */
 
 import { useRef, useState } from 'react'
-import { NODE_H, NODE_W } from './constants'
-import { hitTestMarquee } from './geometry'
+import { NODE_H, NODE_W } from '../lib/constants'
+import { hitTestMarquee } from '../lib/geometry'
 
 export function useViewportPointer({
   view,

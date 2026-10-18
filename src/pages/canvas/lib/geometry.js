@@ -6,8 +6,8 @@
    因此可以被事件处理器、渲染、测试以任意顺序调用。
    ============================================================ */
 
-import { getTableSize } from '../../constants/canvasTable'
-import { MAX_SCALE, MIN_SCALE } from '../../utils/canvasStore'
+import { getTableSize } from '../../../constants/canvasTable'
+import { MAX_SCALE, MIN_SCALE } from '../../../utils/canvasStore'
 
 /** 缩放比例夹到画布允许的上下限（与本地存档校验共用同一套值） */
 export const clampScale = (s) => Math.min(MAX_SCALE, Math.max(MIN_SCALE, s))

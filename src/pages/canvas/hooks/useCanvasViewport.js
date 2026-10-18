@@ -8,8 +8,8 @@
    ============================================================ */
 
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
-import { getTableSize } from '../../constants/canvasTable'
-import { clampScale, screenToWorld as toWorld } from './geometry'
+import { getTableSize } from '../../../constants/canvasTable'
+import { clampScale, screenToWorld as toWorld } from '../lib/geometry'
 
 export function useCanvasViewport({ initial, wheelZoom }) {
   const viewportRef = useRef(null)

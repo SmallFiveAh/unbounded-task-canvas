@@ -1,7 +1,7 @@
 /* ============================================
    CanvasPage —— 无限画布的页面外壳与视口
-   全屏视口 + 浮动顶栏 + 世界层（平移/缩放）
-   工具栏 / 节点 / 表格各自的样式在对应组件目录内
+   全屏视口 + 世界层（平移/缩放）+ 空态 / 404
+   工具栏、节点、选中框、HUD 的样式都在 canvas/components/ 下各自的目录里
    ============================================ */
 
 .canvasPage {
@@ -108,16 +108,6 @@
   height: 0;
   transform-origin: 0 0;
   pointer-events: none;
-}
-
-/* 框选矩形 */
-.marquee {
-  position: absolute;
-  pointer-events: none;
-  border: 1.5px solid var(--color-accent);
-  background: rgba(0, 0, 0, 0.06);
-  border-radius: 6px;
-  z-index: 5;
 }
 
 /* ---------- 空状态 ---------- */

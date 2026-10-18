@@ -3,30 +3,33 @@ import CanvasTable from '../components/CanvasTable/CanvasTable'
 import InsertTablePanel from '../components/InsertTablePanel/InsertTablePanel'
 import { CATEGORIES, TASKS } from '../constants/tasks'
 import { EMPTY_CANVAS, loadCanvas } from '../utils/canvasStore'
-import CanvasNodeLayer from './canvas/CanvasNodeLayer'
-import CanvasSaveHint from './canvas/CanvasSaveHint'
-import CanvasSelectionLayer from './canvas/CanvasSelectionLayer'
-import CanvasSideToolbar from './canvas/CanvasSideToolbar'
-import CanvasToolbar from './canvas/CanvasToolbar'
-import CanvasZoomBadge from './canvas/CanvasZoomBadge'
-import { GRID_FINE, GRID_MAJOR } from './canvas/constants'
-import { useCanvasDocument } from './canvas/useCanvasDocument'
-import { useCanvasKeyboard } from './canvas/useCanvasKeyboard'
-import { useCanvasPersistence } from './canvas/useCanvasPersistence'
-import { useCanvasSelection } from './canvas/useCanvasSelection'
-import { useCanvasToolbar } from './canvas/useCanvasToolbar'
-import { useCanvasViewport } from './canvas/useCanvasViewport'
-import { useItemDrag } from './canvas/useItemDrag'
-import { useSelectionResize } from './canvas/useSelectionResize'
-import { useViewportPointer } from './canvas/useViewportPointer'
+import CanvasNodeLayer from './canvas/components/CanvasNodeLayer'
+import CanvasSaveHint from './canvas/components/CanvasSaveHint'
+import CanvasSelectionLayer from './canvas/components/CanvasSelectionLayer'
+import CanvasSideToolbar from './canvas/components/CanvasSideToolbar'
+import CanvasToolbar from './canvas/components/CanvasToolbar'
+import CanvasZoomBadge from './canvas/components/CanvasZoomBadge'
+import { useCanvasDocument } from './canvas/hooks/useCanvasDocument'
+import { useCanvasKeyboard } from './canvas/hooks/useCanvasKeyboard'
+import { useCanvasPersistence } from './canvas/hooks/useCanvasPersistence'
+import { useCanvasSelection } from './canvas/hooks/useCanvasSelection'
+import { useCanvasToolbar } from './canvas/hooks/useCanvasToolbar'
+import { useCanvasViewport } from './canvas/hooks/useCanvasViewport'
+import { useItemDrag } from './canvas/hooks/useItemDrag'
+import { useSelectionResize } from './canvas/hooks/useSelectionResize'
+import { useViewportPointer } from './canvas/hooks/useViewportPointer'
+import { GRID_FINE, GRID_MAJOR } from './canvas/lib/constants'
 import styles from './CanvasPage.module.css'
 
 /**
  * 无限画布页面（编排层）
  * ------------------------------------------------------------
  * 这里只做三件事：解析任务、把各功能 hook 串起来、摆出页面骨架。
- * 具体职责分别落在 ./canvas/ 下：
+ * 周边的模块按职责分三类，都在 ./canvas/ 下：
+ *
+ * canvas/hooks/ —— 行为（每个文件一个关注点）
  * - useCanvasViewport     视图（平移 + 缩放）与滚轮
+ * - useCanvasToolbar      工具栏 / 插入面板的 UI 状态
  * - useCanvasDocument     节点 / 连线 / 表格数据与增删改
  * - useCanvasSelection    选中态与节点编辑态
  * - useItemDrag           节点 + 表格拖拽
@@ -34,9 +37,15 @@ import styles from './CanvasPage.module.css'
  * - useViewportPointer    视口指针：平移 / 框选 / 收口
  * - useCanvasKeyboard     Delete / Esc / 空格
  * - useCanvasPersistence  归档到 localStorage + 「已保存」提示
- * - CanvasToolbar / CanvasSideToolbar / CanvasNodeLayer / CanvasSelectionLayer
- * - CanvasSaveHint / CanvasZoomBadge
- *                         纯展示的子组件（工具栏 / 图层 / HUD）
+ *
+ * canvas/components/ —— 展示（一个组件一个目录：jsx + module.css + index.js）
+ * - CanvasToolbar / CanvasSideToolbar          顶部与左侧工具栏
+ * - CanvasNodeLayer / CanvasSelectionLayer     连线与节点、选中框与框选矩形
+ * - CanvasSaveHint / CanvasZoomBadge           右上角保存提示、右下角缩放徽标
+ *
+ * canvas/lib/ —— 纯函数与常量（不依赖 React）
+ * - constants.js  网格 / 节点尺寸等设计值
+ * - geometry.js   坐标换算、缩放夹取、框选命中
  *
  * 行为约定（与拆分前一致）：
  * - 拖拽空白处平移，滚轮平移；激活「鼠标滚轮」按钮后滚轮缩放（每次 5%，光标为中心）

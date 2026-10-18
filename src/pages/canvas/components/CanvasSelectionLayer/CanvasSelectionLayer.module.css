@@ -1,0 +1,14 @@
+/* ============================================
+   CanvasSelectionLayer —— 屏幕空间的选中框层
+   选中框本体（SelectionFrame）自带样式，这里只放框选矩形
+   ============================================ */
+
+/* 框选矩形 */
+.marquee {
+  position: absolute;
+  pointer-events: none;
+  border: 1.5px solid var(--color-accent);
+  background: rgba(0, 0, 0, 0.06);
+  border-radius: 6px;
+  z-index: 5;
+}

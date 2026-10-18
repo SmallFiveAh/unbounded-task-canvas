@@ -1,6 +1,6 @@
-import SelectionFrame from '../../components/SelectionFrame/SelectionFrame'
-import { cornerRadius } from '../../utils/canvasRadius'
-import styles from '../CanvasPage.module.css'
+import SelectionFrame from '../../../../components/SelectionFrame/SelectionFrame'
+import { cornerRadius } from '../../../../utils/canvasRadius'
+import styles from './CanvasSelectionLayer.module.css'
 
 /**
  * 选中框层 + 框选矩形 —— 都画在「屏幕坐标」里

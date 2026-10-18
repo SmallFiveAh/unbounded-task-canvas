@@ -9,8 +9,8 @@
    ============================================================ */
 
 import { useCallback, useEffect, useRef } from 'react'
-import { createSaver } from '../../utils/canvasStore'
-import { SAVED_HINT_DURATION } from './constants'
+import { createSaver } from '../../../utils/canvasStore'
+import { SAVED_HINT_DURATION } from '../lib/constants'
 
 export function useCanvasPersistence({
   task,
