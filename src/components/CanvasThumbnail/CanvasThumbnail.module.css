@@ -11,11 +11,18 @@
   overflow: hidden;
 }
 
-/* 有内容时才铺点阵：屏幕空间网格，与画布坐标无关，密度恒为 18px */
-.grid {
+/* 有内容时才铺点阵：屏幕空间网格，与画布坐标无关，密度恒为 18px。
+   点阵单独画在 ::before 这一层上，opacity 只作用于网格本身；
+   若直接写在 .wrap 上，会把同层的节点 / 连线一起变淡。 */
+.grid::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  opacity: 0.2;
   background-image: radial-gradient(
     circle,
-    color-mix(in srgb, var(--color-muted) 32%, transparent) 1px,
+    var(--color-muted) 1px,
     transparent 1.2px
   );
   background-size: 18px 18px;
