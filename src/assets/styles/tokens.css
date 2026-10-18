@@ -14,6 +14,9 @@
   --color-border: rgba(28, 27, 23, 0.14); /* 发丝线 */
   --color-wash: rgba(28, 27, 23, 0.05); /* 中性悬停薄洗 */
   --color-selection: rgba(255, 77, 0, 0.18);
+  /* 表格单元格选区：普通选中格 0.2；选区末端（活动格）更淡，用 0.1 */
+  --color-cell-selection: rgba(255, 77, 0, 0.2);
+  --color-cell-cursor: rgba(255, 77, 0, 0.1);
 
   /* 字体 —— 展示字 Sora（拉丁/数字），中文 Noto Sans SC */
   --font-display:
@@ -75,6 +78,8 @@
     --color-border: rgba(242, 240, 233, 0.14);
     --color-wash: rgba(242, 240, 233, 0.06);
     --color-selection: rgba(255, 106, 38, 0.28);
+    --color-cell-selection: rgba(255, 106, 38, 0.2);
+    --color-cell-cursor: rgba(255, 106, 38, 0.1);
     --shadow-1: 0 2px 8px rgba(0, 0, 0, 0.35);
     --shadow-2: 0 8px 28px rgba(0, 0, 0, 0.42);
     --shadow-3: 0 24px 64px rgba(0, 0, 0, 0.55);

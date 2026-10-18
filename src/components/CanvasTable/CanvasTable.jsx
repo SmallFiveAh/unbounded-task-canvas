@@ -604,6 +604,9 @@ export default function CanvasTable({
     '--sl': selection.has(cellKey(r, c - 1)) ? 0 : 1,
   })
 
+  // 多选时末端那一格保留选区底色（单选时它被挖空为表格底色，见模块 CSS）
+  const multiSelect = selection.size > 1
+
   return (
     <div
       ref={wrapRef}
@@ -657,7 +660,9 @@ export default function CanvasTable({
                   data-cell-c={c}
                   className={`${styles.cell}${
                     isSelected && !isEditing ? ` ${styles.selected}` : ''
-                  }${isCursor ? ` ${styles.cursor}` : ''}`}
+                  }${isCursor ? ` ${styles.cursor}` : ''}${
+                    isCursor && multiSelect ? ` ${styles.cursorMulti}` : ''
+                  }`}
                   style={isSelected && !isEditing ? sideVars(r, c) : undefined}
                 >
                   {isEditing ? (
