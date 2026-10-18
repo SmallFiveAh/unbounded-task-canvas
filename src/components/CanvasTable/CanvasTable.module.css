@@ -20,10 +20,11 @@
   cursor: grabbing;
 }
 
+/* 选中态：1px 边框换强调色（与画布节点一致）。
+   不再叠 0 0 0 1px 的外环——环在边框之外，视觉上会变成 2px 粗边 */
 .table.selected {
-  box-shadow:
-    0 0 0 1px var(--color-accent),
-    var(--shadow-2);
+  border-color: var(--color-accent);
+  box-shadow: var(--shadow-2);
 }
 
 .grid {

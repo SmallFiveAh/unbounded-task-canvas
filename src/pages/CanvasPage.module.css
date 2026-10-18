@@ -367,32 +367,38 @@
   box-shadow: var(--shadow-1);
   cursor: grab;
   pointer-events: auto;
-  transition: box-shadow var(--dur-fast) var(--ease-out);
+  transition:
+    border-color var(--dur-fast) var(--ease-out),
+    box-shadow var(--dur-fast) var(--ease-out);
 }
 
 .node:active {
   cursor: grabbing;
 }
 
+/* accent 节点：靠描边颜色 + 橙色底纹区分，边框宽度与普通节点一致（1px） */
 .accent {
   border-color: var(--color-accent);
-  border-width: 2px;
-  padding: calc(var(--space-3) - 1px);
   background: var(--color-selection);
 }
 
+/* 选中态：把 1px 边框本身换成强调色。
+   不再用带 spread 的 box-shadow 外画环——环落在 1px 边框之外，
+   与边框叠加后边缘会变成 2~3px 的粗线；这里只做「边框换色 + 抬升阴影」，
+   选中后的边框严格保持 1px。 */
 .selected {
-  box-shadow:
-    0 0 0 2px var(--color-accent),
-    var(--shadow-2);
+  border-color: var(--color-accent);
+  box-shadow: var(--shadow-2);
 }
 
-/* 多选中的主节点（最后点击/框选命中的） */
+/* 多选中的主节点（最后点击/框选命中的）
+   边框同样 1px，只用更暖的柔和外发光 + 更高投影与普通选中节点区分，
+   不额外加实心描边环 */
 .primary {
+  border-color: var(--color-accent);
   box-shadow:
-    0 0 0 2px var(--color-accent),
-    0 0 0 4px rgba(0, 0, 0, 0.12),
-    var(--shadow-2);
+    0 2px 12px rgba(255, 77, 0, 0.18),
+    var(--shadow-3);
 }
 
 /* 框选矩形 */
