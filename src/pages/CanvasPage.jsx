@@ -1,8 +1,9 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
-import { CATEGORIES, TASKS, buildCanvas } from '../constants/tasks'
+import { CATEGORIES, TASKS } from '../constants/tasks'
 import InsertTablePanel from '../components/InsertTablePanel/InsertTablePanel'
 import CanvasTable from '../components/CanvasTable/CanvasTable'
 import { getTableSize } from '../constants/canvasTable'
+import { EMPTY_CANVAS, createSaver, loadCanvas } from '../utils/canvasStore'
 import styles from './CanvasPage.module.css'
 
 /**
@@ -10,7 +11,7 @@ import styles from './CanvasPage.module.css'
  * - 拖拽空白处平移，滚轮平移；激活「鼠标滚轮」按钮后滚轮缩放（每次 5%，光标为中心）
  * - Ctrl/⌘ + 滚轮也可缩放
  * - 双击空白添加节点，节点可拖拽、双击编辑、Delete 删除
- * - 任务卡片缩略图中的节点/连线作为初始内容
+ * - 内容（节点/连线/表格）持久化到 localStorage，任务列表缩略图实时同步
  */
 
 const GRID_FINE = 24 // 细网格（世界坐标）
@@ -19,23 +20,30 @@ const MIN_SCALE = 0.2
 const MAX_SCALE = 5 // 最大 500%
 const NODE_W = 176
 const NODE_H = 76
+const SAVED_HINT_DURATION = 5000 // 「已保存到本地」提示停留时长（ms），之后淡出
 
 const clampScale = (s) => Math.min(MAX_SCALE, Math.max(MIN_SCALE, s))
 
 export default function CanvasPage({ taskId }) {
   const task = TASKS.find((t) => String(t.id) === String(taskId))
 
+  // 首次进入：优先读取本地存档，没有存档才用常量数据生成初始画布
   const initial = useMemo(
-    () => (task ? buildCanvas(task) : { nodes: [], edges: [] }),
+    () => (task ? loadCanvas(task) : EMPTY_CANVAS),
     [task],
   )
 
   const viewportRef = useRef(null)
-  const idSeq = useRef(initial.nodes.length)
+  const idSeq = useRef(0)
+  const saverRef = useRef(null)
+  // 保存提示直接操作 DOM：只在数据变化时出现，5 秒无变化后淡出，
+  // 不参与 React 渲染，避免每次落盘都重渲染整张画布
+  const savedHintRef = useRef(null)
+  const hideTimerRef = useRef(null)
 
   const [nodes, setNodes] = useState(initial.nodes)
   const [edges, setEdges] = useState(initial.edges)
-  const [tables, setTables] = useState([]) // 画布表格（Excel 风格）
+  const [tables, setTables] = useState(initial.tables) // 画布表格（Excel 风格）
   const [view, setView] = useState({ x: 0, y: 0, scale: 1 })
   const [tool, setTool] = useState('select')
 const [sideTool, setSideTool] = useState(null)
@@ -61,22 +69,22 @@ const [sideTool, setSideTool] = useState(null)
 
   /* ---------- 视图变换 ---------- */
 
-  // 让一组节点在视口中居中（自适应 / 初次进入）
-  const frameNodes = useCallback((targetNodes) => {
+  // 让一组内容（节点/表格的包围盒）在视口中居中（自适应 / 初次进入）
+  const frameContent = useCallback((rects) => {
     const el = viewportRef.current
     if (!el) return
     const w = el.clientWidth
     const h = el.clientHeight
 
-    if (targetNodes.length === 0) {
+    if (!rects.length) {
       setView({ x: w / 2, y: h / 2, scale: 1 })
       return
     }
 
-    const minX = Math.min(...targetNodes.map((n) => n.x))
-    const minY = Math.min(...targetNodes.map((n) => n.y))
-    const maxX = Math.max(...targetNodes.map((n) => n.x + n.w))
-    const maxY = Math.max(...targetNodes.map((n) => n.y + n.h))
+    const minX = Math.min(...rects.map((r) => r.x))
+    const minY = Math.min(...rects.map((r) => r.y))
+    const maxX = Math.max(...rects.map((r) => r.x + r.w))
+    const maxY = Math.max(...rects.map((r) => r.y + r.h))
     const bw = Math.max(maxX - minX, 1)
     const bh = Math.max(maxY - minY, 1)
     const padding = 140
@@ -91,12 +99,68 @@ const [sideTool, setSideTool] = useState(null)
     })
   }, [])
 
-  // 初次进入：自适应到任务内容
+  // 初次进入：自适应到（存档中的）全部内容
   useEffect(() => {
-    frameNodes(initial.nodes)
+    frameContent([
+      ...initial.nodes.map((n) => ({ x: n.x, y: n.y, w: n.w, h: n.h })),
+      ...initial.tables.map((t) => ({
+        x: t.x,
+        y: t.y,
+        ...getTableSize(t.rows, t.cols),
+      })),
+    ])
     // 仅挂载时执行一次
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
+
+  /* ---------- 持久化：画布内容 → localStorage ---------- */
+
+  // 每次落盘点亮提示，并重新开始 5 秒倒计时
+  const flashSaved = useCallback(() => {
+    const el = savedHintRef.current
+    if (!el) return
+    el.dataset.visible = 'true'
+    if (hideTimerRef.current) clearTimeout(hideTimerRef.current)
+    hideTimerRef.current = setTimeout(() => {
+      hideTimerRef.current = null
+      el.dataset.visible = 'false'
+    }, SAVED_HINT_DURATION)
+  }, [])
+
+  useEffect(() => {
+    if (!task) return undefined
+    const saver = createSaver(task.id)
+    saverRef.current = saver
+    // 关闭/刷新页面前把未落盘的改动写掉
+    const flush = () => saver.flush()
+    window.addEventListener('pagehide', flush)
+    window.addEventListener('beforeunload', flush)
+    return () => {
+      window.removeEventListener('pagehide', flush)
+      window.removeEventListener('beforeunload', flush)
+      saverRef.current = null
+      if (hideTimerRef.current) {
+        clearTimeout(hideTimerRef.current)
+        hideTimerRef.current = null
+      }
+      saver.flush()
+    }
+  }, [task])
+
+  // 节点/连线/表格任一变化都写回本地存档
+  useEffect(() => {
+    if (!task || !saverRef.current) return
+    // 初次挂载时的状态就是存档/种子本身，不算「数据发生变化」
+    if (
+      nodes === initial.nodes &&
+      edges === initial.edges &&
+      tables === initial.tables
+    ) {
+      return
+    }
+    flashSaved()
+    saverRef.current.save({ nodes, edges, tables })
+  }, [task, initial, nodes, edges, tables, flashSaved])
 
   // 以视口某点为锚点缩放
   const zoomAt = useCallback((anchorX, anchorY, factor) => {
@@ -159,15 +223,20 @@ const [sideTool, setSideTool] = useState(null)
     [view],
   )
 
+  const nextId = useCallback((prefix) => {
+    idSeq.current += 1
+    // 带上时间戳，避免与存档里上一轮生成的 id 撞车
+    return `${prefix}-${Date.now().toString(36)}-${idSeq.current}`
+  }, [])
+
   const addNode = useCallback(
     (x, y, text = '新节点', kind = 'muted') => {
-      idSeq.current += 1
-      const id = `n-new-${idSeq.current}`
+      const id = nextId('n')
       setNodes((ns) => [...ns, { id, x, y, w: NODE_W, h: NODE_H, kind, text }])
       setSelectedId(id)
       return id
     },
-    [],
+    [nextId],
   )
 
   const addNodeAtCenter = useCallback(() => {
@@ -200,8 +269,7 @@ const [sideTool, setSideTool] = useState(null)
         rect.top + el.clientHeight / 2,
       )
       const { w, h } = getTableSize(rows, cols)
-      idSeq.current += 1
-      const id = `t-new-${idSeq.current}`
+      const id = nextId('t')
       setTables((ts) => [
         ...ts,
         {
@@ -217,7 +285,7 @@ const [sideTool, setSideTool] = useState(null)
       ])
       setSelectedId(id)
     },
-    [screenToWorld],
+    [screenToWorld, nextId],
   )
 
   const removeTable = useCallback((id) => {
@@ -560,6 +628,12 @@ const [sideTool, setSideTool] = useState(null)
 
   return (
     <div className={styles.canvasPage}>
+      {/* 右上角：本地保存提示（仅在数据发生变化时出现，5 秒后淡出） */}
+      <div ref={savedHintRef} className={styles.saveHint} data-visible="false" role="status">
+        <i className="bi bi-cloud-check" aria-hidden="true"></i>
+        已保存到本地
+      </div>
+
       {/* 顶部中间工具栏：选择 + 缩放 */}
       <div className={styles.toolbar} role="toolbar" aria-label="画布工具栏">
         <button

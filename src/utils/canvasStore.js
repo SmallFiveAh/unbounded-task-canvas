@@ -1,0 +1,194 @@
+/* ============================================================
+   无限画布数据持久化（localStorage）
+   ------------------------------------------------------------
+   · 按任务维度存取画布内容（节点 / 连线 / 表格）
+   · 同标签页用自定义事件广播，跨标签页用 storage 事件广播
+     —— 画布页改动后，任务列表缩略图的结构预览实时跟上（仅结构，不含文本）
+   · 首次打开任务时用常量数据生成种子画布（seed），之后以存储为准
+   ============================================================ */
+
+import { buildCanvas } from '../constants/tasks'
+
+const KEY_PREFIX = 'unbounded-canvas:doc:'
+const CHANGE_EVENT = 'unbounded-canvas:change'
+const VERSION = 1
+
+/** 拖拽时状态高频变化，写入做节流，避免每帧都碰 localStorage */
+const SAVE_DELAY = 120
+
+export const EMPTY_CANVAS = {
+  version: VERSION,
+  nodes: [],
+  edges: [],
+  tables: [],
+  updatedAt: 0,
+}
+
+const memoryFallback = new Map()
+
+/** localStorage 不可用（隐私模式 / 配额满）时退化为内存存储，功能不中断 */
+const storage = (() => {
+  try {
+    const probe = '__utc_probe__'
+    window.localStorage.setItem(probe, '1')
+    window.localStorage.removeItem(probe)
+    return window.localStorage
+  } catch {
+    return null
+  }
+})()
+
+export const canvasKey = (taskId) => `${KEY_PREFIX}${taskId}`
+
+const isNum = (v) => typeof v === 'number' && Number.isFinite(v)
+
+/* ---------- 数据规整：兼容损坏 / 旧版本数据 ---------- */
+
+function normalizeNode(raw) {
+  if (!raw || typeof raw.id !== 'string') return null
+  if (![raw.x, raw.y, raw.w, raw.h].every(isNum)) return null
+  return {
+    id: raw.id,
+    x: raw.x,
+    y: raw.y,
+    w: Math.max(40, raw.w),
+    h: Math.max(24, raw.h),
+    kind: raw.kind === 'accent' ? 'accent' : 'muted',
+    text: typeof raw.text === 'string' ? raw.text : '',
+  }
+}
+
+function normalizeEdge(raw) {
+  if (!raw || typeof raw.id !== 'string') return null
+  if (typeof raw.from !== 'string' || typeof raw.to !== 'string') return null
+  return { id: raw.id, from: raw.from, to: raw.to }
+}
+
+function normalizeTable(raw) {
+  if (!raw || typeof raw.id !== 'string') return null
+  if (!isNum(raw.x) || !isNum(raw.y)) return null
+  const rows = Math.max(1, Math.floor(raw.rows) || 1)
+  const cols = Math.max(1, Math.floor(raw.cols) || 1)
+  const cells = Array.from({ length: rows }, (_, r) =>
+    Array.from({ length: cols }, (_, c) => {
+      const v = raw.cells?.[r]?.[c]
+      return typeof v === 'string' ? v : ''
+    }),
+  )
+  return { id: raw.id, x: raw.x, y: raw.y, rows, cols, cells }
+}
+
+function normalizeDoc(raw) {
+  if (!raw || typeof raw !== 'object') return null
+  return {
+    version: VERSION,
+    nodes: Array.isArray(raw.nodes) ? raw.nodes.map(normalizeNode).filter(Boolean) : [],
+    edges: Array.isArray(raw.edges) ? raw.edges.map(normalizeEdge).filter(Boolean) : [],
+    tables: Array.isArray(raw.tables) ? raw.tables.map(normalizeTable).filter(Boolean) : [],
+    updatedAt: isNum(raw.updatedAt) ? raw.updatedAt : 0,
+  }
+}
+
+/* ---------- 读写 ---------- */
+
+/** 任务初始内容（常量数据 → 世界坐标），仅在没有本地存档时使用 */
+export function createSeedCanvas(task) {
+  const { nodes, edges } = buildCanvas(task)
+  return { ...EMPTY_CANVAS, nodes, edges, tables: [] }
+}
+
+/** 读取本地存档；没有存档返回 null */
+export function readCanvas(taskId) {
+  const key = canvasKey(taskId)
+  try {
+    const raw = storage ? storage.getItem(key) : memoryFallback.get(key)
+    if (!raw) return null
+    return normalizeDoc(typeof raw === 'string' ? JSON.parse(raw) : raw)
+  } catch {
+    return null
+  }
+}
+
+/** 读取画布：优先本地存档，其次种子内容 */
+export function loadCanvas(task) {
+  return readCanvas(task.id) ?? createSeedCanvas(task)
+}
+
+/** 写入画布并通知订阅者（含其它标签页） */
+export function writeCanvas(taskId, { nodes, edges, tables }) {
+  const doc = {
+    version: VERSION,
+    nodes,
+    edges,
+    tables,
+    updatedAt: Date.now(),
+  }
+  const key = canvasKey(taskId)
+  const serialized = JSON.stringify(doc)
+  try {
+    if (storage) storage.setItem(key, serialized)
+    else memoryFallback.set(key, serialized)
+  } catch {
+    // 配额超限：保留内存副本，界面照常工作
+    memoryFallback.set(key, serialized)
+  }
+  notify(taskId)
+  return doc
+}
+
+function notify(taskId) {
+  window.dispatchEvent(new CustomEvent(CHANGE_EVENT, { detail: { taskId } }))
+}
+
+/**
+ * 订阅某个任务的画布变更（同标签页 + 跨标签页）。
+ * 返回取消订阅函数。
+ */
+export function subscribeCanvas(taskId, listener) {
+  const key = canvasKey(taskId)
+
+  const onLocalChange = (event) => {
+    const changed = event.detail?.taskId
+    if (changed === undefined || String(changed) === String(taskId)) listener()
+  }
+  const onStorage = (event) => {
+    if (event.key === null || event.key === key) listener()
+  }
+
+  window.addEventListener(CHANGE_EVENT, onLocalChange)
+  window.addEventListener('storage', onStorage)
+  return () => {
+    window.removeEventListener(CHANGE_EVENT, onLocalChange)
+    window.removeEventListener('storage', onStorage)
+  }
+}
+
+/**
+ * 创建节流写入器：连续变更合并为一次落盘，flush 立即写入。
+ */
+export function createSaver(taskId) {
+  let timer = null
+  let pending = null
+
+  const flush = () => {
+    if (timer) {
+      clearTimeout(timer)
+      timer = null
+    }
+    if (!pending) return
+    const snapshot = pending
+    pending = null
+    writeCanvas(taskId, snapshot)
+  }
+
+  const save = (snapshot) => {
+    pending = snapshot
+    if (timer) return
+    timer = setTimeout(() => {
+      timer = null
+      flush()
+    }, SAVE_DELAY)
+  }
+
+  return { save, flush }
+}

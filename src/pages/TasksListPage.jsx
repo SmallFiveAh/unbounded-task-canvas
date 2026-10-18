@@ -1,141 +1,14 @@
 import { useState } from 'react'
-import { CATEGORIES, TASKS, buildCanvas } from '../constants/tasks'
+import { CATEGORIES, TASKS } from '../constants/tasks'
+import CanvasThumbnail from '../components/CanvasThumbnail/CanvasThumbnail'
 import styles from './TasksListPage.module.css'
 
 /**
  * 任务列表页面
  * 搜索栏 + 分类筛选 + 新建任务按钮 + 任务卡片列表
- * 卡片小地图缩略图展示无限画布内容
+ * 卡片缩略图渲染该任务无限画布的结构预览（节点/连线/表格），文字内容不显示
  * 点击卡片在新标签页打开对应任务的无限画布 /canvas/:taskId
  */
-
-/**
- * 小地图缩略图：与无限画布共用 buildCanvas 布局，
- * 按内容包围盒自适应 viewBox，保证节点/连线完整显示且与画布一致。
- * 当画布无内容时不显示缩略图
- */
-function CanvasThumbnail({ task }) {
-  const hasContent = task.thumbnail === 'canvas'
-  if (!hasContent || !(task.canvasElements || []).length) {
-    return (
-      <div className={styles.emptyThumbnail}>
-        <i className="bi bi-inbox" aria-hidden="true"></i>
-      </div>
-    )
-  }
-
-  // 与无限画布页一致的节点/连线布局（世界坐标）
-  const { nodes, edges } = buildCanvas(task)
-  const nodeById = new Map(nodes.map((n) => [n.id, n]))
-
-  // 内容包围盒 + 留白，扩展为正方形 viewBox（与缩略图区域比例一致），确保完整显示
-  const pad = 40
-  const minX = Math.min(...nodes.map((n) => n.x)) - pad
-  const minY = Math.min(...nodes.map((n) => n.y)) - pad
-  const maxX = Math.max(...nodes.map((n) => n.x + n.w)) + pad
-  const maxY = Math.max(...nodes.map((n) => n.y + n.h)) + pad
-  const side = Math.max(maxX - minX, maxY - minY)
-  const vx = (minX + maxX) / 2 - side / 2
-  const vy = (minY + maxY) / 2 - side / 2
-  const unit = side / 240 // 视觉参数随场景尺寸等比缩放
-
-  const gridId = `thumb-grid-${task.id}`
-  const arrowId = `thumb-arrow-${task.id}`
-
-  return (
-    <svg
-      className={styles.thumbnailSvg}
-      viewBox={`${vx} ${vy} ${side} ${side}`}
-      preserveAspectRatio="xMidYMid meet"
-    >
-      <defs>
-        {/* 网格背景：与画布一致的点状网格 */}
-        <pattern
-          id={gridId}
-          width={24}
-          height={24}
-          patternUnits="userSpaceOnUse"
-        >
-          <circle
-            cx="1"
-            cy="1"
-            r={1 * unit}
-            fill="var(--color-border)"
-          />
-        </pattern>
-        <marker
-          id={arrowId}
-          markerWidth="8"
-          markerHeight="8"
-          refX="5"
-          refY="3"
-          orient="auto"
-        >
-          <path d="M0,0 L6,3 L0,6 Z" style={{ fill: 'var(--color-muted)' }} />
-        </marker>
-      </defs>
-      <rect x={vx} y={vy} width={side} height={side} fill={`url(#${gridId})`} />
-
-      {/* 连线：样式与画布一致（虚线 + 箭头） */}
-      {edges.map((edge) => {
-        const from = nodeById.get(edge.from)
-        const to = nodeById.get(edge.to)
-        if (!from || !to) return null
-        return (
-          <line
-            key={edge.id}
-            x1={from.x + from.w / 2}
-            y1={from.y + from.h / 2}
-            x2={to.x + to.w / 2}
-            y2={to.y + to.h / 2}
-            stroke="var(--color-muted)"
-            strokeWidth={1.5 * unit}
-            strokeDasharray={`${6 * unit} ${4 * unit}`}
-            opacity="0.7"
-            markerEnd={`url(#${arrowId})`}
-          />
-        )
-      })}
-
-      {/* 节点：样式与画布一致（accent 为橙色高亮节点） */}
-      {nodes.map((node) => (
-        <g key={node.id}>
-          <rect
-            x={node.x}
-            y={node.y}
-            width={node.w}
-            height={node.h}
-            rx={6 * unit}
-            fill={
-              node.kind === 'accent'
-                ? 'var(--color-selection)'
-                : 'var(--color-surface)'
-            }
-            stroke={
-              node.kind === 'accent'
-                ? 'var(--color-accent)'
-                : 'var(--color-border)'
-            }
-            strokeWidth={(node.kind === 'accent' ? 2 : 1) * unit}
-          />
-          {/* 模拟文字行 */}
-          <rect
-            x={node.x + 12 * unit}
-            y={node.y + node.h / 2 - 3 * unit}
-            width={node.w * 0.5}
-            height={6 * unit}
-            rx={3 * unit}
-            fill={
-              node.kind === 'accent'
-                ? 'var(--color-accent)'
-                : 'var(--color-border)'
-            }
-          />
-        </g>
-      ))}
-    </svg>
-  )
-}
 
 /**
  * 状态徽标 */

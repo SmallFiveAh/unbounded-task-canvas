@@ -213,24 +213,7 @@
   border-color: var(--color-accent);
 }
 
-.thumbnailSvg {
-  width: 100%;
-  height: 100%;
-}
-
-.emptyThumbnail {
-  width: 100%;
-  height: 100%;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  color: var(--color-border);
-}
-
-.emptyThumbnail i {
-  font-size: 32px;
-  opacity: 0.5;
-}
+/* 缩略图本体由 CanvasThumbnail 组件自带样式（SVG 用 class 上色） */
 
 /* 卡片主体 */
 .cardBody {

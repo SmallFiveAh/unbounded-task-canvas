@@ -1,0 +1,108 @@
+/* ============================================
+   CanvasThumbnail —— 任务卡片上的画布结构预览
+   只画节点/连线/表格的形态，不渲染任何文本数据
+   （SVG 呈现属性不支持 var()，颜色一律走 CSS 类）
+   ============================================ */
+
+.wrap {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+}
+
+/* 有内容时才铺点阵：屏幕空间网格，与画布坐标无关，密度恒为 18px */
+.grid {
+  background-image: radial-gradient(
+    circle,
+    color-mix(in srgb, var(--color-muted) 32%, transparent) 1px,
+    transparent 1.2px
+  );
+  background-size: 18px 18px;
+  background-position: center;
+}
+
+.svg {
+  position: absolute;
+  inset: 0;
+  display: block;
+  width: 100%;
+  height: 100%;
+}
+
+/* 连线：与画布页一致的暖灰虚线 */
+.edge {
+  stroke: var(--color-muted);
+  opacity: 0.7;
+}
+
+.arrow {
+  fill: var(--color-muted);
+}
+
+/* 普通节点 */
+.node {
+  fill: var(--color-surface);
+  stroke: var(--color-border);
+  stroke-width: 1.5;
+  vector-effect: non-scaling-stroke;
+}
+
+/* 强调节点：橙描边 + 橙色底纹 */
+.nodeAccent {
+  fill: var(--color-selection);
+  stroke: var(--color-accent);
+  stroke-width: 2;
+  vector-effect: non-scaling-stroke;
+}
+
+/* 文字占位条：示意“有内容”，但不泄露任何文本 */
+.bar {
+  fill: var(--color-border);
+}
+
+.barAccent {
+  fill: var(--color-accent);
+  opacity: 0.55;
+}
+
+/* 表格 */
+.table {
+  fill: var(--color-surface);
+  stroke: var(--color-border);
+  stroke-width: 1.5;
+  vector-effect: non-scaling-stroke;
+}
+
+.tableHead {
+  fill: var(--color-wash);
+}
+
+.tableLine {
+  stroke: var(--color-border);
+  stroke-width: 1;
+  vector-effect: non-scaling-stroke;
+}
+
+/* 空画布 */
+.empty {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-2);
+  color: var(--color-border);
+}
+
+.empty i {
+  font-size: 32px;
+  opacity: 0.55;
+}
+
+.emptyText {
+  font-size: var(--text-xs);
+  color: var(--color-muted);
+  opacity: 0.7;
+}
