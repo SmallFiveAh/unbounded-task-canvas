@@ -1,0 +1,339 @@
+/* ============================================
+   Sidebar —— 极致极简导航
+   发丝边框 / 中性薄洗悬停 / 信号橙刻度激活标记
+   ============================================ */
+
+.sidebar {
+  width: var(--sidebar-width);
+  flex-shrink: 0;
+  height: 100svh;
+  position: sticky;
+  top: 0;
+  display: flex;
+  flex-direction: column;
+  background: var(--color-bg);
+  border-right: 1px solid var(--color-border);
+  transition: width 400ms var(--ease-out);
+  overflow: hidden;
+}
+
+.sidebar.collapsed {
+  width: var(--sidebar-width-collapsed);
+}
+
+/* ---- 品牌区 ---- */
+
+.header {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  padding: var(--space-5) var(--space-4) var(--space-4);
+  border-bottom: 1px solid var(--color-border);
+  white-space: nowrap;
+  transition: gap 400ms var(--ease-out), padding 400ms var(--ease-out);
+}
+
+/* 记忆点：8px 信号橙方标，45° 立起；折叠时旋成正方块 */
+.mark {
+  width: 10px;
+  height: 10px;
+  flex-shrink: 0;
+  margin: 0 7px; /* 与折叠态图标列对齐 */
+  background: var(--color-accent);
+  transform: rotate(45deg);
+  border-radius: 1px;
+  transition: transform 400ms var(--ease-out), margin 400ms var(--ease-out);
+}
+
+.wordmark {
+  font-family: var(--font-display);
+  font-size: var(--text-md);
+  font-weight: 600;
+  letter-spacing: -0.02em;
+  color: var(--color-text);
+  max-width: 160px;
+  opacity: 1;
+  overflow: hidden;
+  /* 展开：等侧栏拉开后再滑入 */
+  transition:
+    max-width 300ms var(--ease-out) 120ms,
+    opacity 200ms ease 160ms,
+    transform 280ms var(--ease-out) 140ms;
+}
+
+/* ---- 导航列表 ---- */
+
+.nav {
+  flex: 1;
+  padding: var(--space-3) var(--space-2);
+  overflow-y: auto;
+  overflow-x: hidden;
+}
+
+.sidebar ul {
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: 2px; /* 精确间距，不用模糊空隙 */
+}
+
+.navItem {
+  position: relative;
+  width: 100%;
+  min-height: 44px; /* 触摸目标基准 */
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  padding: 0 var(--space-3);
+  border: none;
+  border-radius: var(--radius-md);
+  background: transparent;
+  color: var(--color-muted);
+  font-size: var(--text-base);
+  cursor: pointer;
+  white-space: nowrap;
+  overflow: hidden;
+  transition: gap 400ms var(--ease-out);
+}
+
+.navItem .bi {
+  font-size: 17px;
+  flex-shrink: 0;
+  width: 24px;
+  text-align: center;
+  transition: transform var(--dur-fast) ease-out;
+}
+
+/* 悬停：中性薄洗自左扫过 + 图标微移，不止"变亮" */
+.navItem::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: var(--radius-md);
+  background: var(--color-wash);
+  transform: scaleX(0);
+  transform-origin: left;
+  transition: transform var(--dur-fast) var(--ease-out);
+  pointer-events: none;
+}
+
+.navItem:hover::before {
+  transform: scaleX(1);
+}
+
+.navItem:hover {
+  color: var(--color-text);
+}
+
+.navItem:hover .bi {
+  transform: translateX(2px);
+}
+
+/* 激活：文字转墨色 + 左侧 2px 信号橙刻度条 */
+.navItem.active {
+  color: var(--color-text);
+  font-weight: 500;
+}
+
+.navItem.active::after {
+  content: '';
+  position: absolute;
+  left: 0;
+  top: 50%;
+  width: 2px;
+  height: 18px;
+  transform: translateY(-50%);
+  background: var(--color-accent);
+  border-radius: 1px;
+  /* 折叠时竖刻度 morph 为底部居中短横 */
+  transition:
+    left 380ms var(--ease-out),
+    top 380ms var(--ease-out),
+    width 380ms var(--ease-out),
+    height 380ms var(--ease-out),
+    transform 380ms var(--ease-out);
+}
+
+.navItem.active .bi {
+  color: var(--color-accent);
+}
+
+/* 标签：grid 轨道 1fr→0fr 实现「自动宽度」的真实平滑收合
+   （width: auto 无法过渡，故用双层 span + 内层裁切） */
+.navLabel {
+  display: grid;
+  grid-template-columns: 1fr;
+  min-width: 0; /* 覆盖 flex 子项的 min-width:auto，允许轨道收到 0 */
+  opacity: 1;
+  /* 展开方向：侧栏先拉开，标签按 --i 逐项错峰滑回，如依次书写 */
+  transition:
+    grid-template-columns 280ms var(--ease-out)
+      calc(120ms + var(--i, 0) * 26ms),
+    opacity 200ms ease calc(150ms + var(--i, 0) * 26ms),
+    transform 280ms var(--ease-out) calc(120ms + var(--i, 0) * 26ms);
+}
+
+.navLabel > span {
+  overflow: hidden;
+}
+
+/* ---- 折叠态 ---- */
+
+/* 收起方向：标签先于宽度收缩，整体向左「吸入」并淡出 */
+.collapsed .navLabel {
+  grid-template-columns: 0fr;
+  opacity: 0;
+  transform: translateX(-10px);
+  pointer-events: none;
+  transition:
+    grid-template-columns 180ms ease-in,
+    opacity 120ms ease-in,
+    transform 180ms ease-in;
+}
+
+/* 图标在两态下天然同位（展开态 padding 已居中图标列），只需收间距 */
+.collapsed .navItem {
+  gap: 0;
+}
+
+/* 折叠态悬停：图标轻跳放大，替代展开态的右移 */
+.collapsed .navItem:hover .bi {
+  transform: scale(1.12);
+}
+
+/* 激活刻度：左侧竖条 → 底部居中短横 */
+.collapsed .navItem.active::after {
+  left: 50%;
+  top: calc(100% - 7px);
+  width: 14px;
+  height: 2px;
+  transform: translateX(-50%);
+}
+
+/* 品牌区：方标滑到正中并旋成正方块，字标让位 */
+.collapsed .header {
+  gap: 0;
+  padding-left: calc(50% - 5px);
+  padding-right: 0;
+}
+
+.collapsed .mark {
+  margin: 0;
+  transform: rotate(90deg) scale(0.86);
+}
+
+.collapsed .wordmark {
+  max-width: 0;
+  opacity: 0;
+  transform: translateX(-8px);
+  transition:
+    max-width 180ms ease-in,
+    opacity 120ms ease-in,
+    transform 180ms ease-in;
+}
+
+/* ---- 底部区 ---- */
+
+.bottom {
+  padding: var(--space-3) var(--space-2);
+  border-top: 1px solid var(--color-border);
+}
+
+.bottom ul {
+  margin-bottom: var(--space-1);
+}
+
+.collapseBtn {
+  color: var(--color-muted);
+}
+
+/* 双箭头：固定同一字形，折叠态弹性旋转 180° 指向右侧 */
+.collapseBtn .bi {
+  transition: transform 480ms cubic-bezier(0.34, 1.4, 0.5, 1);
+}
+
+.collapsed .collapseBtn .bi {
+  transform: rotate(180deg);
+}
+
+.collapsed .collapseBtn:hover .bi {
+  transform: rotate(180deg) scale(1.08);
+}
+
+/* ---- 入场编排：页头 → 5 项菜单 → 底部组，逐项错峰 60ms ---- */
+@media (prefers-reduced-motion: no-preference) {
+  .header,
+  .navItem {
+    animation: sidebar-rise var(--dur-base) var(--ease-out) both;
+    animation-delay: calc(var(--i, 0) * 60ms);
+  }
+
+  @keyframes sidebar-rise {
+    from {
+      opacity: 0;
+      transform: translateY(8px);
+    }
+    to {
+      opacity: 1;
+      transform: none;
+    }
+  }
+}
+
+/* ---- 窄屏：自动收成图标栏（与折叠态同一套让位规则） ---- */
+@media (max-width: 768px) {
+  .sidebar {
+    width: var(--sidebar-width-collapsed);
+  }
+
+  .wordmark {
+    max-width: 0;
+    opacity: 0;
+    transform: translateX(-8px);
+    pointer-events: none;
+  }
+
+  .navLabel {
+    grid-template-columns: 0fr;
+    opacity: 0;
+    transform: translateX(-10px);
+    pointer-events: none;
+  }
+
+  .navItem {
+    gap: 0;
+  }
+
+  .header {
+    gap: 0;
+    padding-left: calc(50% - 5px);
+    padding-right: 0;
+  }
+
+  .mark {
+    margin: 0;
+    transform: rotate(90deg) scale(0.86);
+  }
+
+  .navItem.active::after {
+    left: 50%;
+    top: calc(100% - 7px);
+    width: 14px;
+    height: 2px;
+    transform: translateX(-50%);
+  }
+}
+
+/* ---- 减弱动效偏好：状态瞬切，仅保留颜色反馈 ---- */
+@media (prefers-reduced-motion: reduce) {
+  .sidebar,
+  .header,
+  .mark,
+  .wordmark,
+  .navItem,
+  .navItem .bi,
+  .navLabel,
+  .navItem.active::after {
+    transition: none !important;
+  }
+}

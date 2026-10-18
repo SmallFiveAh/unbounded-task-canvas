@@ -1,0 +1,82 @@
+/* ============================================
+   设计令牌 —— 极致极简（Brutally minimal）
+   暖纸面 + 暖墨色 + 单一信号橙强调
+   明/暗双主题均为主动设计，非系统默认
+   ============================================ */
+:root {
+  /* 色彩 —— 60% 暖纸 / 30% 暖墨 / 10% 信号橙 */
+  --color-bg: #f6f5f1; /* 暖纸白，非默认纯白 */
+  --color-surface: #fdfcf9; /* 微抬升面 */
+  --color-text: #1c1b17; /* 暖近黑，不用纯 #000 */
+  --color-muted: #65615a; /* 暖灰，对纸面对比度 ≥ 4.5:1 */
+  --color-accent: #ff4d00; /* 信号橙：仅关键动作与激活标记 */
+  --color-accent-ink: #c23a00; /* 橙的深态，用于需文字级对比的场景 */
+  --color-border: rgba(28, 27, 23, 0.14); /* 发丝线 */
+  --color-wash: rgba(28, 27, 23, 0.05); /* 中性悬停薄洗 */
+  --color-selection: rgba(255, 77, 0, 0.18);
+
+  /* 字体 —— 展示字 Sora（拉丁/数字），中文 Noto Sans SC */
+  --font-display:
+    'Sora', 'Noto Sans SC', 'PingFang SC', 'Microsoft YaHei', sans-serif;
+  --font-body:
+    'Sora', 'Noto Sans SC', 'PingFang SC', 'Microsoft YaHei', sans-serif;
+
+  /* 字阶 —— 1.25 模块化比例 */
+  --text-xs: 12px;
+  --text-sm: 13px;
+  --text-base: 15px;
+  --text-md: 17px;
+  --text-lg: 21px;
+  --text-xl: 26px;
+  --text-2xl: 33px;
+  --text-3xl: 41px;
+  --text-4xl: 51px;
+
+  /* 间距梯度 4 / 8 / 12 / 16 / 24 / 40 / 64 / 96 */
+  --space-1: 4px;
+  --space-2: 8px;
+  --space-3: 12px;
+  --space-4: 16px;
+  --space-5: 24px;
+  --space-6: 40px;
+  --space-7: 64px;
+  --space-8: 96px;
+
+  /* 圆角 —— 克制近锐利 */
+  --radius-sm: 12px;
+  --radius-md: 8px;
+  --radius-lg: 16px; 
+
+  /* 三级暖调阴影（Y 偏移 2 / 8 / 24） */
+  --shadow-1: 0 2px 8px rgba(28, 27, 23, 0.07);
+  --shadow-2: 0 8px 28px rgba(28, 27, 23, 0.1);
+  --shadow-3: 0 24px 64px rgba(28, 27, 23, 0.16);
+
+  /* 动效 */
+  --ease-out: cubic-bezier(0.16, 1, 0.3, 1);
+  --dur-fast: 160ms;
+  --dur-base: 320ms;
+  --dur-slow: 640ms;
+
+  /* 布局 */
+  --sidebar-width: 244px;
+  --sidebar-width-collapsed: 64px;
+}
+
+/* 暗色：暖墨底，同一套语义令牌整体重映射 */
+@media (prefers-color-scheme: dark) {
+  :root {
+    --color-bg: #161512;
+    --color-surface: #1d1c18;
+    --color-text: #f2f0e9;
+    --color-muted: #a5a096;
+    --color-accent: #ff6a26;
+    --color-accent-ink: #ff8a50;
+    --color-border: rgba(242, 240, 233, 0.14);
+    --color-wash: rgba(242, 240, 233, 0.06);
+    --color-selection: rgba(255, 106, 38, 0.28);
+    --shadow-1: 0 2px 8px rgba(0, 0, 0, 0.35);
+    --shadow-2: 0 8px 28px rgba(0, 0, 0, 0.42);
+    --shadow-3: 0 24px 64px rgba(0, 0, 0, 0.55);
+  }
+}

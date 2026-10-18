@@ -1,0 +1,74 @@
+/* ============================================
+   InsertTablePanel —— 表格插入面板
+   跟随左侧工具栏弹出，仅含网格选区
+   ============================================ */
+
+.panel {
+  width: 240px;
+  padding: var(--space-3);
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  box-shadow: var(--shadow-2);
+  animation: var(--dur-fast) var(--ease-out) both;
+  animation-name: popIn;
+}
+
+@keyframes popIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+/* 网格选区：10 × 10，参考 Word 表格选区 */
+.grid {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+
+.row {
+  display: flex;
+  gap: 3px;
+}
+
+.cell {
+  width: 18px;
+  height: 18px;
+  border: none;
+  background: transparent;
+  border-radius: 4px;
+  cursor: pointer;
+  position: relative;
+  transition: background-color var(--dur-fast) var(--ease-out);
+}
+
+.cell::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border: 1px solid var(--color-border);
+  border-radius: 4px;
+  background: var(--color-surface);
+}
+
+.cell:hover::before {
+  border-color: var(--color-accent);
+}
+
+.cell.active::before {
+  background: var(--color-selection);
+  border-color: var(--color-accent);
+}
+
+.cell.active::after {
+  content: '';
+  position: absolute;
+  inset: 2px;
+  border-radius: 2px;
+  background: var(--color-accent);
+  opacity: 0.6;
+}

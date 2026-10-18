@@ -1,0 +1,349 @@
+/* ============================================
+   TasksListPage —— 任务列表页面
+   搜索栏 / 分类筛选 / 新建任务 / 卡片网格
+   卡片含小地图缩略图展示无限画布内容
+   ============================================ */
+
+.page {
+  max-width: 100%;
+  width: 100%;
+  margin: 0 auto;
+}
+
+/* 页面标题 */
+.header {
+  margin-bottom: var(--space-5);
+}
+
+.pageTitle {
+  font-family: var(--font-display);
+  font-size: clamp(28px, 4vw, var(--text-3xl));
+  font-weight: 700;
+  line-height: 1.1;
+  letter-spacing: -0.02em;
+  color: var(--color-text);
+}
+
+/* 工具栏：搜索 + 新建按钮 */
+.toolbar {
+  display: flex;
+  gap: var(--space-3);
+  margin-bottom: var(--space-4);
+}
+
+.searchBox {
+  flex: 1;
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+.searchBox i {
+  position: absolute;
+  left: var(--space-3);
+  color: var(--color-muted);
+  pointer-events: none;
+}
+
+.searchInput {
+  width: 100%;
+  height: 44px;
+  padding: 0 var(--space-3) 0 calc(var(--space-3) + 20px);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  background: var(--color-surface);
+  font-size: var(--text-md);
+  color: var(--color-text);
+  transition: border-color var(--dur-fast) var(--ease-out);
+}
+
+.searchInput::placeholder {
+  color: var(--color-muted);
+}
+
+.searchInput:focus {
+  border-color: var(--color-accent);
+  outline: none;
+}
+
+.newTaskBtn {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  height: 44px;
+  padding: 0 var(--space-4);
+  background: var(--color-accent);
+  color: #fff;
+  border: none;
+  border-radius: var(--radius-md);
+  font-size: var(--text-md);
+  font-weight: 500;
+  cursor: pointer;
+  transition:
+    transform var(--dur-fast) var(--ease-out),
+    filter var(--dur-fast) var(--ease-out);
+}
+
+.newTaskBtn:hover {
+  filter: brightness(1.08);
+}
+
+.newTaskBtn:active {
+  transform: scale(0.98);
+}
+
+/* 分类筛选 */
+.categories {
+  display: flex;
+  gap: var(--space-2);
+  margin-bottom: var(--space-5);
+  padding-bottom: var(--space-3);
+  border-bottom: 1px solid var(--color-border);
+}
+
+.categoryBtn {
+  padding: var(--space-2) var(--space-3);
+  background: transparent;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-sm);
+  font-size: var(--text-sm);
+  color: var(--color-muted);
+  cursor: pointer;
+  transition:
+    all var(--dur-fast) var(--ease-out);
+}
+
+.categoryBtn:hover {
+  border-color: var(--color-accent);
+  color: var(--color-accent-ink);
+}
+
+.categoryBtn.active {
+  background: var(--color-accent);
+  border-color: var(--color-accent);
+  color: #fff;
+}
+
+/* 任务网格布局 */
+.taskGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: var(--space-4);
+  width: 100%;
+}
+
+/* 任务卡片（整卡为新标签页链接） */
+.taskCard {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-lg);
+  overflow: hidden;
+  color: inherit;
+  text-decoration: none;
+  cursor: pointer;
+  transition:
+    transform var(--dur-fast) var(--ease-out),
+    box-shadow var(--dur-fast) var(--ease-out);
+  animation: card-rise var(--dur-base) var(--ease-out) both;
+  animation-delay: calc(var(--i, 0) * 80ms);
+}
+
+.taskCard:hover {
+  transform: translateY(-4px);
+  box-shadow: var(--shadow-2);
+}
+
+@keyframes card-rise {
+  from {
+    opacity: 0;
+    transform: translateY(16px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+/* 小地图缩略图区域 */
+.thumbnailWrap {
+  position: relative;
+  aspect-ratio: 1;
+  background: var(--color-bg);
+  border-bottom: 1px solid var(--color-border);
+  overflow: hidden;
+}
+
+/* 悬浮“打开画布”提示 */
+.openBadge {
+  position: absolute;
+  top: var(--space-2);
+  right: var(--space-2);
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-1);
+  padding: var(--space-1) var(--space-2);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-sm);
+  background: var(--color-surface);
+  box-shadow: var(--shadow-1);
+  font-size: var(--text-xs);
+  font-weight: 500;
+  color: var(--color-muted);
+  opacity: 0;
+  transform: translateY(-4px);
+  transition:
+    opacity var(--dur-fast) var(--ease-out),
+    transform var(--dur-fast) var(--ease-out),
+    color var(--dur-fast) var(--ease-out),
+    border-color var(--dur-fast) var(--ease-out);
+}
+
+.taskCard:hover .openBadge,
+.taskCard:focus-visible .openBadge {
+  opacity: 1;
+  transform: none;
+}
+
+.openBadge:hover,
+.taskCard:hover .openBadge {
+  color: var(--color-accent-ink);
+  border-color: var(--color-accent);
+}
+
+.thumbnailSvg {
+  width: 100%;
+  height: 100%;
+}
+
+.emptyThumbnail {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--color-border);
+}
+
+.emptyThumbnail i {
+  font-size: 32px;
+  opacity: 0.5;
+}
+
+/* 卡片主体 */
+.cardBody {
+  padding: var(--space-4);
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+}
+
+.cardHeader {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: var(--space-2);
+}
+
+.cardTitle {
+  flex: 1;
+  font-size: var(--text-md);
+  font-weight: 600;
+  line-height: 1.3;
+  color: var(--color-text);
+}
+
+/* 状态徽标 */
+.statusBadge {
+  display: inline-flex;
+  align-items: center;
+  padding: var(--space-1) var(--space-2);
+  font-size: var(--text-xs);
+  font-weight: 500;
+  border-radius: var(--radius-sm);
+  white-space: nowrap;
+}
+
+.statusBadge.done {
+  background: rgba(76, 175, 80, 0.12);
+  color: #4caf50;
+}
+
+.statusBadge.active {
+  background: rgba(255, 77, 0, 0.12);
+  color: var(--color-accent);
+}
+
+.statusBadge.pending {
+  background: rgba(101, 97, 90, 0.12);
+  color: var(--color-muted);
+}
+
+/* 进度条 */
+.progressBar {
+  height: 6px;
+  background: var(--color-border);
+  border-radius: 3px;
+  overflow: hidden;
+}
+
+.progressFill {
+  height: 100%;
+  background: var(--color-accent);
+  transition: width var(--dur-base) var(--ease-out);
+}
+
+/* 卡片底部 */
+.cardFooter {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  font-size: var(--text-sm);
+  color: var(--color-muted);
+}
+
+.cardCategory {
+  font-weight: 500;
+}
+
+/* 空状态 */
+.emptyState {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: var(--space-7) var(--space-5);
+  color: var(--color-muted);
+}
+
+.emptyState i {
+  font-size: 48px;
+  margin-bottom: var(--space-3);
+  opacity: 0.4;
+}
+
+.emptyState p {
+  font-size: var(--text-lg);
+}
+
+/* 响应式 */
+@media (max-width: 768px) {
+  .toolbar {
+    flex-direction: column;
+  }
+
+  .searchBox {
+    width: 100%;
+  }
+
+  .newTaskBtn {
+    width: 100%;
+    justify-content: center;
+  }
+
+  .taskGrid {
+    grid-template-columns: 1fr;
+  }
+}

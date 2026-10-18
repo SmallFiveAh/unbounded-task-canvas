@@ -1,0 +1,18 @@
+/* 应用外壳：侧边栏 + 主内容区 */
+
+.app-layout {
+  display: flex;
+  min-height: 100svh;
+}
+
+.app-main {
+  flex: 1;
+  min-width: 0;
+  padding: var(--space-6) var(--space-7);
+}
+
+@media (max-width: 768px) {
+  .app-main {
+    padding: var(--space-5) var(--space-5);
+  }
+}

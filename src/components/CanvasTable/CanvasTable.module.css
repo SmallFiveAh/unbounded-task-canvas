@@ -1,0 +1,109 @@
+/* ============================================
+   CanvasTable —— 画布上的 Excel 风格表格
+   列标 + 行号 + 网格线单元格
+   ============================================ */
+
+.table {
+  position: absolute;
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: 5px;
+  overflow: hidden;
+  box-shadow: var(--shadow-1);
+  cursor: grab;
+  pointer-events: auto;
+  user-select: none;
+  outline: none;
+}
+
+.table:active {
+  cursor: grabbing;
+}
+
+.table.selected {
+  box-shadow:
+    0 0 0 1px var(--color-accent),
+    var(--shadow-2);
+}
+
+.grid {
+  display: grid;
+  width: 100%;
+}
+
+/* 列标 / 行号表头 */
+.head {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 28px;
+  background: var(--color-wash);
+  color: var(--color-muted);
+  font-size: 11px;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+  border-right: 1px solid var(--color-border);
+  border-bottom: 1px solid var(--color-border);
+}
+
+/* 单元格 */
+.cell {
+  position: relative;
+  display: flex;
+  align-items: center;
+  height: 28px;
+  padding: 0 8px;
+  border-right: 1px solid var(--color-border);
+  border-bottom: 1px solid var(--color-border);
+  cursor: cell;
+  overflow: hidden;
+}
+
+.cellText {
+  font-size: var(--text-xs);
+  line-height: 1.4;
+  color: var(--color-text);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* 活动单元格：outline 在边框外侧绘制，不与单元格自身 border 叠加，避免"倍数"效果 */
+.cell.active {
+  outline: 1px solid var(--color-accent);
+  outline-offset: -1px;
+}
+
+/* 多选选中但非活动格：仅橙色背景，不添加额外边框 */
+.cell.cellSelected {
+  background: var(--color-selection);
+}
+
+/* 表格进入框选态时改为 crosshair */
+.table.selecting {
+  cursor: crosshair;
+}
+
+/* 单元格编辑输入框 */
+.cellInput {
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  width: 100%;
+  height: 100%;
+  padding: 0 8px;
+  border: none;
+  outline: none;
+  background: var(--color-surface);
+  font: inherit;
+  font-size: var(--text-xs);
+  color: var(--color-text);
+  cursor: text;
+  user-select: text;
+}
+
+/* 覆盖全局 :focus-visible 的橙色描边与 12px 圆角，避免编辑时出现胶囊效果 */
+.cellInput:focus-visible {
+  outline: none;
+  border-radius: 0;
+}
