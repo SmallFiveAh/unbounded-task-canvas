@@ -2,10 +2,11 @@ import { useEffect, useRef, useState, Fragment } from 'react'
 import {
   TABLE_ROW_HEADER_W,
   TABLE_COL_HEADER_H,
-  TABLE_CELL_W,
-  TABLE_CELL_H,
+  tableCellW,
+  tableCellH,
   getTableSize,
 } from '../../constants/canvasTable'
+import { cornerRadius } from '../../utils/canvasRadius'
 import styles from './CanvasTable.module.css'
 
 /**
@@ -56,8 +57,13 @@ export default function CanvasTable({
   onActivate,
   onCellChange,
   onClearCells,
+  scale = 1,
 }) {
   const { rows, cols, cells } = table
+  // 单元格尺寸可由画布上的四角控制点拖动改变（见 CanvasPage 的 applyResize）
+  const cellW = tableCellW(table)
+  const cellH = tableCellH(table)
+  const size = getTableSize(table)
 
   const wrapRef = useRef(null)
   const inputRef = useRef(null)
@@ -124,11 +130,11 @@ export default function CanvasTable({
     const grid = wrapRef.current?.querySelector('[data-grid]')
     if (!grid) return null
     const rect = grid.getBoundingClientRect()
-    const kx = rect.width / (TABLE_ROW_HEADER_W + cols * TABLE_CELL_W)
-    const ky = rect.height / (TABLE_COL_HEADER_H + rows * TABLE_CELL_H)
+    const kx = rect.width / (TABLE_ROW_HEADER_W + cols * cellW)
+    const ky = rect.height / (TABLE_COL_HEADER_H + rows * cellH)
     if (!kx || !ky) return null
-    const c = Math.floor(((clientX - rect.left) / kx - TABLE_ROW_HEADER_W) / TABLE_CELL_W)
-    const r = Math.floor(((clientY - rect.top) / ky - TABLE_COL_HEADER_H) / TABLE_CELL_H)
+    const c = Math.floor(((clientX - rect.left) / kx - TABLE_ROW_HEADER_W) / cellW)
+    const r = Math.floor(((clientY - rect.top) / ky - TABLE_COL_HEADER_H) / cellH)
     const inside = r >= 0 && r < rows && c >= 0 && c < cols
     if (!inside && !clamp) return null
     return {
@@ -367,7 +373,15 @@ export default function CanvasTable({
       data-table-id={table.id}
       tabIndex={-1}
       className={`${styles.table}${selected ? ` ${styles.selected}` : ''}`}
-      style={{ left: table.x, top: table.y, width: getTableSize(rows, cols).w }}
+      style={{
+        left: table.x,
+        top: table.y,
+        width: size.w,
+        // 圆角随缩放补偿（缩小时仍看得出圆角，放大时不额外变圆）
+        borderRadius: cornerRadius(5, size.w, size.h, scale),
+        // 行高交给 CSS 变量：表头与单元格共用同一个值
+        '--cell-h': `${cellH}px`,
+      }}
       onPointerDown={handlePointerDown}
       onPointerMove={handlePointerMove}
       onPointerUp={handlePointerUp}
@@ -378,7 +392,7 @@ export default function CanvasTable({
         data-grid
         className={styles.grid}
         style={{
-          gridTemplateColumns: `${TABLE_ROW_HEADER_W}px repeat(${cols}, 96px)`,
+          gridTemplateColumns: `${TABLE_ROW_HEADER_W}px repeat(${cols}, ${cellW}px)`,
         }}
       >
         {/* 左上角空白格 */}

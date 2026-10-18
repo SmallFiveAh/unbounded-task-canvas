@@ -3,10 +3,15 @@
    列标 + 行号 + 网格线单元格
    ============================================ */
 
+/* 默认态：无节点边框。
+   1px 透明边框只用于占位——选中框由屏幕空间的 SelectionFrame 绘制，
+   这里换成实线也不会让盒子尺寸跳动。
+   表格自身的「外形」由网格线表达（见下方 .table::before 的发丝线），
+   那是内容结构（行列闭合），不是选中态的边框。 */
 .table {
   position: absolute;
   background: var(--color-surface);
-  border: 1px solid var(--color-border);
+  border: 1px solid transparent;
   border-radius: 5px;
   overflow: hidden;
   box-shadow: var(--shadow-1);
@@ -16,15 +21,26 @@
   outline: none;
 }
 
+/* 网格外缘发丝线：闭合行列轮廓。
+   不用真 border 是因为 .grid 里是定宽列，多一层 border 会让列宽溢出 2px。 */
+.table::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border: 1px solid var(--color-border);
+  border-radius: inherit;
+  pointer-events: none;
+}
+
 .table:active {
   cursor: grabbing;
 }
 
-/* 选中态：1px 边框换强调色（与画布节点一致）。
-   不再叠 0 0 0 1px 的外环——环在边框之外，视觉上会变成 2px 粗边 */
+/* 选中态：只抬升投影（橙色 1px 选中框 + 四角控制点由 SelectionFrame 屏幕空间绘制，
+   所以缩放画布时线宽与控制点大小恒定，不会跟着放大变粗）。 */
 .table.selected {
-  border-color: var(--color-accent);
   box-shadow: var(--shadow-2);
+  z-index: 2;
 }
 
 .grid {
@@ -37,7 +53,7 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  height: 28px;
+  height: var(--cell-h, 28px);
   background: var(--color-wash);
   color: var(--color-muted);
   font-size: 11px;
@@ -52,7 +68,7 @@
   position: relative;
   display: flex;
   align-items: center;
-  height: 28px;
+  height: var(--cell-h, 28px);
   padding: 0 8px;
   border-right: 1px solid var(--color-border);
   border-bottom: 1px solid var(--color-border);

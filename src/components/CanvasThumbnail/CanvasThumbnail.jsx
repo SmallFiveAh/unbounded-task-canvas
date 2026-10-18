@@ -1,10 +1,10 @@
 import { useId, useMemo } from 'react'
 import {
-  TABLE_CELL_H,
-  TABLE_CELL_W,
   TABLE_COL_HEADER_H,
   TABLE_ROW_HEADER_W,
   getTableSize,
+  tableCellH,
+  tableCellW,
 } from '../../constants/canvasTable'
 import { useCanvasSnapshot } from '../../hooks/useCanvasSnapshot'
 import styles from './CanvasThumbnail.module.css'
@@ -25,7 +25,7 @@ function computeLayout(nodes, tables) {
   const rects = [
     ...nodes.map((n) => ({ x: n.x, y: n.y, w: n.w, h: n.h })),
     ...tables.map((t) => {
-      const { w, h } = getTableSize(t.rows, t.cols)
+      const { w, h } = getTableSize(t)
       return { x: t.x, y: t.y, w, h }
     }),
   ]
@@ -80,16 +80,18 @@ function NodeShape({ node }) {
 
 /** 表格：只画外框、行列头与网格线，单元格内容一律不渲染 */
 function TableShape({ table }) {
-  const { w, h } = getTableSize(table.rows, table.cols)
+  const { w, h } = getTableSize(table)
+  const cellW = tableCellW(table)
+  const cellH = tableCellH(table)
   const headBottom = table.y + TABLE_COL_HEADER_H
 
   const colLines = Array.from(
     { length: table.cols + 1 },
-    (_, c) => table.x + TABLE_ROW_HEADER_W + c * TABLE_CELL_W,
+    (_, c) => table.x + TABLE_ROW_HEADER_W + c * cellW,
   )
   const rowLines = Array.from(
     { length: table.rows + 1 },
-    (_, r) => headBottom + r * TABLE_CELL_H,
+    (_, r) => headBottom + r * cellH,
   )
 
   return (

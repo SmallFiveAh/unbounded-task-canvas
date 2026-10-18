@@ -405,49 +405,50 @@
 
 /* ---------- 节点 ---------- */
 
+/* 默认态：无边框。
+   卡片靠「底色 + 投影」立起来，不靠描边。
+   1px 透明边框只是占位，保证选中 / 未选中切换时盒子尺寸与内容位置纹丝不动。
+   选中态的 1px 橙线由屏幕空间的 SelectionFrame 绘制（见该组件注释），
+   所以画布缩放到 500% 时线宽依然是 1px，不会变粗。 */
 .node {
   position: absolute;
   display: flex;
   align-items: center;
   padding: var(--space-3);
-  border: 1px solid var(--color-border);
+  border: 1px solid transparent;
   border-radius: var(--radius-md);
   background: var(--color-surface);
   box-shadow: var(--shadow-1);
+  overflow: hidden;
   cursor: grab;
   pointer-events: auto;
   transition:
-    border-color var(--dur-fast) var(--ease-out),
     box-shadow var(--dur-fast) var(--ease-out);
+}
+
+.node:hover {
+  box-shadow: var(--shadow-2);
 }
 
 .node:active {
   cursor: grabbing;
 }
 
-/* accent 节点：靠描边颜色 + 橙色底纹区分，边框宽度与普通节点一致（1px） */
+/* accent 节点：靠橙色底纹 + 深橙文字区分，不再依赖描边 */
 .accent {
-  border-color: var(--color-accent);
   background: var(--color-selection);
 }
 
-/* 选中态：把 1px 边框本身换成强调色。
-   不再用带 spread 的 box-shadow 外画环——环落在 1px 边框之外，
-   与边框叠加后边缘会变成 2~3px 的粗线；这里只做「边框换色 + 抬升阴影」，
-   选中后的边框严格保持 1px。 */
+/* 选中态：抬升投影 + 提高层级（选中框与四角控制点由 SelectionFrame 负责） */
 .selected {
-  border-color: var(--color-accent);
   box-shadow: var(--shadow-2);
+  z-index: 2;
 }
 
-/* 多选中的主节点（最后点击/框选命中的）
-   边框同样 1px，只用更暖的柔和外发光 + 更高投影与普通选中节点区分，
-   不额外加实心描边环 */
+/* 多选里最后点击/命中的主元素：只比普通选中再高一点点层级，
+   视觉区分交给选区框上的四角控制点（只有单选时才出现） */
 .primary {
-  border-color: var(--color-accent);
-  box-shadow:
-    0 2px 12px rgba(255, 77, 0, 0.18),
-    var(--shadow-3);
+  z-index: 3;
 }
 
 /* 框选矩形 */
@@ -467,6 +468,9 @@
   color: var(--color-text);
   word-break: break-word;
   overflow-wrap: anywhere;
+  /* 节点高度由用户拖动控制点决定：文字超出就裁掉，不撑破卡片 */
+  max-height: 100%;
+  overflow: hidden;
 }
 
 .accent .nodeText {
@@ -476,6 +480,8 @@
 
 .nodeInput {
   width: 100%;
+  max-height: 100%;
+  overflow-y: auto;
   border: none;
   outline: none;
   resize: none;

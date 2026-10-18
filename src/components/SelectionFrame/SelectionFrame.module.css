@@ -1,0 +1,88 @@
+/* ============================================
+   SelectionFrame —— 屏幕空间选中框
+   1px 定宽边框 + 四角控制点（Photoshop 手感）
+   所有尺寸都是屏幕像素，不随画布缩放变化
+   ============================================ */
+
+.frame {
+  position: absolute;
+  z-index: 6;
+  box-sizing: border-box;
+  border: 1px solid var(--color-accent);
+  pointer-events: none;
+}
+
+/* 四角控制点：中心对准选中框角点，一半盖在框内、一半探出框外 */
+.handle {
+  position: absolute;
+  width: 9px;
+  height: 9px;
+  box-sizing: border-box;
+  border: 1.5px solid var(--color-accent);
+  border-radius: 2px;
+  background: var(--color-surface);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.18);
+  transform: translate(-50%, -50%);
+  pointer-events: auto;
+  transition:
+    transform var(--dur-fast) var(--ease-out),
+    background-color var(--dur-fast) var(--ease-out);
+}
+
+/* 透明外扩命中区：控制点看起来只有 9px，实际可点范围 19px，鼠标更好抓 */
+.handle::after {
+  content: '';
+  position: absolute;
+  inset: -5px;
+}
+
+.handle:hover {
+  background: var(--color-accent);
+  transform: translate(-50%, -50%) scale(1.18);
+}
+
+.nw {
+  left: 0;
+  top: 0;
+}
+
+.ne {
+  left: 100%;
+  top: 0;
+}
+
+.sw {
+  left: 0;
+  top: 100%;
+}
+
+.se {
+  left: 100%;
+  top: 100%;
+}
+
+/* 缩放中的尺寸徽标：贴在选中框正下方 */
+.label {
+  position: absolute;
+  left: 50%;
+  top: calc(100% + 10px);
+  transform: translateX(-50%);
+  padding: 3px 8px;
+  border-radius: 6px;
+  background: var(--color-accent);
+  color: #fff;
+  font-size: 11px;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+  line-height: 1.4;
+  white-space: nowrap;
+  box-shadow: var(--shadow-1);
+  pointer-events: none;
+  user-select: none;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .handle {
+    transition: none;
+  }
+}

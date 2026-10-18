@@ -2,8 +2,24 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { CATEGORIES, TASKS } from '../constants/tasks'
 import InsertTablePanel from '../components/InsertTablePanel/InsertTablePanel'
 import CanvasTable from '../components/CanvasTable/CanvasTable'
-import { getTableSize } from '../constants/canvasTable'
-import { EMPTY_CANVAS, createSaver, loadCanvas } from '../utils/canvasStore'
+import SelectionFrame from '../components/SelectionFrame/SelectionFrame'
+import {
+  TABLE_COL_HEADER_H,
+  TABLE_MAX_CELL_H,
+  TABLE_MAX_CELL_W,
+  TABLE_MIN_CELL_H,
+  TABLE_MIN_CELL_W,
+  TABLE_ROW_HEADER_W,
+  getTableSize,
+} from '../constants/canvasTable'
+import {
+  EMPTY_CANVAS,
+  MAX_SCALE,
+  MIN_SCALE,
+  createSaver,
+  loadCanvas,
+} from '../utils/canvasStore'
+import { cornerRadius } from '../utils/canvasRadius'
 import styles from './CanvasPage.module.css'
 
 /**
@@ -11,18 +27,23 @@ import styles from './CanvasPage.module.css'
  * - 拖拽空白处平移，滚轮平移；激活「鼠标滚轮」按钮后滚轮缩放（每次 5%，光标为中心）
  * - Ctrl/⌘ + 滚轮也可缩放
  * - 双击空白添加节点，节点可拖拽、双击编辑、Delete 删除
- * - 内容（节点/连线/表格）持久化到 localStorage，任务列表缩略图实时同步
+ * - 元素默认无边框；选中后出现 1px 橙色选中框 + 四角控制点，拖动控制点缩放
+ * - 内容（节点/连线/表格）与视图（缩放比例 + 平移）都持久化到 localStorage，
+ *   下次打开原样回到上次的视角；任务列表缩略图实时同步结构
  */
 
 const GRID_FINE = 24 // 细网格（世界坐标）
 const GRID_MAJOR = 120 // 主网格
-const MIN_SCALE = 0.2
-const MAX_SCALE = 5 // 最大 500%
 const NODE_W = 176
 const NODE_H = 76
+const NODE_RADIUS = 8 // 节点圆角（世界坐标设计值，缩小时会自动补偿）
+const NODE_MIN_W = 96 // 缩放节点时的最小宽度
+const NODE_MIN_H = 48 // 缩放节点时的最小高度
 const SAVED_HINT_DURATION = 5000 // 「已保存到本地」提示停留时长（ms），之后淡出
 
 const clampScale = (s) => Math.min(MAX_SCALE, Math.max(MIN_SCALE, s))
+const clamp = (v, lo, hi) => Math.min(hi, Math.max(lo, v))
+
 
 export default function CanvasPage({ taskId }) {
   const task = TASKS.find((t) => String(t.id) === String(taskId))
@@ -44,7 +65,13 @@ export default function CanvasPage({ taskId }) {
   const [nodes, setNodes] = useState(initial.nodes)
   const [edges, setEdges] = useState(initial.edges)
   const [tables, setTables] = useState(initial.tables) // 画布表格（Excel 风格）
-  const [view, setView] = useState({ x: 0, y: 0, scale: 1 })
+  // 视图（平移 + 缩放）：优先恢复上次离开时的视口，没有记忆才走「自适应全部内容」
+  const initialView = useMemo(
+    () => initial.view ?? { x: 0, y: 0, scale: 1 },
+    [initial],
+  )
+  const [view, setView] = useState(initialView)
+  const viewRef = useRef(initialView) // 供「内容落盘」读取当前视口，避免拖动时重复写
   const [tool, setTool] = useState('select')
 const [sideTool, setSideTool] = useState(null)
   // 表格插入面板：点击左侧「表格」按钮时显示，参考 Word 插入表格
@@ -66,6 +93,9 @@ const [sideTool, setSideTool] = useState(null)
   const panRef = useRef(null)
   const dragRef = useRef(null)
   const marqueeRef = useRef(null)
+  const resizeRef = useRef(null) // 四角控制点缩放状态
+  // 缩放中的实时尺寸徽标（仅拖动控制点时出现）
+  const [resizeLabel, setResizeLabel] = useState(null)
 
   /* ---------- 视图变换 ---------- */
 
@@ -99,14 +129,16 @@ const [sideTool, setSideTool] = useState(null)
     })
   }, [])
 
-  // 初次进入：自适应到（存档中的）全部内容
+  // 初次进入：没有视口记忆时才自适应全部内容；
+  // 有记忆则原样回到上次的缩放与位置（localStorage 里的 view）
   useEffect(() => {
+    if (initial.view) return
     frameContent([
       ...initial.nodes.map((n) => ({ x: n.x, y: n.y, w: n.w, h: n.h })),
       ...initial.tables.map((t) => ({
         x: t.x,
         y: t.y,
-        ...getTableSize(t.rows, t.cols),
+        ...getTableSize(t),
       })),
     ])
     // 仅挂载时执行一次
@@ -147,6 +179,11 @@ const [sideTool, setSideTool] = useState(null)
     }
   }, [task])
 
+  // 视口同步到 ref：内容落盘时一并带上当前视图（effect 顺序在内容保存之前）
+  useEffect(() => {
+    viewRef.current = view
+  }, [view])
+
   // 节点/连线/表格任一变化都写回本地存档
   useEffect(() => {
     if (!task || !saverRef.current) return
@@ -159,8 +196,16 @@ const [sideTool, setSideTool] = useState(null)
       return
     }
     flashSaved()
-    saverRef.current.save({ nodes, edges, tables })
+    saverRef.current.save({ nodes, edges, tables, view: viewRef.current })
   }, [task, initial, nodes, edges, tables, flashSaved])
+
+  // 视图（缩放比例 + 平移）也落盘：下次打开原样回到这个视角。
+  // 静默保存 —— 不弹「已保存到本地」，也不广播给任务列表缩略图。
+  useEffect(() => {
+    if (!task || !saverRef.current) return
+    if (view === initialView) return // 与初始视角一致，无需重复写
+    saverRef.current.save({ nodes, edges, tables, view }, { notify: false })
+  }, [task, initialView, view, nodes, edges, tables])
 
   // 以视口某点为锚点缩放
   const zoomAt = useCallback((anchorX, anchorY, factor) => {
@@ -233,6 +278,8 @@ const [sideTool, setSideTool] = useState(null)
     (x, y, text = '新节点', kind = 'muted') => {
       const id = nextId('n')
       setNodes((ns) => [...ns, { id, x, y, w: NODE_W, h: NODE_H, kind, text }])
+      // 选中集合与主选中同步：新节点落地即带选中框
+      setSelectedIds([id])
       setSelectedId(id)
       return id
     },
@@ -252,6 +299,7 @@ const [sideTool, setSideTool] = useState(null)
   const removeNode = useCallback((id) => {
     setNodes((ns) => ns.filter((n) => n.id !== id))
     setEdges((es) => es.filter((e) => e.from !== id && e.to !== id))
+    setSelectedIds((ids) => ids.filter((x) => x !== id))
     setSelectedId(null)
     setEditingId(null)
   }, [])
@@ -268,7 +316,7 @@ const [sideTool, setSideTool] = useState(null)
         rect.left + el.clientWidth / 2,
         rect.top + el.clientHeight / 2,
       )
-      const { w, h } = getTableSize(rows, cols)
+      const { w, h } = getTableSize({ rows, cols })
       const id = nextId('t')
       setTables((ts) => [
         ...ts,
@@ -283,6 +331,7 @@ const [sideTool, setSideTool] = useState(null)
           ),
         },
       ])
+      setSelectedIds([id])
       setSelectedId(id)
     },
     [screenToWorld, nextId],
@@ -290,6 +339,7 @@ const [sideTool, setSideTool] = useState(null)
 
   const removeTable = useCallback((id) => {
     setTables((ts) => ts.filter((t) => t.id !== id))
+    setSelectedIds((ids) => ids.filter((x) => x !== id))
     setSelectedId(null)
   }, [])
 
@@ -409,6 +459,120 @@ const [sideTool, setSideTool] = useState(null)
 
   const onTablePointerUp = endItemDrag
 
+  /* ---------- 选中框 + 四角控制点缩放 ---------- */
+
+  // 选中元素的几何（世界坐标）。节点与表格统一抽象成 {x,y,w,h,baseRadius}，
+  // 选中框因此可以用同一套代码画在屏幕空间里。
+  const selectionRects = useMemo(() => {
+    if (!selectedIds.length) return []
+    const rects = []
+    for (const id of selectedIds) {
+      const node = nodes.find((n) => n.id === id)
+      if (node) {
+        rects.push({
+          id,
+          kind: 'node',
+          x: node.x,
+          y: node.y,
+          w: node.w,
+          h: node.h,
+          baseRadius: NODE_RADIUS,
+        })
+        continue
+      }
+      const table = tables.find((t) => t.id === id)
+      if (table) {
+        const { w, h } = getTableSize(table)
+        rects.push({
+          id,
+          kind: 'table',
+          x: table.x,
+          y: table.y,
+          w,
+          h,
+          baseRadius: 5,
+          rows: table.rows,
+          cols: table.cols,
+        })
+      }
+    }
+    return rects
+  }, [selectedIds, nodes, tables])
+
+  // 按下控制点：记录起始矩形与指针位置，指针捕获交给视口统一收口
+  // （这样即使控制点自身被移走，move/up 依然稳定落到视口上）
+  const beginResize = useCallback(
+    (e, corner) => {
+      const rect = selectionRects.find((r) => r.id === selectedId)
+      const viewport = viewportRef.current
+      if (!rect || !viewport) return
+      resizeRef.current = { ...rect, corner, px: e.clientX, py: e.clientY }
+      viewport.setPointerCapture(e.pointerId)
+    },
+    [selectionRects, selectedId],
+  )
+
+  // 拖动控制点：把屏幕位移换算回世界坐标，再按「对边固定」重算矩形
+  const applyResize = (e) => {
+    const rz = resizeRef.current
+    if (!rz) return
+
+    const dx = (e.clientX - rz.px) / view.scale
+    const dy = (e.clientY - rz.py) / view.scale
+    const fromWest = rz.corner.includes('w')
+    const fromNorth = rz.corner.includes('n')
+
+    const minW =
+      rz.kind === 'table' ? TABLE_ROW_HEADER_W + rz.cols * TABLE_MIN_CELL_W : NODE_MIN_W
+    const minH =
+      rz.kind === 'table' ? TABLE_COL_HEADER_H + rz.rows * TABLE_MIN_CELL_H : NODE_MIN_H
+
+    // 先算宽高并夹到下限，再由固定边反推左上角 —— 拖过最小尺寸时不会「翻面」
+    const w = Math.max(minW, fromWest ? rz.w - dx : rz.w + dx)
+    const h = Math.max(minH, fromNorth ? rz.h - dy : rz.h + dy)
+    const x = fromWest ? rz.x + rz.w - w : rz.x
+    const y = fromNorth ? rz.y + rz.h - h : rz.y
+
+    setResizeLabel({ w: Math.round(w), h: Math.round(h) })
+
+    if (rz.kind === 'node') {
+      setNodes((ns) => ns.map((n) => (n.id === rz.id ? { ...n, x, y, w, h } : n)))
+      return
+    }
+
+    // 表格：外框尺寸换算成统一的单元格宽 / 高。
+    // 只改行列尺寸、不缩放内容 —— 字不会被拉扁，语义上等于「拉宽列、拉高行」。
+    const cellW = Math.round(
+      clamp((w - TABLE_ROW_HEADER_W) / rz.cols, TABLE_MIN_CELL_W, TABLE_MAX_CELL_W),
+    )
+    const cellH = Math.round(
+      clamp((h - TABLE_COL_HEADER_H) / rz.rows, TABLE_MIN_CELL_H, TABLE_MAX_CELL_H),
+    )
+    const fittedW = TABLE_ROW_HEADER_W + rz.cols * cellW
+    const fittedH = TABLE_COL_HEADER_H + rz.rows * cellH
+    setTables((ts) =>
+      ts.map((t) =>
+        t.id === rz.id
+          ? {
+              ...t,
+              cellW,
+              cellH,
+              x: fromWest ? rz.x + rz.w - fittedW : rz.x,
+              y: fromNorth ? rz.y + rz.h - fittedH : rz.y,
+            }
+          : t,
+      ),
+    )
+  }
+
+  const endResize = (e) => {
+    resizeRef.current = null
+    setResizeLabel(null)
+    if (e.currentTarget.hasPointerCapture?.(e.pointerId)) {
+      e.currentTarget.releasePointerCapture(e.pointerId)
+    }
+  }
+
   // Delete 删除选中节点；Esc 取消编辑/选中；空格键切换平移模式
   useEffect(() => {
     const onKeyDown = (e) => {
@@ -429,6 +593,7 @@ const [sideTool, setSideTool] = useState(null)
       } else if (e.key === 'Escape') {
         setEditingId(null)
         setSelectedId(null)
+        setSelectedIds([])
       } else if (e.key === ' ' && !isTyping && !spaceDown) {
         // 空格键按下：进入临时平移模式（仅在选择工具下生效）
         e.preventDefault()
@@ -478,6 +643,12 @@ const [sideTool, setSideTool] = useState(null)
   }
 
   const onViewportPointerMove = (e) => {
+    // 四角控制点缩放中（优先级最高）
+    if (resizeRef.current) {
+      applyResize(e)
+      return
+    }
+
     // 元素拖拽中：由视口兜底驱动（节点/表格上的移动事件会冒泡到这里）
     if (dragRef.current) {
       applyDragMove(e)
@@ -502,6 +673,12 @@ const [sideTool, setSideTool] = useState(null)
   }
 
   const onViewportPointerUp = (e) => {
+    // 四角控制点缩放释放
+    if (resizeRef.current) {
+      endResize(e)
+      return
+    }
+
     // 元素拖拽释放
     if (dragRef.current) {
       endItemDrag(e)
@@ -536,7 +713,7 @@ const [sideTool, setSideTool] = useState(null)
           .map((n) => n.id)
         const hitTables = tables
           .filter((t) => {
-            const { w, h } = getTableSize(t.rows, t.cols)
+            const { w, h } = getTableSize(t)
             return t.x + w >= wx1 && t.x <= wx2 && t.y + h >= wy1 && t.y <= wy2
           })
           .map((t) => t.id)
@@ -587,6 +764,7 @@ const [sideTool, setSideTool] = useState(null)
   const onNodePointerUp = endItemDrag
 
   const startEdit = (node) => {
+    setSelectedIds([node.id])
     setSelectedId(node.id)
     setEditingId(node.id)
     setDraft(node.text)
@@ -802,7 +980,14 @@ const [sideTool, setSideTool] = useState(null)
                 className={`${styles.node} ${styles[node.kind]}${
                   selected ? ` ${styles.selected}` : ''
                 }${primary ? ` ${styles.primary}` : ''}`}
-                style={{ left: node.x, top: node.y, width: node.w, minHeight: node.h }}
+                style={{
+                  left: node.x,
+                  top: node.y,
+                  width: node.w,
+                  height: node.h,
+                  // 圆角随缩放补偿：缩小时至少保留 3.5 个屏幕像素，避免「看起来是直角」
+                  borderRadius: cornerRadius(NODE_RADIUS, node.w, node.h, view.scale),
+                }}
                 onPointerDown={(e) => onNodePointerDown(e, node)}
                 onPointerMove={onNodePointerMove}
                 onPointerUp={onNodePointerUp}
@@ -855,6 +1040,28 @@ const [sideTool, setSideTool] = useState(null)
           ))}
 
         </div>
+
+        {/* 选中框层（屏幕坐标）：1px 定宽橙框 + 四角控制点。
+            画在视口坐标系里而不是世界层里，缩放画布时线宽与控制点大小恒定。
+            多选时每个元素各有一圈框，但只有单选时才给出可拖拽的四角控制点。 */}
+        {selectionRects.map((rect) => {
+          const single = selectionRects.length === 1
+          return (
+            <SelectionFrame
+              key={rect.id}
+              left={view.x + rect.x * view.scale}
+              top={view.y + rect.y * view.scale}
+              width={rect.w * view.scale}
+              height={rect.h * view.scale}
+              radius={
+                cornerRadius(rect.baseRadius, rect.w, rect.h, view.scale) * view.scale
+              }
+              showHandles={single && rect.id === selectedId && !editingId}
+              label={single && resizeLabel ? `${resizeLabel.w} × ${resizeLabel.h}` : null}
+              onResizeStart={beginResize}
+            />
+          )
+        })}
 
         {/* 框选矩形（屏幕坐标，固定于视口） */}
         {marquee && (() => {
