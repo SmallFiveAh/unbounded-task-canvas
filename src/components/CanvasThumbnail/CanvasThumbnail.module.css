@@ -44,7 +44,7 @@
 .node {
   fill: var(--color-surface);
   stroke: var(--color-border);
-  stroke-width: 1.5;
+  stroke-width: 1;
   vector-effect: non-scaling-stroke;
 }
 
@@ -52,7 +52,7 @@
 .nodeAccent {
   fill: var(--color-selection);
   stroke: var(--color-accent);
-  stroke-width: 2;
+  stroke-width: 1;
   vector-effect: non-scaling-stroke;
 }
 
