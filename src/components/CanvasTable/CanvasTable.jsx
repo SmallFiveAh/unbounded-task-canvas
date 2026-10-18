@@ -22,6 +22,8 @@ import styles from './CanvasTable.module.css'
  * - Shift + 单击：选中「锚点 → 目标」之间的矩形范围（Ctrl+Shift 则叠加到现有选区）
  * - 从单元格按下并拖拽：实时框选矩形范围，越界时夹到表格边缘继续扩展
  * - Shift + 方向键扩展选区；Delete/Backspace 清空所有选中单元格
+ * - Ctrl/⌘ + C 复制、Ctrl/⌘ + X 剪切、Ctrl/⌘ + V 粘贴（TSV，可与 Excel / 飞书表格互通）
+ *   单选时从活动格铺开；多选时循环铺满整块框选区域，光标停在选区最后一格
  */
 
 const colLetter = (i) => String.fromCharCode(65 + i) // A, B, C …
@@ -30,6 +32,68 @@ const cellKey = (r, c) => `${r}:${c}`
 
 /** 同一个单元格两次按下视为「双击」的时间窗（毫秒） */
 const DOUBLE_PRESS_MS = 400
+
+/** 剪贴板二维文本分隔符：列用 Tab、行用换行 —— 与 Excel / 各家在线表格一致 */
+const CLIP_COL_SEP = '\t'
+const CLIP_ROW_SEP = '\n'
+
+/** 选区包围盒（Excel 语义：选区中间没选中的格子也一起复制） */
+function selectionBox(selection) {
+  if (!selection.size) return null
+  let r1 = Infinity
+  let r2 = -Infinity
+  let c1 = Infinity
+  let c2 = -Infinity
+  selection.forEach((key) => {
+    const { r, c } = keyToCoord(key)
+    if (r < r1) r1 = r
+    if (r > r2) r2 = r
+    if (c < c1) c1 = c
+    if (c > c2) c2 = c
+  })
+  return { r1, r2, c1, c2 }
+}
+
+/**
+ * 剪贴板纯文本 → 二维数组。
+ * 兼容 CRLF；末尾的空行是 Excel 系列软件的惯用收尾，丢掉即可。
+ */
+function parseClipText(text) {
+  const body = text.replace(/\r\n?/g, '\n').replace(/\n+$/, '')
+  if (!body) return []
+  return body.split('\n').map((line) => line.split('\t'))
+}
+
+/**
+ * 写剪贴板：优先异步 Clipboard API（需要安全上下文 / 用户授权），
+ * 失败时退回临时 textarea + execCommand —— 保留 http 调试场景可用。
+ * 降级方案会短暂抢焦点，调用方负责把焦点还给表格。
+ */
+async function writeClipText(text) {
+  try {
+    if (navigator.clipboard?.writeText) {
+      await navigator.clipboard.writeText(text)
+      return true
+    }
+  } catch {
+    // 授权被拒 / 非安全上下文：走下面的降级路径
+  }
+  try {
+    const ta = document.createElement('textarea')
+    ta.value = text
+    ta.setAttribute('readonly', '')
+    ta.style.position = 'fixed'
+    ta.style.top = '-1000px'
+    ta.style.opacity = '0'
+    document.body.appendChild(ta)
+    ta.select()
+    const ok = document.execCommand('copy')
+    document.body.removeChild(ta)
+    return ok
+  } catch {
+    return false
+  }
+}
 
 /** 两个对角单元格之间的矩形范围（含端点）对应的 key 列表 */
 function rectKeys(r1, c1, r2, c2) {
@@ -52,10 +116,12 @@ const keyToCoord = (key) => {
 export default function CanvasTable({
   table,
   selected,
+  primary,
   onPointerDown,
   onActivate,
   onCellChange,
   onClearCells,
+  onPasteCells,
   scale = 1,
 }) {
   const { rows, cols, cells } = table
@@ -68,12 +134,16 @@ export default function CanvasTable({
   const inputRef = useRef(null)
   const dragRef = useRef(null) // 单元格框选状态
   const dblPressRef = useRef({ key: null, time: 0 }) // 自实现的双击判定基准
+  const pasteStampRef = useRef(0) // 粘贴事件序号：给 keydown 的异步兜底去重
+  const lastPasteAtRef = useRef(0) // 上次真正落地粘贴的时间，防止双通道重复粘贴
+  const flashTimerRef = useRef(null)
 
   const [anchor, setAnchor] = useState(null) // 范围起始格（Shift 扩展的支点）
   const [cursor, setCursor] = useState(null) // 活动格（键盘 / 编辑作用于它）
   const [selection, setSelection] = useState(() => new Set()) // Set<'r:c'>
   const [editing, setEditing] = useState(null) // { r, c }
   const [draft, setDraft] = useState('')
+  const [flash, setFlash] = useState(null) // { text, r1, r2, c1, c2 } 复制 / 粘贴后的轻提示
 
   // 属性变化时调整状态：表格取消选中即清除单元格选中/编辑态
   const [prevSelected, setPrevSelected] = useState(selected)
@@ -84,6 +154,7 @@ export default function CanvasTable({
       setCursor(null)
       setSelection(new Set())
       setEditing(null)
+      setFlash(null)
     }
   }
 
@@ -118,6 +189,99 @@ export default function CanvasTable({
     selectOnly(r, c)
     setEditing({ r, c })
     setDraft(initial ?? (cells[r]?.[c] ?? ''))
+  }
+
+  /* ---------- 剪贴板：复制 / 剪切 / 粘贴 ---------- */
+
+  // 短暂提示（复制成功 / 粘贴了几行几列）—— 1.2 秒后自动消失
+  const showFlash = (text, box) => {
+    setFlash({ text, ...box })
+    if (flashTimerRef.current) clearTimeout(flashTimerRef.current)
+    flashTimerRef.current = setTimeout(() => {
+      flashTimerRef.current = null
+      setFlash(null)
+    }, 1200)
+  }
+
+  useEffect(
+    () => () => {
+      if (flashTimerRef.current) clearTimeout(flashTimerRef.current)
+    },
+    [],
+  )
+
+  // 把选区按 TSV 写进系统剪贴板；cut=true 时写完后清空单元格
+  const copySelection = async (cut) => {
+    const box = selectionBox(selection)
+    if (!box) return
+
+    const lines = []
+    for (let r = box.r1; r <= box.r2; r += 1) {
+      const row = []
+      for (let c = box.c1; c <= box.c2; c += 1) row.push(cells[r]?.[c] ?? '')
+      lines.push(row.join(CLIP_COL_SEP))
+    }
+
+    const ok = await writeClipText(lines.join(CLIP_ROW_SEP))
+    // 降级方案会临时把焦点挪到 textarea 上，这里还给表格，
+    // 否则接下来的方向键 / 粘贴会落到别的地方
+    wrapRef.current?.focus({ preventScroll: true })
+    if (!ok) return
+
+    showFlash(cut ? '已剪切' : '已复制', box)
+    if (cut) onClearCells?.(table.id, [...selection].map(keyToCoord))
+  }
+
+  /**
+   * 把剪贴板文本贴到当前选区；超出表格时由父级自动扩行扩列。
+   * - 单选：从活动格向右下铺开，选区随后包住整块内容，光标停在内容最后一格
+   * - 多选（框选一片单元格）：以选区左上角为起点，把内容循环铺满整块选区，
+   *   光标与选区最后落在选区右下角那一格 —— Excel 里「粘贴到多选区域」的语义
+   */
+  const applyPaste = (text) => {
+    // 去重：paste 事件与 keydown 的异步兜底是同一次按键的两条通道，
+    // 极端时序下可能都跑到这里，短时间内只认第一条
+    const now = performance.now()
+    if (now - lastPasteAtRef.current < 250) return
+    lastPasteAtRef.current = now
+
+    const block = parseClipText(text)
+    if (!block.length) return
+    const origin = cursor ?? anchor
+    if (!origin) return
+
+    const srcH = block.length
+    const srcW = Math.max(...block.map((row) => row.length))
+    if (!srcW) return
+
+    const box = selectionBox(selection)
+    const multi = !!box && (box.r2 > box.r1 || box.c2 > box.c1)
+
+    // 落点与铺开尺寸：多选时铺满框选区域（内容比选区大则以内容为准，不截断）
+    const r1 = multi ? box.r1 : origin.r
+    const c1 = multi ? box.c1 : origin.c
+    const h = multi ? Math.max(box.r2 - box.r1 + 1, srcH) : srcH
+    const w = multi ? Math.max(box.c2 - box.c1 + 1, srcW) : srcW
+
+    // 按目标尺寸铺块：内容不够就循环填充（复制 1 格贴满整块选区就是最常见的用法）
+    const filled = Array.from({ length: h }, (_, dr) =>
+      Array.from({ length: w }, (_, dc) => {
+        const srcRow = block[dr % srcH]
+        return srcRow?.[dc % srcW] ?? ''
+      }),
+    )
+
+    onPasteCells?.(table.id, r1, c1, filled)
+
+    // 粘贴后选区覆盖整块落地区域，光标停在最后一格，方便继续拖拽 / 清空 / 接着敲
+    const r2 = r1 + h - 1
+    const c2 = c1 + w - 1
+    const next = new Set()
+    rectKeys(r1, c1, r2, c2).forEach((k) => next.add(k))
+    setAnchor({ r: r1, c: c1 })
+    setSelection(next)
+    setCursor({ r: r2, c: c2 })
+    showFlash(multi ? `已填充 ${h}×${w}` : `已粘贴 ${h}×${w}`, { r1, r2, c1, c2 })
   }
 
   /**
@@ -273,9 +437,10 @@ export default function CanvasTable({
       if (!cursor) return // 无活动单元格：交给画布处理（Esc 取消选中 / Delete 删除表格）
 
       const target = e.target
-      // 焦点在表格内或无具体焦点（body）时才接管，避免劫持工具栏、面板等处的按键
+      // 焦点在表格内时接管；焦点落在 body（点过画布后常见）时只有「主选中表格」接管，
+      // 否则多选几张表时同一次按键会被每张表各处理一遍
       const inTable = wrapRef.current?.contains(target)
-      if (!inTable && target !== document.body) return
+      if (!inTable && (target !== document.body || !primary)) return
       if (
         target.tagName === 'INPUT' ||
         target.tagName === 'TEXTAREA' ||
@@ -287,6 +452,36 @@ export default function CanvasTable({
       const { r, c } = cursor
       const extend = e.shiftKey
       const additive = e.ctrlKey || e.metaKey
+
+      // Ctrl/⌘ + C / X / V：剪贴板。放在 switch 之前、且先于「输入字符即编辑」的分支，
+      // 否则带修饰键的字母会被当成输入字符吞掉（这正是之前复制不生效的原因）。
+      if (additive && !e.altKey) {
+        const combo = e.key.toLowerCase()
+        if (combo === 'c' || combo === 'x') {
+          e.preventDefault()
+          e.stopPropagation()
+          copySelection(combo === 'x')
+          return
+        }
+        if (combo === 'v') {
+          // 不阻断默认行为：浏览器随后会在 window 上派发 paste 事件，
+          // 那是唯一能同步拿到 clipboardData 的可靠通道（见下面的 paste 监听）。
+          // 少数环境下 paste 事件不派发，这里用异步 API 兜底 —— 序号一变即说明已处理过
+          const stamp = pasteStampRef.current
+          window.setTimeout(() => {
+            if (pasteStampRef.current !== stamp) return
+            navigator.clipboard
+              ?.readText?.()
+              .then((text) => {
+                if (pasteStampRef.current !== stamp || !text) return
+                pasteStampRef.current += 1
+                applyPaste(text)
+              })
+              .catch(() => {})
+          }, 160)
+          return
+        }
+      }
 
       // 移动光标；Shift 时锚点固定、只移动另一端，形成矩形选区
       const moveTo = (nr, nc) => {
@@ -351,7 +546,49 @@ export default function CanvasTable({
     window.addEventListener('keydown', onKeyDown, true)
     return () => window.removeEventListener('keydown', onKeyDown, true)
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [selected, editing, cursor, anchor, selection, rows, cols, cells, table.id, onClearCells, onCellChange])
+  }, [selected, editing, cursor, anchor, selection, rows, cols, cells, table.id, onClearCells, onCellChange, primary])
+
+  /* ---------- 粘贴：监听 window 的 paste 事件 ---------- */
+  // 用 paste 事件而不是 navigator.clipboard.readText()：
+  // 前者能同步拿到 clipboardData、不需要授权，且 Ctrl+V / 右键菜单粘贴都能覆盖到。
+  useEffect(() => {
+    if (!selected) return undefined
+
+    const onPaste = (e) => {
+      if (editing || !cursor) return // 编辑中交给输入框自己粘，无活动格则不管
+
+      const target = e.target
+      // 其它输入框 / 可编辑区域的粘贴照旧走原生行为
+      if (
+        target?.tagName === 'INPUT' ||
+        target?.tagName === 'TEXTAREA' ||
+        target?.isContentEditable
+      ) {
+        return
+      }
+      // 与 keydown 同一套判定：焦点在表格内，或焦点落在 body 且本表是主选中表
+      const inTable = wrapRef.current?.contains(target)
+      if (
+        !inTable &&
+        (target !== document.body || !primary) &&
+        target !== document.documentElement
+      ) {
+        return
+      }
+
+      const text = e.clipboardData?.getData('text/plain')
+      if (!text) return // 图片 / 文件等非文本内容不接管
+
+      e.preventDefault()
+      e.stopPropagation()
+      pasteStampRef.current += 1 // 标记「已由 paste 事件处理」，抑制 keydown 的异步兜底
+      applyPaste(text)
+    }
+
+    window.addEventListener('paste', onPaste, true)
+    return () => window.removeEventListener('paste', onPaste, true)
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [selected, editing, cursor, anchor, selection, rows, cols, cells, table.id, onPasteCells, primary])
 
   /* ---------- 渲染 ---------- */
 
@@ -457,6 +694,19 @@ export default function CanvasTable({
           </Fragment>
         ))}
       </div>
+
+      {/* 复制 / 粘贴后的轻提示：贴在选区右下角内侧（表格 overflow:hidden，只能画在里面） */}
+      {flash && (
+        <div
+          className={styles.flash}
+          style={{
+            left: TABLE_ROW_HEADER_W + (flash.c2 + 1) * cellW - 4,
+            top: cellH + (flash.r2 + 1) * cellH - 4,
+          }}
+        >
+          {flash.text}
+        </div>
+      )}
     </div>
   )
 }

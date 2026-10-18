@@ -371,6 +371,39 @@ const [sideTool, setSideTool] = useState(null)
     )
   }, [])
 
+  /**
+   * 粘贴一块二维文本到表格（Ctrl/⌘ + V）：
+   * 从 (r0, c0) 开始铺开，放不下时按 Excel 的行为自动扩行扩列 ——
+   * 表格尺寸由 rows/cols 推导（见 getTableSize），所以只需补空格子即可。
+   */
+  const pasteTableCells = useCallback((tableId, r0, c0, block) => {
+    setTables((ts) =>
+      ts.map((t) => {
+        if (t.id !== tableId) return t
+
+        const blockW = Math.max(...block.map((row) => row.length))
+        const rows = Math.max(t.rows, r0 + block.length)
+        const cols = Math.max(t.cols, c0 + blockW)
+
+        // 先按新尺寸补齐（保留原有内容，新增格子填空串）
+        const cells = Array.from({ length: rows }, (_, r) => {
+          const src = t.cells[r] ?? []
+          return Array.from({ length: cols }, (_, c) => src[c] ?? '')
+        })
+
+        block.forEach((row, dr) => {
+          row.forEach((value, dc) => {
+            const r = r0 + dr
+            const c = c0 + dc
+            if (cells[r] && c < cols) cells[r][c] = value
+          })
+        })
+
+        return { ...t, rows, cols, cells }
+      }),
+    )
+  }, [])
+
   // 仅在画布上选中某个表格（不进入拖拽）
   const selectTable = useCallback((id) => {
     setSelectedIds([id])
@@ -1029,12 +1062,14 @@ const [sideTool, setSideTool] = useState(null)
               key={table.id}
               table={table}
               selected={table.id === selectedId || selectedIds.includes(table.id)}
+              primary={table.id === selectedId}
               onPointerDown={onTablePointerDown}
               onPointerMove={onTablePointerMove}
               onPointerUp={onTablePointerUp}
               onActivate={selectTable}
               onCellChange={updateTableCell}
               onClearCells={clearTableCells}
+              onPasteCells={pasteTableCells}
               scale={view.scale}
             />
           ))}

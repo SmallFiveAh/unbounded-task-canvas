@@ -151,3 +151,38 @@
   outline-offset: 0;
   border-radius: 0;
 }
+
+/* 复制 / 粘贴轻提示：右下角对齐选区末端格子，向内偏移 4px。
+   表格是 overflow:hidden，提示只能画在表格内部，超出部分会被裁掉。 */
+.flash {
+  position: absolute;
+  z-index: 3;
+  transform: translate(-100%, -100%);
+  padding: 1px 8px;
+  border-radius: 999px;
+  background: var(--color-accent);
+  color: #fff;
+  font-size: 11px;
+  font-weight: 600;
+  line-height: 1.7;
+  white-space: nowrap;
+  pointer-events: none;
+  box-shadow: var(--shadow-1);
+  animation: flash-in var(--dur-fast) var(--ease-out);
+}
+
+@keyframes flash-in {
+  from {
+    opacity: 0;
+    transform: translate(-100%, calc(-100% + 4px));
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .flash {
+    animation: none;
+  }
+}
