@@ -16,7 +16,7 @@ import styles from './CanvasPage.module.css'
 const GRID_FINE = 24 // 细网格（世界坐标）
 const GRID_MAJOR = 120 // 主网格
 const MIN_SCALE = 0.2
-const MAX_SCALE = 3
+const MAX_SCALE = 5 // 最大 500%
 const NODE_W = 176
 const NODE_H = 76
 
@@ -238,6 +238,26 @@ const [sideTool, setSideTool] = useState(null)
           : t,
       ),
     )
+  }, [])
+
+  // 清空一组单元格（表格内多选后按 Delete）—— 一次更新，避免逐格 setState
+  const clearTableCells = useCallback((tableId, coords) => {
+    setTables((ts) =>
+      ts.map((t) => {
+        if (t.id !== tableId) return t
+        const cells = t.cells.map((row) => [...row])
+        coords.forEach(({ r, c }) => {
+          if (cells[r] && c >= 0 && c < cells[r].length) cells[r][c] = ''
+        })
+        return { ...t, cells }
+      }),
+    )
+  }, [])
+
+  // 仅在画布上选中某个表格（不进入拖拽）
+  const selectTable = useCallback((id) => {
+    setSelectedIds([id])
+    setSelectedId(id)
   }, [])
 
   /* ---------- 元素拖拽（节点 + 表格统一处理） ---------- */
@@ -528,7 +548,9 @@ const [sideTool, setSideTool] = useState(null)
 
   const categoryLabel = CATEGORIES.find((c) => c.key === task.category)?.label
 
-  const fine = GRID_FINE * view.scale
+  // 高倍率下细网格跟着细分，避免 500% 时格距过大、画面发大块
+  const gridSub = view.scale >= 4 ? 4 : view.scale >= 2 ? 2 : 1
+  const fine = (GRID_FINE / gridSub) * view.scale
   const major = GRID_MAJOR * view.scale
   // 缩放过小时隐藏细网格，避免密集摩尔纹
   const fineColor = view.scale < 0.5 ? 'transparent' : 'var(--color-wash)'
@@ -751,7 +773,9 @@ const [sideTool, setSideTool] = useState(null)
               onPointerDown={onTablePointerDown}
               onPointerMove={onTablePointerMove}
               onPointerUp={onTablePointerUp}
+              onActivate={selectTable}
               onCellChange={updateTableCell}
+              onClearCells={clearTableCells}
               scale={view.scale}
             />
           ))}

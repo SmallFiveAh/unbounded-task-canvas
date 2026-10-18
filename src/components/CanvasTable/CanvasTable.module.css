@@ -56,7 +56,9 @@
   border-right: 1px solid var(--color-border);
   border-bottom: 1px solid var(--color-border);
   cursor: cell;
-  overflow: hidden;
+  /* 注意：不能加 overflow: hidden —— 它会裁剪到 padding box，把编辑输入框
+     outline 落在格外的上 / 左环带（正好压在网格线上）裁掉，编辑框又会缺边。
+     长文本的裁剪由 .cellText 自身的 overflow + ellipsis 负责。 */
 }
 
 .cellText {
@@ -68,22 +70,54 @@
   text-overflow: ellipsis;
 }
 
-/* 活动单元格：outline 在边框外侧绘制，不与单元格自身 border 叠加，避免"倍数"效果 */
-.cell.active {
-  outline: 1px solid var(--color-accent);
-  outline-offset: -1px;
+/* 多选：选区填充（边界线由下方 ::after 覆盖层按连通块描边） */
+.cell.selected {
+  background: var(--color-selection);
 }
 
-/* 单元格编辑输入框 */
+/* 选区边界描边覆盖层 —— 让四条橙线全部骑在网格线上。
+   灰色网格线的归属是不对称的：右 / 下是本格自己的 border（在格内），
+   上 / 左是相邻表头的 border（在格外 1px）。outline 与 inset box-shadow
+   都无法「一半画在格外、一半画在格内」，所以用一个定位覆盖层：
+   注意绝对定位的包含块是 padding box（右 / 下各比边框盒少 1px），
+   因此四边统一外扩 1px（inset: -1px），覆盖层恰好包住整个边框盒，
+   其 1px border 四边都与网格线重合。
+   每侧宽度由 JSX 注入的 --st/--sr/--sb/--sl（0 或 1）控制，
+   相邻选中格之间不会出现重复描边。 */
+.cell.selected::after {
+  content: '';
+  position: absolute;
+  inset: -1px;
+  border-style: solid;
+  border-color: var(--color-accent);
+  border-top-width: calc(var(--st, 0) * 1px);
+  border-right-width: calc(var(--sr, 0) * 1px);
+  border-bottom-width: calc(var(--sb, 0) * 1px);
+  border-left-width: calc(var(--sl, 0) * 1px);
+  pointer-events: none;
+}
+
+/* 活动单元格（光标）：在选区内「挖空」为表格底色，Excel 视觉。
+   描边由 .selected::after 统一提供，这里不再画 outline ——
+   之前 outline + box-shadow 双描边会在右 / 下叠出双线 */
+.cell.cursor {
+  background: var(--color-surface);
+}
+
+/* 单元格编辑输入框
+   outline 永远画在边框盒外侧 1px 环带（offset 0 = 紧贴外缘）：
+   右 / 下正好压在本格的 border-right / border-bottom 上，
+   上 / 左正好压在相邻表头的 border 上 —— 四条橙线与网格线完全重合。
+   不能再用单元格自身的 outline / box-shadow 画框：输入框 z-index 更高，
+   会把落在自己覆盖区内的上、左两段盖掉，只剩「右边 + 下边」的 L 形残框 */
 .cellInput {
   position: absolute;
   inset: 0;
   z-index: 1;
-  width: 100%;
-  height: 100%;
   padding: 0 8px;
   border: none;
-  outline: none;
+  outline: 1px solid var(--color-accent);
+  outline-offset: 0;
   background: var(--color-surface);
   font: inherit;
   font-size: var(--text-xs);
@@ -92,8 +126,10 @@
   user-select: text;
 }
 
-/* 覆盖全局 :focus-visible 的橙色描边与 12px 圆角，避免编辑时出现胶囊效果 */
+/* 覆盖全局 :focus-visible 的 2px 描边 + 2px 外扩 + 12px 圆角，
+   编辑时只保留与网格线对齐的 1px 橙框 */
 .cellInput:focus-visible {
-  outline: none;
+  outline: 1px solid var(--color-accent);
+  outline-offset: 0;
   border-radius: 0;
 }
