@@ -24,6 +24,17 @@ const CORNERS = [
   { key: 'se', cursor: 'nwse-resize' },
 ]
 
+/**
+ * 四边拉线命中条：透明地贴住边框（内外各一段），光标变为十字线。
+ * 两端缩进避开四角控制点 —— 角上永远优先触发缩放，边上才是拉线。
+ */
+const LINK_SIDES = [
+  { key: 'n', className: 'linkN' },
+  { key: 'e', className: 'linkE' },
+  { key: 's', className: 'linkS' },
+  { key: 'w', className: 'linkW' },
+]
+
 export default function SelectionFrame({
   left,
   top,
@@ -31,8 +42,10 @@ export default function SelectionFrame({
   height,
   radius = 8,
   showHandles = true,
+  showLinkStrips = false,
   label,
   onResizeStart,
+  onLinkStart,
 }) {
   return (
     <div
@@ -40,6 +53,21 @@ export default function SelectionFrame({
       style={{ left, top, width, height, borderRadius: radius }}
       aria-hidden="true"
     >
+      {showLinkStrips &&
+        LINK_SIDES.map((side) => (
+          <span
+            key={side.key}
+            className={`${styles.linkStrip} ${styles[side.className]}`}
+            onPointerDown={(e) => {
+              if (e.button !== 0) return
+              // 阻止冒泡：否则视口会把这次按下当成框选 / 取消选中
+              e.stopPropagation()
+              e.preventDefault()
+              onLinkStart?.(e)
+            }}
+          />
+        ))}
+
       {showHandles &&
         CORNERS.map((corner) => (
           <span

@@ -73,10 +73,21 @@ function normalizeNode(raw) {
   }
 }
 
+/** 连线锚点：端点在元素矩形内的相对位置（∈[0,1]），缺失 / 脏数据按「无锚点」处理 */
+function normalizeAnchor(raw) {
+  if (!raw || !isNum(raw.rx) || !isNum(raw.ry)) return null
+  return { rx: Math.min(1, Math.max(0, raw.rx)), ry: Math.min(1, Math.max(0, raw.ry)) }
+}
+
 function normalizeEdge(raw) {
   if (!raw || typeof raw.id !== 'string') return null
   if (typeof raw.from !== 'string' || typeof raw.to !== 'string') return null
-  return { id: raw.id, from: raw.from, to: raw.to }
+  const edge = { id: raw.id, from: raw.from, to: raw.to }
+  const fromAnchor = normalizeAnchor(raw.fromAnchor)
+  const toAnchor = normalizeAnchor(raw.toAnchor)
+  if (fromAnchor) edge.fromAnchor = fromAnchor
+  if (toAnchor) edge.toAnchor = toAnchor
+  return edge
 }
 
 function normalizeTable(raw) {

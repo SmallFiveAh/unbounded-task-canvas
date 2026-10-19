@@ -1,8 +1,9 @@
 /* ============================================================
    视口指针交互 —— 平移 / 框选 / 收口
    ------------------------------------------------------------
-   视口是最外层的「不缩放」容器，三种拖拽都从这里发起或收尾：
+   视口是最外层的「不缩放」容器，四种拖拽都从这里发起或收尾：
    · 四角控制点缩放（优先级最高，由 SelectionFrame 发起）
+   · 边框拉线（由 SelectionFrame 四边命中条发起）
    · 元素拖拽（节点 / 表格上的 move 会冒泡到这里）
    · 空白处拖拽：选择工具 → 框选；平移工具或按住空格 → 平移
    move / up 统一挂在视口，被拖的东西被移走也不会丢事件。
@@ -24,6 +25,9 @@ export function useViewportPointer({
   resizingRef,
   applyResize,
   endResize,
+  edgeDragRef,
+  applyEdgeDrag,
+  endEdgeDrag,
   dragRef,
   applyDragMove,
   endItemDrag,
@@ -69,6 +73,12 @@ export function useViewportPointer({
       return
     }
 
+    // 边框拉线中（优先级仅低于缩放）
+    if (edgeDragRef.current) {
+      applyEdgeDrag(e)
+      return
+    }
+
     // 元素拖拽中：由视口兜底驱动（节点/表格上的移动事件会冒泡到这里）
     if (dragRef.current) {
       applyDragMove(e)
@@ -96,6 +106,12 @@ export function useViewportPointer({
     // 四角控制点缩放释放
     if (resizingRef.current) {
       endResize(e)
+      return
+    }
+
+    // 边框拉线释放：落在其它元素上则落库连线
+    if (edgeDragRef.current) {
+      endEdgeDrag(e)
       return
     }
 

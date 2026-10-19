@@ -12,9 +12,47 @@
   pointer-events: none;
 }
 
+/* 四边拉线命中条：透明，贴住边框内外各 5px，悬停时光标变为十字线提示可拉线。
+   两端缩进 14px 避开四角控制点的 19px 命中区 —— 角上永远优先缩放 */
+.linkStrip {
+  position: absolute;
+  z-index: 1;
+  pointer-events: auto;
+  cursor: crosshair;
+}
+
+.linkN {
+  left: 14px;
+  right: 14px;
+  top: -5px;
+  height: 10px;
+}
+
+.linkS {
+  left: 14px;
+  right: 14px;
+  bottom: -5px;
+  height: 10px;
+}
+
+.linkW {
+  left: -5px;
+  top: 14px;
+  bottom: 14px;
+  width: 10px;
+}
+
+.linkE {
+  right: -5px;
+  top: 14px;
+  bottom: 14px;
+  width: 10px;
+}
+
 /* 四角控制点：中心对准选中框角点，一半盖在框内、一半探出框外 */
 .handle {
   position: absolute;
+  z-index: 2; /* 盖过拉线命中条：角上永远优先缩放 */
   width: 9px;
   height: 9px;
   box-sizing: border-box;

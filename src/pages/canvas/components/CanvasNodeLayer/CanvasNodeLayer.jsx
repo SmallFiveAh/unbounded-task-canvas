@@ -6,12 +6,15 @@ import styles from './CanvasNodeLayer.module.css'
  * 世界层的「连线 + 节点」两层
  * ------------------------------------------------------------
  * 连线层是 1×1 但允许溢出绘制的 svg，坐标即世界坐标；
+ * 连线是三次贝塞尔曲线（路径由 CanvasPage 经 lib/edges.js 算好传入），
+ * 末端带实心箭头标明 A → B 的方向；拖拽中的预览线用强调色区分。
  * 节点层按世界坐标绝对定位，圆角随缩放补偿（缩小时仍看得出圆角）。
  * 只负责画：拖拽 / 选中 / 编辑的事件都由 CanvasPage 传入。
  */
 export default function CanvasNodeLayer({
   nodes,
-  edges,
+  edgeViews,
+  previewPath,
   selectedIds,
   selectedId,
   editingId,
@@ -25,8 +28,6 @@ export default function CanvasNodeLayer({
   onCommitEdit,
   onCancelEdit,
 }) {
-  const nodeById = new Map(nodes.map((n) => [n.id, n]))
-
   return (
     <>
       <svg className={styles.edgeLayer} aria-hidden="true">
@@ -41,23 +42,34 @@ export default function CanvasNodeLayer({
           >
             <path d="M0,0 L6,3 L0,6 Z" style={{ fill: 'var(--color-muted)' }} />
           </marker>
+          <marker
+            id="canvas-arrow-accent"
+            markerWidth="8"
+            markerHeight="8"
+            refX="5"
+            refY="3"
+            orient="auto"
+          >
+            <path d="M0,0 L6,3 L0,6 Z" style={{ fill: 'var(--color-accent)' }} />
+          </marker>
         </defs>
-        {edges.map((edge) => {
-          const from = nodeById.get(edge.from)
-          const to = nodeById.get(edge.to)
-          if (!from || !to) return null
-          return (
-            <line
-              key={edge.id}
-              x1={from.x + from.w / 2}
-              y1={from.y + from.h / 2}
-              x2={to.x + to.w / 2}
-              y2={to.y + to.h / 2}
-              className={styles.edge}
-              markerEnd="url(#canvas-arrow)"
-            />
-          )
-        })}
+        {edgeViews.map((edge) => (
+          <path
+            key={edge.id}
+            d={edge.d}
+            fill="none"
+            className={styles.edge}
+            markerEnd="url(#canvas-arrow)"
+          />
+        ))}
+        {previewPath && (
+          <path
+            d={previewPath}
+            fill="none"
+            className={styles.edgePreview}
+            markerEnd="url(#canvas-arrow-accent)"
+          />
+        )}
       </svg>
 
       {nodes.map((node) => {

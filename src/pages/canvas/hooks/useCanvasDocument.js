@@ -69,6 +69,18 @@ export function useCanvasDocument({
     setNodes((ns) => ns.map((n) => (n.id === id ? { ...n, text } : n)))
   }, [])
 
+  /* ---------- 连线 ---------- */
+
+  // 边框拉线落库：一对锚点记录两端在元素矩形里的相对位置，元素移动后端点不漂移；
+  // 不做去重 —— 同一对元素之间允许任意多条连线
+  const addEdge = useCallback(
+    (from, to, fromAnchor, toAnchor) => {
+      const id = nextId('e')
+      setEdges((es) => [...es, { id, from, to, fromAnchor, toAnchor }])
+    },
+    [nextId],
+  )
+
   /* ---------- 表格 ---------- */
 
   // 插入表格：在视口中央放置一个 rows × cols 的 Excel 风格表格
@@ -104,6 +116,8 @@ export function useCanvasDocument({
   const removeTable = useCallback(
     (id) => {
       setTables((ts) => ts.filter((t) => t.id !== id))
+      // 表格也可能是连线端点：一并摘掉相关连线，与 removeNode 行为一致
+      setEdges((es) => es.filter((e) => e.from !== id && e.to !== id))
       onTableRemoved(id)
     },
     [onTableRemoved],
@@ -182,6 +196,7 @@ export function useCanvasDocument({
     addNodeAtCenter,
     removeNode,
     commitNodeText,
+    addEdge,
     addTable,
     removeTable,
     updateTableCell,

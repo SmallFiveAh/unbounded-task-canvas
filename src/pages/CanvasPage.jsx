@@ -15,10 +15,12 @@ import { useCanvasPersistence } from './canvas/hooks/useCanvasPersistence'
 import { useCanvasSelection } from './canvas/hooks/useCanvasSelection'
 import { useCanvasToolbar } from './canvas/hooks/useCanvasToolbar'
 import { useCanvasViewport } from './canvas/hooks/useCanvasViewport'
+import { useEdgeDrag } from './canvas/hooks/useEdgeDrag'
 import { useItemDrag } from './canvas/hooks/useItemDrag'
 import { useSelectionResize } from './canvas/hooks/useSelectionResize'
 import { useViewportPointer } from './canvas/hooks/useViewportPointer'
 import { GRID_FINE, GRID_MAJOR } from './canvas/lib/constants'
+import { previewEdgePath, resolveEdgePath } from './canvas/lib/edges'
 import styles from './CanvasPage.module.css'
 
 /**
@@ -33,6 +35,7 @@ import styles from './CanvasPage.module.css'
  * - useCanvasDocument     节点 / 连线 / 表格数据与增删改
  * - useCanvasSelection    选中态与节点编辑态
  * - useItemDrag           节点 + 表格拖拽
+ * - useEdgeDrag           选中框四边拉线（连线拖拽状态机）
  * - useSelectionResize    选中框几何 + 四角控制点缩放
  * - useViewportPointer    视口指针：平移 / 框选 / 收口
  * - useCanvasKeyboard     Delete / Esc / 空格
@@ -44,14 +47,17 @@ import styles from './CanvasPage.module.css'
  * - CanvasSaveHint / CanvasZoomBadge           右上角保存提示、右下角缩放徽标
  *
  * canvas/lib/ —— 纯函数与常量（不依赖 React）
- * - constants.js  网格 / 节点尺寸等设计值
+ * - constants.js  网格 / 节点尺寸 / 贝塞尔弯曲度等设计值
  * - geometry.js   坐标换算、缩放夹取、框选命中
+ * - edges.js      连线锚点、贝塞尔路径、拉线命中
  *
  * 行为约定（与拆分前一致）：
  * - 拖拽空白处平移，滚轮平移；激活「鼠标滚轮」按钮后滚轮缩放（每次 5%，光标为中心）
  * - Ctrl/⌘ + 滚轮也可缩放
  * - 双击空白添加节点，节点可拖拽、双击编辑、Delete 删除
  * - 元素默认无边框；选中后出现 1px 橙色选中框 + 四角控制点，拖动控制点缩放
+ * - 鼠标悬到选中框四边：光标变十字线，按下拖出连线（贝塞尔曲线 + 实心箭头），
+ *   松手落在哪个元素上就连到哪个元素，落在空白则取消；连线数量不限
  * - 内容（节点/连线/表格）与视图（缩放比例 + 平移）都持久化到 localStorage，
  *   下次打开原样回到上次的视角；任务列表缩略图实时同步结构
  */
@@ -137,6 +143,14 @@ export default function CanvasPage({ taskId }) {
     viewportRef,
   })
 
+  const edgeDrag = useEdgeDrag({
+    nodes: doc.nodes,
+    tables: doc.tables,
+    viewportRef,
+    screenToWorld,
+    addEdge: doc.addEdge,
+  })
+
   const pointer = useViewportPointer({
     view,
     setView,
@@ -149,6 +163,9 @@ export default function CanvasPage({ taskId }) {
     resizingRef: resize.resizeRef,
     applyResize: resize.applyResize,
     endResize: resize.endResize,
+    edgeDragRef: edgeDrag.dragRef,
+    applyEdgeDrag: edgeDrag.applyEdgeDrag,
+    endEdgeDrag: edgeDrag.endEdgeDrag,
     dragRef: drag.dragRef,
     applyDragMove: drag.applyDragMove,
     endItemDrag: drag.endItemDrag,
@@ -178,6 +195,24 @@ export default function CanvasPage({ taskId }) {
   /* ---------- 渲染 ---------- */
 
   const { nodes, edges, tables } = doc
+
+  /* ---------- 连线路径（贝塞尔） ---------- */
+
+  // 落库连线与拉线预览共用同一套锚点换算（元素索引由 useEdgeDrag 统一维护）
+  const edgeViews = useMemo(
+    () =>
+      edges
+        .map((edge) => ({ id: edge.id, d: resolveEdgePath(edge, edgeDrag.elementIndex) }))
+        .filter((edge) => edge.d),
+    [edges, edgeDrag.elementIndex],
+  )
+  const edgePreviewPath = edgeDrag.preview
+    ? previewEdgePath(edgeDrag.preview, edgeDrag.elementIndex)
+    : null
+  // 拉线悬停的目标元素：亮框提示「松手即连接」
+  const linkTargetRect = edgeDrag.preview?.targetId
+    ? edgeDrag.elementIndex.get(edgeDrag.preview.targetId)
+    : null
 
   if (!task) {
     return (
@@ -259,7 +294,8 @@ export default function CanvasPage({ taskId }) {
           {/* 连线层 + 节点层 */}
           <CanvasNodeLayer
             nodes={nodes}
-            edges={edges}
+            edgeViews={edgeViews}
+            previewPath={edgePreviewPath}
             selectedIds={selection.selectedIds}
             selectedId={selection.selectedId}
             editingId={selection.editingId}
@@ -293,7 +329,7 @@ export default function CanvasPage({ taskId }) {
           ))}
         </div>
 
-        {/* 选中框层（屏幕坐标）：1px 定宽橙框 + 四角控制点 + 框选矩形 */}
+        {/* 选中框层（屏幕坐标）：1px 定宽橙框 + 四角控制点 + 四边拉线命中条 + 框选矩形 */}
         <CanvasSelectionLayer
           rects={resize.selectionRects}
           view={view}
@@ -301,6 +337,8 @@ export default function CanvasPage({ taskId }) {
           editingId={selection.editingId}
           resizeLabel={resize.resizeLabel}
           onResizeStart={resize.beginResize}
+          onLinkStart={edgeDrag.beginEdgeDrag}
+          linkTargetRect={linkTargetRect}
           marquee={pointer.marquee}
           viewportRef={viewportRef}
         />
