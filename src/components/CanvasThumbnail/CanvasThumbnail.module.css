@@ -37,9 +37,11 @@
   height: 100%;
 }
 
-/* 连线：与画布页一致的暖灰虚线 */
+/* 连线：与画布页一致的暖灰虚线 + 贝塞尔曲线 */
 .edge {
   stroke: var(--color-muted);
+  stroke-width: 1.5;
+  stroke-dasharray: 6 4;
   opacity: 0.7;
 }
 

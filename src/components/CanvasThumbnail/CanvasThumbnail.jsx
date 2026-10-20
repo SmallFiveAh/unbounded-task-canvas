@@ -6,6 +6,7 @@ import {
   tableCellW,
 } from '../../constants/canvasTable'
 import { useCanvasSnapshot } from '../../hooks/useCanvasSnapshot'
+import { buildElementIndex, resolveEdgePath } from '../../pages/canvas/lib/edges'
 import styles from './CanvasThumbnail.module.css'
 
 /**
@@ -144,24 +145,16 @@ export default function CanvasThumbnail({ task }) {
     [nodes, tables],
   )
 
-  const edgeLines = useMemo(() => {
+  // 与画布页共用同一套连线几何：节点 + 表格统一建索引，
+  // 锚点（fromAnchor / toAnchor）决定端点在元素矩形里的相对位置，
+  // 三次贝塞尔曲线 + 终点裁剪到目标边框，保证缩略图与画布连线一致。
+  const edgeViews = useMemo(() => {
     if (!layout) return []
-    const nodeById = new Map(nodes.map((n) => [n.id, n]))
+    const elementIndex = buildElementIndex(nodes, tables)
     return edges
-      .map((edge) => {
-        const from = nodeById.get(edge.from)
-        const to = nodeById.get(edge.to)
-        if (!from || !to) return null
-        return {
-          id: edge.id,
-          x1: from.x + from.w / 2,
-          y1: from.y + from.h / 2,
-          x2: to.x + to.w / 2,
-          y2: to.y + to.h / 2,
-        }
-      })
-      .filter(Boolean)
-  }, [edges, nodes, layout])
+      .map((edge) => ({ id: edge.id, d: resolveEdgePath(edge, elementIndex) }))
+      .filter((edge) => edge.d)
+  }, [edges, nodes, tables, layout])
 
   if (!layout) {
     // 空画布：不铺点阵网格，只留空状态
@@ -201,17 +194,13 @@ export default function CanvasThumbnail({ task }) {
           </marker>
         </defs>
 
-        {/* 连线层：与画布一致的虚线 + 箭头 */}
-        {edgeLines.map((line) => (
-          <line
-            key={line.id}
-            x1={line.x1}
-            y1={line.y1}
-            x2={line.x2}
-            y2={line.y2}
+        {/* 连线层：与画布一致的贝塞尔曲线 + 虚线 + 箭头 */}
+        {edgeViews.map((edge) => (
+          <path
+            key={edge.id}
+            d={edge.d}
+            fill="none"
             className={styles.edge}
-            strokeWidth={1.5}
-            strokeDasharray="6 4"
             markerEnd={`url(#${arrowId})`}
           />
         ))}
