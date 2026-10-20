@@ -1,3 +1,4 @@
+import PropTypes from 'prop-types'
 import styles from './PlaceholderPage.module.css'
 
 /**
@@ -31,4 +32,11 @@ export default function PlaceholderPage({ title, desc, index, total }) {
       </p>
     </section>
   )
+}
+
+PlaceholderPage.propTypes = {
+  title: PropTypes.string.isRequired,
+  desc: PropTypes.string.isRequired,
+  index: PropTypes.number.isRequired,
+  total: PropTypes.number.isRequired,
 }

@@ -1,7 +1,8 @@
 /* ============================================================
    表格指针交互 —— 单击多选 + 拖拽框选 + 双击进入编辑
    ------------------------------------------------------------
-   单元格多选的三套语义（与 Excel 一致）：
+   单元格多选的三套语义（与 Excel 一致，纯计算见 tableGeometry.js
+   的 resolvePressSelection / cellFromPoint）：
    · 单击：选中单个单元格，锚点与光标都落在该格
    · Ctrl/⌘ + 单击：把单元格加入或移出选区
    · Shift + 单击：选中「锚点 → 目标」之间的矩形范围（Ctrl+Shift 叠加）
@@ -13,8 +14,7 @@
    ============================================================ */
 
 import { useRef } from 'react'
-import { TABLE_ROW_HEADER_W } from '../../constants/canvasTable'
-import { cellKey, rectKeys } from './tableGeometry'
+import { cellFromPoint as cellFromPointPure, cellKey, rectKeys, resolvePressSelection as resolvePressSelectionPure } from './tableGeometry'
 
 /** 同一个单元格两次按下视为「双击」的时间窗（毫秒） */
 const DOUBLE_PRESS_MS = 400
@@ -40,27 +40,32 @@ export function useTablePointer({
   const dragRef = useRef(null) // 单元格框选状态
   const dblPressRef = useRef({ key: null, time: 0 }) // 自实现的双击判定基准
 
-  /**
-   * 屏幕坐标 → 单元格坐标。
-   * 通过 grid 的实测尺寸与设计尺寸之比换算缩放，因此不依赖外部 scale。
-   * 表头行高与单元格共用 cellH，总高 = (rows + 1) * cellH（见 canvasTable.js）。
-   * clamp=true 时越界夹到最近边缘（拖拽框选保持扩展到末行/末列）。
-   */
-  const cellFromPoint = (clientX, clientY, clamp) => {
+  /** 屏幕坐标 → 单元格坐标（网格实测尺寸从 DOM 查询，见 tableGeometry.cellFromPoint） */
+  const cellFromPoint = (clientX, clientY, clampToEdges) => {
     const grid = wrapRef.current?.querySelector('[data-grid]')
     if (!grid) return null
-    const rect = grid.getBoundingClientRect()
-    const kx = rect.width / (TABLE_ROW_HEADER_W + cols * cellW)
-    const ky = rect.height / ((rows + 1) * cellH)
-    if (!kx || !ky) return null
-    const c = Math.floor(((clientX - rect.left) / kx - TABLE_ROW_HEADER_W) / cellW)
-    const r = Math.floor(((clientY - rect.top) / ky - cellH) / cellH)
-    const inside = r >= 0 && r < rows && c >= 0 && c < cols
-    if (!inside && !clamp) return null
-    return {
-      r: Math.min(rows - 1, Math.max(0, r)),
-      c: Math.min(cols - 1, Math.max(0, c)),
+    return cellFromPointPure({
+      clientX,
+      clientY,
+      gridRect: grid.getBoundingClientRect(),
+      rows,
+      cols,
+      cellW,
+      cellH,
+      clamp: clampToEdges,
+    })
+  }
+
+  /** 双击判定：同一格在时间窗内两次按下即进入编辑（画布内原生 dblclick 不可靠，见文件头注释） */
+  const detectDoubleClick = (cell) => {
+    const now = performance.now()
+    const lastPress = dblPressRef.current
+    if (lastPress.key === cellKey(cell.r, cell.c) && now - lastPress.time <= DOUBLE_PRESS_MS) {
+      dblPressRef.current = { key: null, time: 0 } // 重置，避免连续按下重复触发
+      return true
     }
+    dblPressRef.current = { key: cellKey(cell.r, cell.c), time: now }
+    return false
   }
 
   const handlePointerDown = (e) => {
@@ -84,50 +89,29 @@ export function useTablePointer({
       c: Number(cellEl.dataset.cellC),
     }
 
-    // 双击进入编辑（自实现判定）：画布内 pointerdown 既做了 preventDefault，
-    // 又对容器做了 setPointerCapture，原生 dblclick 会被吞掉或重定向到容器，
-    // 导致事件目标不再是单元格。这里在「指针按下瞬间」用时间 + 同格判断，
-    // 不依赖任何后端鼠标事件，因此稳定可靠。
-    const now = performance.now()
-    const lastPress = dblPressRef.current
-    if (lastPress.key === cellKey(cell.r, cell.c) && now - lastPress.time <= DOUBLE_PRESS_MS) {
-      dblPressRef.current = { key: null, time: 0 } // 重置，避免连续按下重复触发
+    if (detectDoubleClick(cell)) {
       onActivate?.(table.id)
       startEdit(cell.r, cell.c)
       return
     }
-    dblPressRef.current = { key: cellKey(cell.r, cell.c), time: now }
 
-    const additive = e.ctrlKey || e.metaKey
-    let base
-
-    if (e.shiftKey) {
-      // Shift：锚点 → 目标的矩形；Ctrl+Shift 叠加到现有选区
-      const from = anchor ?? cell
-      base = additive ? new Set(selection) : new Set()
-      rectKeys(from.r, from.c, cell.r, cell.c).forEach((k) => base.add(k))
-      setAnchor(from)
-    } else if (additive) {
-      // Ctrl/⌘：加入或移出选区
-      base = new Set(selection)
-      const key = cellKey(cell.r, cell.c)
-      if (base.has(key)) base.delete(key)
-      else base.add(key)
-      setAnchor(cell)
-    } else {
-      base = new Set([cellKey(cell.r, cell.c)])
-      setAnchor(cell)
-    }
-
+    const { selection: next, anchor: nextAnchor } = resolvePressSelectionPure({
+      additive: e.ctrlKey || e.metaKey,
+      shift: e.shiftKey,
+      anchor,
+      selection,
+      cell,
+    })
+    setAnchor(nextAnchor)
     setCursor(cell)
-    setSelection(base)
+    setSelection(next)
 
     // 选中单元格即激活表格，让画布把它作为当前元素（键盘事件才会被接管）
     onActivate?.(table.id)
 
-    // 记录拖拽基准：drag 过程中在 base 之上叠加「起点 → 当前格」的矩形
+    // 记录拖拽基准：drag 过程中在 next 之上叠加「起点 → 当前格」的矩形
     dragRef.current = {
-      base: new Set(base),
+      base: new Set(next),
       start: cell,
       last: cell,
       moved: false,

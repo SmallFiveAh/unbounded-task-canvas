@@ -1,3 +1,5 @@
+import { memo } from 'react'
+import PropTypes from 'prop-types'
 import styles from './SelectionFrame.module.css'
 
 /**
@@ -35,7 +37,7 @@ const LINK_SIDES = [
   { key: 'w', className: 'linkW' },
 ]
 
-export default function SelectionFrame({
+function SelectionFrame({
   left,
   top,
   width,
@@ -89,3 +91,18 @@ export default function SelectionFrame({
     </div>
   )
 }
+
+SelectionFrame.propTypes = {
+  left: PropTypes.number.isRequired,
+  top: PropTypes.number.isRequired,
+  width: PropTypes.number.isRequired,
+  height: PropTypes.number.isRequired,
+  radius: PropTypes.number,
+  showHandles: PropTypes.bool,
+  showLinkStrips: PropTypes.bool,
+  label: PropTypes.string,
+  onResizeStart: PropTypes.func,
+  onLinkStart: PropTypes.func,
+}
+
+export default memo(SelectionFrame)

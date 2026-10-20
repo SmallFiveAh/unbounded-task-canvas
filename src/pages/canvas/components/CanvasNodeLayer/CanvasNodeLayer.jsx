@@ -1,3 +1,5 @@
+import { memo } from 'react'
+import PropTypes from 'prop-types'
 import { cornerRadius } from '../../../../utils/canvasRadius'
 import { NODE_RADIUS } from '../../lib/constants'
 import styles from './CanvasNodeLayer.module.css'
@@ -11,7 +13,7 @@ import styles from './CanvasNodeLayer.module.css'
  * 节点层按世界坐标绝对定位，圆角随缩放补偿（缩小时仍看得出圆角）。
  * 只负责画：拖拽 / 选中 / 编辑的事件都由 CanvasPage 传入。
  */
-export default function CanvasNodeLayer({
+function CanvasNodeLayer({
   nodes,
   edgeViews,
   previewPath,
@@ -128,3 +130,38 @@ export default function CanvasNodeLayer({
     </>
   )
 }
+
+CanvasNodeLayer.propTypes = {
+  nodes: PropTypes.arrayOf(
+    PropTypes.shape({
+      id: PropTypes.string.isRequired,
+      x: PropTypes.number.isRequired,
+      y: PropTypes.number.isRequired,
+      w: PropTypes.number.isRequired,
+      h: PropTypes.number.isRequired,
+      kind: PropTypes.string.isRequired,
+      text: PropTypes.string,
+    }),
+  ).isRequired,
+  edgeViews: PropTypes.arrayOf(
+    PropTypes.shape({
+      id: PropTypes.string.isRequired,
+      d: PropTypes.string.isRequired,
+    }),
+  ).isRequired,
+  previewPath: PropTypes.string,
+  selectedIds: PropTypes.arrayOf(PropTypes.string).isRequired,
+  selectedId: PropTypes.string,
+  editingId: PropTypes.string,
+  draft: PropTypes.string,
+  scale: PropTypes.number.isRequired,
+  onNodePointerDown: PropTypes.func.isRequired,
+  onNodePointerMove: PropTypes.func.isRequired,
+  onNodePointerUp: PropTypes.func.isRequired,
+  onStartEdit: PropTypes.func.isRequired,
+  onDraftChange: PropTypes.func.isRequired,
+  onCommitEdit: PropTypes.func.isRequired,
+  onCancelEdit: PropTypes.func.isRequired,
+}
+
+export default memo(CanvasNodeLayer)

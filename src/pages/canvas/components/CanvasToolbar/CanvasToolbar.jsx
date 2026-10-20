@@ -1,10 +1,12 @@
+import { memo } from 'react'
+import PropTypes from 'prop-types'
 import styles from './CanvasToolbar.module.css'
 
 /**
  * 顶部中间工具栏：选择 / 平移 / 鼠标滚轮缩放
  * 纯展示组件 —— 工具状态由 CanvasPage 持有，这里只负责把点击转成回调。
  */
-export default function CanvasToolbar({
+function CanvasToolbar({
   tool,
   wheelZoom,
   onSelectTool,
@@ -40,3 +42,13 @@ export default function CanvasToolbar({
     </div>
   )
 }
+
+CanvasToolbar.propTypes = {
+  tool: PropTypes.oneOf(['select', 'pan']).isRequired,
+  wheelZoom: PropTypes.bool.isRequired,
+  onSelectTool: PropTypes.func.isRequired,
+  onTogglePan: PropTypes.func.isRequired,
+  onToggleWheelZoom: PropTypes.func.isRequired,
+}
+
+export default memo(CanvasToolbar)

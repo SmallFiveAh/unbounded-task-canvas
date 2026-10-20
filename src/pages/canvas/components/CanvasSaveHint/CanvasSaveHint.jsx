@@ -1,3 +1,5 @@
+import { memo } from 'react'
+import PropTypes from 'prop-types'
 import styles from './CanvasSaveHint.module.css'
 
 /**
@@ -5,7 +7,7 @@ import styles from './CanvasSaveHint.module.css'
  * 显隐不走 React 状态：由 useCanvasPersistence 直接改 data-visible，
  * 这样每次落盘都不会重渲染整张画布（5 秒后 CSS 过渡淡出）。
  */
-export default function CanvasSaveHint({ hintRef }) {
+function CanvasSaveHint({ hintRef }) {
   return (
     <div ref={hintRef} className={styles.saveHint} data-visible="false" role="status">
       <i className="bi bi-cloud-check" aria-hidden="true"></i>
@@ -13,3 +15,9 @@ export default function CanvasSaveHint({ hintRef }) {
     </div>
   )
 }
+
+CanvasSaveHint.propTypes = {
+  hintRef: PropTypes.object.isRequired,
+}
+
+export default memo(CanvasSaveHint)

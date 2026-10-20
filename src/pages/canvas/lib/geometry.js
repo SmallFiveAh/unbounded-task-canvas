@@ -15,6 +15,32 @@ export const clampScale = (s) => Math.min(MAX_SCALE, Math.max(MIN_SCALE, s))
 /** 数值夹取 */
 export const clamp = (v, lo, hi) => Math.min(hi, Math.max(lo, v))
 
+/** 框选矩形的最小有效边长（屏幕 px）：低于它视为点击空白而非框选 */
+export const MARQUEE_MIN_SIZE = 2
+
+/**
+ * 屏幕框选矩形 → 世界坐标矩形（端点归一化）。
+ * 框选没有实际范围（任一边 ≤ MARQUEE_MIN_SIZE）时返回 null，
+ * 调用方应视为「点击空白」。
+ * @param {{x1:number, y1:number, x2:number, y2:number}} mq 屏幕坐标框选矩形
+ * @param {{left:number, top:number}} bounds 视口在屏幕中的包围盒
+ * @param {{x:number, y:number, scale:number}} view 当前视口
+ */
+export function marqueeToWorldRect(mq, bounds, view) {
+  const x1 = Math.min(mq.x1, mq.x2)
+  const x2 = Math.max(mq.x1, mq.x2)
+  const y1 = Math.min(mq.y1, mq.y2)
+  const y2 = Math.max(mq.y1, mq.y2)
+  if (x2 - x1 <= MARQUEE_MIN_SIZE || y2 - y1 <= MARQUEE_MIN_SIZE) return null
+
+  return {
+    x1: (x1 - bounds.left - view.x) / view.scale,
+    y1: (y1 - bounds.top - view.y) / view.scale,
+    x2: (x2 - bounds.left - view.x) / view.scale,
+    y2: (y2 - bounds.top - view.y) / view.scale,
+  }
+}
+
 /**
  * 屏幕坐标 → 世界坐标
  * @param {{x:number, y:number, scale:number}} view  当前视口（平移偏移 + 缩放）

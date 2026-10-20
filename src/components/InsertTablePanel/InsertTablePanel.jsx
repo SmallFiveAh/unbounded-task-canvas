@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from 'react'
+import PropTypes from 'prop-types'
 import { createPortal } from 'react-dom'
 import styles from './InsertTablePanel.module.css'
 
@@ -10,7 +11,13 @@ import styles from './InsertTablePanel.module.css'
  * - 点击格子选择行列；点击面板外部关闭
  * - 窗口尺寸变化时自动跟随重定位，保证响应式正常显示
  * - 当前阶段仅负责选择行列，不负责把表格加入画布
+ *
+ * 注意：渲染期读取 anchorRef / toolbarRef 做定位是本组件的既有设计
+ * （面板打开的同一帧就需要拿到锚点位置，改走 effect 会引入一帧闪跳），
+ * 因此对 react-hooks/refs 规则做定向豁免；存量问题，后续如重构定位
+ * 逻辑应一并移除豁免。
  */
+/* eslint-disable react-hooks/refs */
 export default function InsertTablePanel({
   open,
   rows,
@@ -98,4 +105,15 @@ export default function InsertTablePanel({
     </div>,
     document.body,
   )
+}
+
+InsertTablePanel.propTypes = {
+  open: PropTypes.bool.isRequired,
+  rows: PropTypes.number.isRequired,
+  cols: PropTypes.number.isRequired,
+  anchorRef: PropTypes.object.isRequired,
+  toolbarRef: PropTypes.object,
+  onClose: PropTypes.func.isRequired,
+  onConfirm: PropTypes.func.isRequired,
+  onChange: PropTypes.func.isRequired,
 }

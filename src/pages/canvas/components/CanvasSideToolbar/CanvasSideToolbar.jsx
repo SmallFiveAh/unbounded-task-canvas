@@ -1,3 +1,5 @@
+import { memo } from 'react'
+import PropTypes from 'prop-types'
 import styles from './CanvasSideToolbar.module.css'
 
 /**
@@ -6,7 +8,7 @@ import styles from './CanvasSideToolbar.module.css'
  * · 表格按钮额外控制插入面板显隐，并把它自己的 DOM 节点作为面板锚点
  * 纯展示组件：只做点击 → 回调，不碰画布数据。
  */
-export default function CanvasSideToolbar({
+function CanvasSideToolbar({
   sideTool,
   tablePanelOpen,
   tableBtnRef,
@@ -68,3 +70,14 @@ export default function CanvasSideToolbar({
     </div>
   )
 }
+
+CanvasSideToolbar.propTypes = {
+  sideTool: PropTypes.oneOf(['note', 'mind', 'flow', 'card', 'list', null]),
+  tablePanelOpen: PropTypes.bool.isRequired,
+  tableBtnRef: PropTypes.object.isRequired,
+  toolbarRef: PropTypes.object.isRequired,
+  onToggleSideTool: PropTypes.func.isRequired,
+  onToggleTablePanel: PropTypes.func.isRequired,
+}
+
+export default memo(CanvasSideToolbar)

@@ -1,3 +1,5 @@
+import { memo } from 'react'
+import PropTypes from 'prop-types'
 import { MENU_ITEMS, BOTTOM_ITEMS } from '../../constants/navigation'
 import styles from './Sidebar.module.css'
 
@@ -5,6 +7,12 @@ import styles from './Sidebar.module.css'
  * 通用布局组件：左侧导航
  * 仅负责导航展示与切换回调，不含业务逻辑（分层规范）
  */
+
+const NAV_ITEM_SHAPE = PropTypes.shape({
+  id: PropTypes.string.isRequired,
+  label: PropTypes.string.isRequired,
+  icon: PropTypes.string.isRequired,
+})
 
 function NavItem({ item, active, collapsed, onSelect, index }) {
   return (
@@ -27,7 +35,7 @@ function NavItem({ item, active, collapsed, onSelect, index }) {
   )
 }
 
-export default function Sidebar({ activeId, onSelect, collapsed, onToggle }) {
+function Sidebar({ activeId, onSelect, collapsed, onToggle }) {
   return (
     <aside
       className={`${styles.sidebar}${collapsed ? ` ${styles.collapsed}` : ''}`}
@@ -86,3 +94,20 @@ export default function Sidebar({ activeId, onSelect, collapsed, onToggle }) {
     </aside>
   )
 }
+
+NavItem.propTypes = {
+  item: NAV_ITEM_SHAPE.isRequired,
+  active: PropTypes.bool.isRequired,
+  collapsed: PropTypes.bool.isRequired,
+  onSelect: PropTypes.func.isRequired,
+  index: PropTypes.number.isRequired,
+}
+
+Sidebar.propTypes = {
+  activeId: PropTypes.string.isRequired,
+  onSelect: PropTypes.func.isRequired,
+  collapsed: PropTypes.bool.isRequired,
+  onToggle: PropTypes.func.isRequired,
+}
+
+export default memo(Sidebar)

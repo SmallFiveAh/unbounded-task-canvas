@@ -1,4 +1,5 @@
-import { Fragment } from 'react'
+import { Fragment, memo } from 'react'
+import PropTypes from 'prop-types'
 import { TABLE_ROW_HEADER_W } from '../../constants/canvasTable'
 import { cellKey, colLetter } from './tableGeometry'
 import styles from './CanvasTable.module.css'
@@ -23,7 +24,7 @@ const sideVars = (r, c, selection) => ({
   '--sl': selection.has(cellKey(r, c - 1)) ? 0 : 1,
 })
 
-export default function TableGrid({
+function TableGrid({
   rows,
   cols,
   cells,
@@ -114,3 +115,21 @@ export default function TableGrid({
     </div>
   )
 }
+
+TableGrid.propTypes = {
+  rows: PropTypes.number.isRequired,
+  cols: PropTypes.number.isRequired,
+  cells: PropTypes.arrayOf(PropTypes.arrayOf(PropTypes.string)).isRequired,
+  cellW: PropTypes.number.isRequired,
+  selection: PropTypes.object.isRequired,
+  editing: PropTypes.shape({ r: PropTypes.number.isRequired, c: PropTypes.number.isRequired }),
+  cursor: PropTypes.shape({ r: PropTypes.number.isRequired, c: PropTypes.number.isRequired }),
+  draft: PropTypes.string,
+  inputRef: PropTypes.object,
+  onDraftChange: PropTypes.func.isRequired,
+  onCommitEditing: PropTypes.func.isRequired,
+  onCancelEditing: PropTypes.func.isRequired,
+  selectOnly: PropTypes.func.isRequired,
+}
+
+export default memo(TableGrid)

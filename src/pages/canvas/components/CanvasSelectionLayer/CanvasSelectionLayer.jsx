@@ -1,3 +1,5 @@
+import { memo } from 'react'
+import PropTypes from 'prop-types'
 import SelectionFrame from '../../../../components/SelectionFrame/SelectionFrame'
 import { cornerRadius } from '../../../../utils/canvasRadius'
 import styles from './CanvasSelectionLayer.module.css'
@@ -12,7 +14,7 @@ import styles from './CanvasSelectionLayer.module.css'
  * 拉线中指针悬停的目标元素会亮出一圈高亮框，提示「松手即连接」。
  * 框选矩形用的是指针的屏幕坐标（marquee），渲染时换算到视口内的相对位置。
  */
-export default function CanvasSelectionLayer({
+function CanvasSelectionLayer({
   rects,
   view,
   selectedId,
@@ -66,7 +68,10 @@ export default function CanvasSelectionLayer({
         />
       )}
 
-      {/* 框选矩形（屏幕坐标，固定于视口） */}
+      {/* 框选矩形（屏幕坐标，固定于视口）。
+          渲染期读取 viewportRef 是既有设计：矩形必须与视口同帧定位，
+          改走 state/effect 会引入一帧偏移（存量豁免，重构定位逻辑时一并移除） */}
+      {/* eslint-disable react-hooks/refs */}
       {marquee &&
         (() => {
           const r = viewportRef.current.getBoundingClientRect()
@@ -87,6 +92,41 @@ export default function CanvasSelectionLayer({
             />
           )
         })()}
+      {/* eslint-enable react-hooks/refs */}
     </>
   )
 }
+
+CanvasSelectionLayer.propTypes = {
+  rects: PropTypes.arrayOf(
+    PropTypes.shape({
+      id: PropTypes.string.isRequired,
+      kind: PropTypes.oneOf(['node', 'table']).isRequired,
+      x: PropTypes.number.isRequired,
+      y: PropTypes.number.isRequired,
+      w: PropTypes.number.isRequired,
+      h: PropTypes.number.isRequired,
+      baseRadius: PropTypes.number.isRequired,
+    }),
+  ).isRequired,
+  view: PropTypes.shape({
+    x: PropTypes.number.isRequired,
+    y: PropTypes.number.isRequired,
+    scale: PropTypes.number.isRequired,
+  }).isRequired,
+  selectedId: PropTypes.string,
+  editingId: PropTypes.string,
+  resizeLabel: PropTypes.shape({ w: PropTypes.number.isRequired, h: PropTypes.number.isRequired }),
+  onResizeStart: PropTypes.func.isRequired,
+  onLinkStart: PropTypes.func.isRequired,
+  linkTargetRect: PropTypes.object,
+  marquee: PropTypes.shape({
+    x1: PropTypes.number.isRequired,
+    y1: PropTypes.number.isRequired,
+    x2: PropTypes.number.isRequired,
+    y2: PropTypes.number.isRequired,
+  }),
+  viewportRef: PropTypes.object.isRequired,
+}
+
+export default memo(CanvasSelectionLayer)

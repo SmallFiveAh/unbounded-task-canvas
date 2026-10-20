@@ -1,0 +1,10 @@
+/* 世界层：随视口平移 + 缩放（自 CanvasPage.module.css 原样搬迁） */
+.world {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 0;
+  height: 0;
+  transform-origin: 0 0;
+  pointer-events: none;
+}

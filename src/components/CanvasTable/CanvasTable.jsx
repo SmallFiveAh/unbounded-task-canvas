@@ -1,10 +1,6 @@
-import { useRef, useState } from 'react'
-import {
-  TABLE_ROW_HEADER_W,
-  getTableSize,
-  tableCellH,
-  tableCellW,
-} from '../../constants/canvasTable'
+import { memo, useRef, useState } from 'react'
+import PropTypes from 'prop-types'
+import { getTableSize, tableCellH, tableCellW } from '../../constants/canvasTable'
 import { cornerRadius } from '../../utils/canvasRadius'
 import TableGrid from './TableGrid'
 import { useTableClipboard } from './useTableClipboard'
@@ -12,6 +8,7 @@ import { useTableKeyboard } from './useTableKeyboard'
 import { useTablePaste } from './useTablePaste'
 import { useTablePointer } from './useTablePointer'
 import { useTableSelection } from './useTableSelection'
+import TableFlash from './TableFlash'
 import styles from './CanvasTable.module.css'
 
 /**
@@ -41,8 +38,9 @@ import styles from './CanvasTable.module.css'
  * - useTablePaste        window paste 监听
  * - useTableClipboard    复制 / 剪切 / 粘贴 + 轻提示
  * - TableGrid.jsx        网格与单元格渲染
+ * - TableFlash.jsx       复制 / 粘贴后的轻提示
  */
-export default function CanvasTable({
+function CanvasTable({
   table,
   selected,
   primary,
@@ -190,18 +188,32 @@ export default function CanvasTable({
         selectOnly={sel.selectOnly}
       />
 
-      {/* 复制 / 粘贴后的轻提示：贴在选区右下角内侧（表格 overflow:hidden，只能画在里面） */}
-      {clipboard.flash && (
-        <div
-          className={styles.flash}
-          style={{
-            left: TABLE_ROW_HEADER_W + (clipboard.flash.c2 + 1) * cellW - 4,
-            top: cellH + (clipboard.flash.r2 + 1) * cellH - 4,
-          }}
-        >
-          {clipboard.flash.text}
-        </div>
-      )}
+      <TableFlash flash={clipboard.flash} cellW={cellW} cellH={cellH} />
     </div>
   )
 }
+
+CanvasTable.propTypes = {
+  table: PropTypes.shape({
+    id: PropTypes.string.isRequired,
+    x: PropTypes.number.isRequired,
+    y: PropTypes.number.isRequired,
+    rows: PropTypes.number.isRequired,
+    cols: PropTypes.number.isRequired,
+    cellW: PropTypes.number,
+    cellH: PropTypes.number,
+    cells: PropTypes.arrayOf(PropTypes.arrayOf(PropTypes.string)).isRequired,
+  }).isRequired,
+  selected: PropTypes.bool.isRequired,
+  primary: PropTypes.bool.isRequired,
+  onPointerDown: PropTypes.func.isRequired,
+  onPointerMove: PropTypes.func,
+  onPointerUp: PropTypes.func,
+  onActivate: PropTypes.func.isRequired,
+  onCellChange: PropTypes.func.isRequired,
+  onClearCells: PropTypes.func.isRequired,
+  onPasteCells: PropTypes.func.isRequired,
+  scale: PropTypes.number,
+}
+
+export default memo(CanvasTable)
