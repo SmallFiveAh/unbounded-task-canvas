@@ -1,0 +1,149 @@
+/* ============================================
+   便签视觉原型 —— 面板缩略图与画布节点共用
+   ------------------------------------------------------------
+   每个样式类只做两件事：
+   1. 注入 --note-bg / --note-ink 两个变量（基座负责消费）
+   2. 需要纸张装饰的样式用伪元素叠加（横线 / 点阵 / 折角…）
+   基座（面板 swatch、画布 .node、拖拽幽灵）各自负责
+   background: var(--note-bg) 与 color: var(--note-ink)。
+   ============================================ */
+
+.amber {
+  --note-bg: #ffe27a;
+  --note-ink: #6b5100;
+}
+
+.mint {
+  --note-bg: #c9f2dd;
+  --note-ink: #14532d;
+}
+
+.sky {
+  --note-bg: #cfe6ff;
+  --note-ink: #1e3a8a;
+}
+
+.blush {
+  --note-bg: #ffd9e3;
+  --note-ink: #831843;
+}
+
+.lilac {
+  --note-bg: #e4d9ff;
+  --note-ink: #4c1d95;
+}
+
+.kraft {
+  --note-bg: #dcbd8f;
+  --note-ink: #4a2f16;
+}
+
+.slate {
+  --note-bg: #33333a;
+  --note-ink: #f2f0e9;
+}
+
+.tape {
+  --note-bg: #fff8e1;
+  --note-ink: #7a5c00;
+}
+
+.pin {
+  --note-bg: #ffd8a8;
+  --note-ink: #7c3a00;
+}
+
+.grid {
+  --note-bg: #f4f1e8;
+  --note-ink: #3f3d36;
+}
+
+/* ---------- 纸张装饰层 ----------
+   共用约定：伪元素绝对定位铺在纸面上，不拦截指针；
+   文字由各基座抬高（position: relative; z-index: 1）保持可读。 */
+
+/* 天空蓝：横线信纸 */
+.sky::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background: repeating-linear-gradient(
+    to bottom,
+    transparent 0 13px,
+    rgba(30, 58, 138, 0.14) 13px 14px
+  );
+}
+
+/* 雾紫：点阵 */
+.lilac::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background-image: radial-gradient(rgba(76, 29, 149, 0.2) 1px, transparent 1.4px);
+  background-size: 12px 12px;
+}
+
+/* 方格纸：细方格 */
+.grid::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background-image:
+    linear-gradient(rgba(63, 61, 54, 0.12) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(63, 61, 54, 0.12) 1px, transparent 1px);
+  background-size: 12px 12px;
+}
+
+/* 牛皮纸：右下折角 */
+.kraft::after {
+  content: '';
+  position: absolute;
+  right: 0;
+  bottom: 0;
+  width: 18px;
+  height: 18px;
+  pointer-events: none;
+  background: linear-gradient(315deg, rgba(28, 27, 23, 0.28) 0 50%, transparent 50%);
+}
+
+/* 小黑板：粉笔框 */
+.slate::before {
+  content: '';
+  position: absolute;
+  inset: 4px;
+  pointer-events: none;
+  border: 1px dashed rgba(242, 240, 233, 0.3);
+  border-radius: inherit;
+}
+
+/* 胶带便签：顶部斜贴一条半透明胶带 */
+.tape::before {
+  content: '';
+  position: absolute;
+  top: 3px;
+  left: 50%;
+  width: 46px;
+  height: 13px;
+  transform: translateX(-50%) rotate(-3deg);
+  pointer-events: none;
+  background: rgba(255, 255, 255, 0.55);
+  box-shadow: 0 1px 2px rgba(28, 27, 23, 0.12);
+}
+
+/* 图钉便签：顶部中央一颗图钉 */
+.pin::before {
+  content: '';
+  position: absolute;
+  top: 4px;
+  left: 50%;
+  width: 11px;
+  height: 11px;
+  transform: translateX(-50%);
+  pointer-events: none;
+  border-radius: 50%;
+  background: var(--color-accent);
+  box-shadow: 0 2px 3px rgba(28, 27, 23, 0.3);
+}

@@ -1,5 +1,7 @@
 import { memo } from 'react'
 import PropTypes from 'prop-types'
+import { noteStyleIdFromKind } from '../../../../constants/noteStyles'
+import visualStyles from '../../../../components/NoteStyles/NoteStyles.module.css'
 import { cornerRadius } from '../../../../utils/canvasRadius'
 import { NODE_RADIUS } from '../../lib/constants'
 import styles from './CanvasNodeLayer.module.css'
@@ -26,12 +28,15 @@ function CanvasNodeItem({
   onCommitEdit,
   onCancelEdit,
 }) {
+  // 便签节点：kind 形如 note-<样式id>，额外挂上共享视觉类
+  // （纸张底色 / 墨色 / 装饰由 NoteStyles.module.css 统一供给）
+  const noteVisual = visualStyles[noteStyleIdFromKind(node.kind) || '']
   return (
     <div
       data-node-id={node.id}
-      className={`${styles.node} ${styles[node.kind]}${
-        selected ? ` ${styles.selected}` : ''
-      }${primary ? ` ${styles.primary}` : ''}`}
+      className={`${styles.node} ${styles[node.kind] || ''}${
+        noteVisual ? ` ${noteVisual}` : ''
+      }${selected ? ` ${styles.selected}` : ''}${primary ? ` ${styles.primary}` : ''}`}
       style={{
         // 用 transform 定位而不是 left/top：拖拽每帧只动 x/y，
         // transform 走合成器，跳过整层 reflow + 重绘（box-shadow 很贵）

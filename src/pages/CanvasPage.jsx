@@ -1,6 +1,7 @@
 import { useCallback, useMemo } from 'react'
 import PropTypes from 'prop-types'
 import InsertTablePanel from '../components/InsertTablePanel/InsertTablePanel'
+import { NoteDragGhost, NoteStylePanel } from '../components/NoteStylePanel'
 import { TASKS } from '../constants/tasks'
 import { EMPTY_CANVAS, loadCanvas } from '../utils/canvasStore'
 import CanvasSaveHint from './canvas/components/CanvasSaveHint'
@@ -16,6 +17,7 @@ import { useCanvasPersistence } from './canvas/hooks/useCanvasPersistence'
 import { useCanvasSelection } from './canvas/hooks/useCanvasSelection'
 import { useCanvasToolbar } from './canvas/hooks/useCanvasToolbar'
 import { useCanvasViewport } from './canvas/hooks/useCanvasViewport'
+import { useNoteDragCreate } from './canvas/hooks/useNoteDragCreate'
 import { previewEdgePath, resolveEdgePath } from './canvas/lib/edges'
 import { gridBackgroundStyle } from './canvas/lib/gridStyle'
 import styles from './CanvasPage.module.css'
@@ -81,6 +83,13 @@ export default function CanvasPage({ taskId }) {
     addNode: doc.addNode,
   })
 
+  // 便签拖拽创建：按住「便签」按钮 / 面板缩略图拖到画布落节点
+  const noteDrag = useNoteDragCreate({
+    viewportRef,
+    screenToWorld,
+    addNode: doc.addNode,
+  })
+
   const { savedHintRef } = useCanvasPersistence({
     task,
     initial,
@@ -140,10 +149,18 @@ export default function CanvasPage({ taskId }) {
       <CanvasSideToolbar
         sideTool={toolbar.sideTool}
         tablePanelOpen={toolbar.tablePanelOpen}
+        notePanelOpen={toolbar.notePanelOpen}
         tableBtnRef={toolbar.tableBtnRef}
+        noteBtnRef={toolbar.noteBtnRef}
         toolbarRef={toolbar.sideToolbarRef}
         onToggleSideTool={toolbar.toggleSideTool}
         onToggleTablePanel={toolbar.toggleTablePanel}
+        onNotePress={(e) => noteDrag.press(e, toolbar.noteStyleId, toolbar.toggleNotePanel)}
+        onNoteClick={(e) => {
+          // 指针点击已在 pointerup 阶段由 useNoteDragCreate 的 onClick 处理；
+          // 这里只响应键盘激活的 click（detail === 0），否则会开→关双切换
+          if (e.detail === 0) toolbar.toggleNotePanel()
+        }}
       />
       <CanvasZoomBadge scale={view.scale} onReset={() => zoomByStep(1 / view.scale)} />
 
@@ -215,6 +232,21 @@ export default function CanvasPage({ taskId }) {
         }}
         onChange={toolbar.setTableSize}
       />
+
+      {/* 便签样式面板（点击左侧「便签」按钮显示，紧贴按钮右侧）：
+          点缩略图记住样式；按住缩略图可直接拖到画布，拖拽中面板保持可见 */}
+      <NoteStylePanel
+        open={toolbar.notePanelOpen}
+        anchorRef={toolbar.noteBtnRef}
+        toolbarRef={toolbar.sideToolbarRef}
+        selectedId={toolbar.noteStyleId}
+        onSelect={toolbar.selectNoteStyle}
+        onClose={toolbar.closeNotePanel}
+        onSwatchPress={(e, styleId) => noteDrag.press(e, styleId, () => toolbar.selectNoteStyle(styleId))}
+      />
+
+      {/* 便签拖拽幽灵：按住拖动时钉在光标下方的虚拟便签 */}
+      <NoteDragGhost ghost={noteDrag.ghost} />
     </div>
   )
 }

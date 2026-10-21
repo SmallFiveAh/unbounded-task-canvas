@@ -44,7 +44,8 @@
   padding: var(--space-3);
   border: 1px solid transparent;
   border-radius: var(--radius-md);
-  background: var(--color-surface);
+  /* 便签节点由 NoteStyles 样式类注入 --note-bg 覆写；普通节点走默认面 */
+  background: var(--note-bg, var(--color-surface));
   box-shadow: var(--shadow-1);
   overflow: hidden;
   cursor: grab;
@@ -79,10 +80,14 @@
 }
 
 .nodeText {
+  /* 抬到便签纸张装饰层（伪元素）之上，保证文字可读 */
+  position: relative;
+  z-index: 1;
   font-size: var(--text-sm);
   font-weight: 500;
   line-height: 1.45;
-  color: var(--color-text);
+  /* 便签节点用注入的墨色，普通节点回退全局文字色 */
+  color: var(--note-ink, var(--color-text));
   word-break: break-word;
   overflow-wrap: anywhere;
   /* 节点高度由用户拖动控制点决定：文字超出就裁掉，不撑破卡片 */
@@ -96,6 +101,8 @@
 }
 
 .nodeInput {
+  position: relative;
+  z-index: 1; /* 抬到便签纸张装饰层之上 */
   width: 100%;
   max-height: 100%;
   overflow-y: auto;
@@ -107,7 +114,7 @@
   font-size: var(--text-sm);
   font-weight: 500;
   line-height: 1.45;
-  color: var(--color-text);
+  color: var(--note-ink, var(--color-text));
   cursor: text;
   user-select: text;
   field-sizing: content;

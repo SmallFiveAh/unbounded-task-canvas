@@ -1,0 +1,29 @@
+/* ============================================
+   NoteDragGhost —— 拖拽中的虚拟便签
+   与画布节点同尺寸、同纸张视觉（变量由样式类注入）
+   ============================================ */
+
+.ghost {
+  position: fixed;
+  z-index: 300;
+  display: flex;
+  align-items: center;
+  padding: var(--space-3);
+  border-radius: var(--radius-md);
+  background: var(--note-bg, var(--color-surface));
+  box-shadow: var(--shadow-2);
+  /* 中心对齐光标：left/top 由内联样式给到光标点 */
+  transform: translate(-50%, -50%);
+  pointer-events: none;
+  opacity: 0.92;
+}
+
+.ghostText {
+  position: relative;
+  z-index: 1; /* 抬到纸张装饰层之上 */
+  font-size: var(--text-sm);
+  font-weight: 600;
+  line-height: 1.45;
+  color: var(--note-ink, var(--color-text));
+  word-break: break-word;
+}
