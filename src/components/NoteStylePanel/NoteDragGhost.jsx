@@ -1,5 +1,5 @@
 import PropTypes from 'prop-types'
-import { NODE_H, NODE_W } from '../../pages/canvas/lib/constants'
+import { NOTE_H, NOTE_W } from '../../pages/canvas/lib/constants'
 import visualStyles from '../NoteStyles/NoteStyles.module.css'
 import styles from './NoteDragGhost.module.css'
 
@@ -15,7 +15,7 @@ function NoteDragGhost({ ghost }) {
   return (
     <div
       className={`${styles.ghost} ${visualStyles[ghost.styleId] || ''}`}
-      style={{ left: ghost.x, top: ghost.y, width: NODE_W, height: NODE_H }}
+      style={{ left: ghost.x, top: ghost.y, width: NOTE_W, height: NOTE_H }}
       aria-hidden="true"
     >
       <span className={styles.ghostText}>便签</span>

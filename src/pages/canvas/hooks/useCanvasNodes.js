@@ -7,7 +7,8 @@
    ============================================================ */
 
 import { useCallback, useState } from 'react'
-import { NODE_H, NODE_W } from '../lib/constants'
+import { NOTE_H, NOTE_W, NODE_H, NODE_W } from '../lib/constants'
+import { noteStyleIdFromKind } from '../../../constants/noteStyles'
 
 /**
  * @param {object} params
@@ -31,7 +32,11 @@ export function useCanvasNodes({
   const addNode = useCallback(
     (x, y, text = '新节点', kind = 'muted') => {
       const id = nextId('n')
-      setNodes((ns) => [...ns, { id, x, y, w: NODE_W, h: NODE_H, kind, text }])
+      // 便签节点用专属默认尺寸（200×200），其余节点维持 176×76
+      const isNote = noteStyleIdFromKind(kind) !== null
+      const w = isNote ? NOTE_W : NODE_W
+      const h = isNote ? NOTE_H : NODE_H
+      setNodes((ns) => [...ns, { id, x, y, w, h, kind, text }])
       // 选中集合与主选中同步：新节点落地即带选中框
       onSelect(id)
       return id

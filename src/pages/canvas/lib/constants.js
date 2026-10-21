@@ -10,6 +10,9 @@ export const GRID_MAJOR = 120 // 主网格
 
 export const NODE_W = 176
 export const NODE_H = 76
+
+export const NOTE_W = 200 // 便签节点默认宽度（世界坐标）
+export const NOTE_H = 200 // 便签节点默认高度（世界坐标）
 export const NODE_RADIUS = 8 // 节点圆角（世界坐标设计值，缩小时会自动补偿）
 
 export const NODE_MIN_W = 96 // 缩放节点时的最小宽度

@@ -14,7 +14,7 @@
    ============================================================ */
 
 import { useCallback, useRef, useState } from 'react'
-import { NODE_H, NODE_W } from '../lib/constants'
+import { NOTE_H, NOTE_W } from '../lib/constants'
 import { noteKind } from '../../../constants/noteStyles'
 
 const DRAG_THRESHOLD = 4 // 位移(px)超过该值才算拖拽，更小视为误触
@@ -70,7 +70,7 @@ export function useNoteDragCreate({ viewportRef, screenToWorld, addNode }) {
       const dropOnCanvas = (ev) => {
         if (!isInsideViewport(ev.clientX, ev.clientY, viewportRef.current)) return
         const world = screenToWorld(ev.clientX, ev.clientY)
-        addNode(world.x - NODE_W / 2, world.y - NODE_H / 2, NOTE_DEFAULT_TEXT, noteKind(styleId))
+        addNode(world.x - NOTE_W / 2, world.y - NOTE_H / 2, NOTE_DEFAULT_TEXT, noteKind(styleId))
       }
 
       const onMove = (ev) => {
