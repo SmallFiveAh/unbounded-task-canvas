@@ -10,6 +10,7 @@
    ============================================================ */
 
 import { buildCanvas } from '../constants/tasks'
+import { isNoteKind } from '../constants/noteStyles'
 import {
   TABLE_CELL_H,
   TABLE_CELL_W,
@@ -62,13 +63,19 @@ const isNum = (v) => typeof v === 'number' && Number.isFinite(v)
 function normalizeNode(raw) {
   if (!raw || typeof raw.id !== 'string') return null
   if (![raw.x, raw.y, raw.w, raw.h].every(isNum)) return null
+  // kind 白名单：合法便签（note-<样式id>）原样保留，其余只认 accent / muted
+  const kind = isNoteKind(raw.kind)
+    ? raw.kind
+    : raw.kind === 'accent'
+      ? 'accent'
+      : 'muted'
   return {
     id: raw.id,
     x: raw.x,
     y: raw.y,
     w: Math.max(40, raw.w),
     h: Math.max(24, raw.h),
-    kind: raw.kind === 'accent' ? 'accent' : 'muted',
+    kind,
     text: typeof raw.text === 'string' ? raw.text : '',
   }
 }

@@ -37,6 +37,12 @@ export const noteStyleIdFromKind = (kind) =>
     ? kind.slice(NOTE_KIND_PREFIX.length)
     : null
 
+/** 是否为合法便签 kind（note-<已注册的样式 id>），供存档校验等场景使用 */
+export function isNoteKind(kind) {
+  if (typeof kind !== 'string' || !kind.startsWith(NOTE_KIND_PREFIX)) return false
+  return NOTE_STYLE_ID_SET.has(kind.slice(NOTE_KIND_PREFIX.length))
+}
+
 /* ---------- 已选样式的本地记忆（面板关了也记得住） ---------- */
 
 export const NOTE_STYLE_STORAGE_KEY = 'canvas.noteStyle'
