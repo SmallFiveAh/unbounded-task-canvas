@@ -15,6 +15,7 @@
 
 import { useCallback, useRef, useState } from 'react'
 import { NOTE_DEFAULT_TEXT, NOTE_H, NOTE_W } from '../lib/constants'
+import { screenToWorld as toWorld } from '../lib/geometry'
 import { noteKind } from '../../../constants/noteStyles'
 
 const DRAG_THRESHOLD = 4 // 位移(px)超过该值才算拖拽，更小视为误触
@@ -34,11 +35,11 @@ function isInsideViewport(clientX, clientY, viewportEl) {
 /**
  * @param {object} params
  * @param {import('react').MutableRefObject} params.viewportRef  画布视口（判定松手是否落在画布上）
- * @param {(x:number, y:number) => {x:number, y:number}} params.screenToWorld 屏幕坐标 → 世界坐标
+ * @param {import('react').MutableRefObject} params.viewRef      当前视口 {x,y,scale}（松手时取最新值）
  * @param {(x:number, y:number, text?:string, kind?:string) => string} params.addNode 落库节点
  * @param {(id: string) => void} [params.onNoteCreated] 便签落库后回调（用于立即进入文本编辑）
  */
-export function useNoteDragCreate({ viewportRef, screenToWorld, addNode, onNoteCreated }) {
+export function useNoteDragCreate({ viewportRef, viewRef, addNode, onNoteCreated }) {
   // 拖拽中的幽灵：{ styleId, x, y }（屏幕坐标）或 null
   const [ghost, setGhost] = useState(null)
   // 本次按下是否发生了拖拽：供 onClick 里吞掉拖拽结束后的残余 click
@@ -68,8 +69,16 @@ export function useNoteDragCreate({ viewportRef, screenToWorld, addNode, onNoteC
 
       /** 松手落在画布视口内：以光标为中心落一个便签节点，并立即进入编辑 */
       const dropOnCanvas = (ev) => {
-        if (!isInsideViewport(ev.clientX, ev.clientY, viewportRef.current)) return
-        const world = screenToWorld(ev.clientX, ev.clientY)
+        const el = viewportRef.current
+        if (!el || !isInsideViewport(ev.clientX, ev.clientY, el)) return
+        // 用松手这一刻的最新视口换算，保证落点与拖拽中的幽灵一致
+        // （拖拽期间可能滚轮缩放 / 平移，闭包里的 view 会过期）
+        const world = toWorld(
+          viewRef.current,
+          el.getBoundingClientRect(),
+          ev.clientX,
+          ev.clientY,
+        )
         const id = addNode(world.x - NOTE_W / 2, world.y - NOTE_H / 2, NOTE_DEFAULT_TEXT, noteKind(styleId))
         onNoteCreated?.(id)
       }
@@ -99,7 +108,7 @@ export function useNoteDragCreate({ viewportRef, screenToWorld, addNode, onNoteC
       window.addEventListener('pointerup', onUp)
       window.addEventListener('pointercancel', onCancel)
     },
-    [addNode, onNoteCreated, screenToWorld, viewportRef],
+    [addNode, onNoteCreated, viewportRef, viewRef],
   )
 
   return { ghost, press, wasDragRef }

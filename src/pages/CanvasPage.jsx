@@ -86,7 +86,7 @@ export default function CanvasPage({ taskId }) {
   // 便签拖拽创建：按住「便签」按钮 / 面板缩略图拖到画布落节点
   const noteDrag = useNoteDragCreate({
     viewportRef,
-    screenToWorld,
+    viewRef,
     addNode: doc.addNode,
     // 落库即进入编辑：新便签无需双击，创建后直接在左上角输入文案
     onNoteCreated: (id) => {
@@ -266,8 +266,8 @@ export default function CanvasPage({ taskId }) {
         onSwatchPress={(e, styleId) => noteDrag.press(e, styleId, () => toolbar.selectNoteStyle(styleId))}
       />
 
-      {/* 便签拖拽幽灵：按住拖动时钉在光标下方的虚拟便签 */}
-      <NoteDragGhost ghost={noteDrag.ghost} />
+      {/* 便签拖拽幽灵：按住拖动时钉在光标下方，尺寸随画布缩放同步 */}
+      <NoteDragGhost ghost={noteDrag.ghost} scale={view.scale} />
     </div>
   )
 }
