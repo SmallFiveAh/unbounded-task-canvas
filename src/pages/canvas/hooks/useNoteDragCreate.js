@@ -14,11 +14,10 @@
    ============================================================ */
 
 import { useCallback, useRef, useState } from 'react'
-import { NOTE_H, NOTE_W } from '../lib/constants'
+import { NOTE_DEFAULT_TEXT, NOTE_H, NOTE_W } from '../lib/constants'
 import { noteKind } from '../../../constants/noteStyles'
 
 const DRAG_THRESHOLD = 4 // 位移(px)超过该值才算拖拽，更小视为误触
-const NOTE_DEFAULT_TEXT = '便签' // 新便签的初始文案，双击可编辑
 
 /** 光标是否落在画布视口矩形内（松手才落库，拖出画布即取消） */
 function isInsideViewport(clientX, clientY, viewportEl) {
@@ -37,8 +36,9 @@ function isInsideViewport(clientX, clientY, viewportEl) {
  * @param {import('react').MutableRefObject} params.viewportRef  画布视口（判定松手是否落在画布上）
  * @param {(x:number, y:number) => {x:number, y:number}} params.screenToWorld 屏幕坐标 → 世界坐标
  * @param {(x:number, y:number, text?:string, kind?:string) => string} params.addNode 落库节点
+ * @param {(id: string) => void} [params.onNoteCreated] 便签落库后回调（用于立即进入文本编辑）
  */
-export function useNoteDragCreate({ viewportRef, screenToWorld, addNode }) {
+export function useNoteDragCreate({ viewportRef, screenToWorld, addNode, onNoteCreated }) {
   // 拖拽中的幽灵：{ styleId, x, y }（屏幕坐标）或 null
   const [ghost, setGhost] = useState(null)
   // 本次按下是否发生了拖拽：供 onClick 里吞掉拖拽结束后的残余 click
@@ -66,11 +66,12 @@ export function useNoteDragCreate({ viewportRef, screenToWorld, addNode }) {
         window.removeEventListener('pointercancel', onCancel)
       }
 
-      /** 松手落在画布视口内：以光标为中心落一个便签节点 */
+      /** 松手落在画布视口内：以光标为中心落一个便签节点，并立即进入编辑 */
       const dropOnCanvas = (ev) => {
         if (!isInsideViewport(ev.clientX, ev.clientY, viewportRef.current)) return
         const world = screenToWorld(ev.clientX, ev.clientY)
-        addNode(world.x - NOTE_W / 2, world.y - NOTE_H / 2, NOTE_DEFAULT_TEXT, noteKind(styleId))
+        const id = addNode(world.x - NOTE_W / 2, world.y - NOTE_H / 2, NOTE_DEFAULT_TEXT, noteKind(styleId))
+        onNoteCreated?.(id)
       }
 
       const onMove = (ev) => {
@@ -84,11 +85,7 @@ export function useNoteDragCreate({ viewportRef, screenToWorld, addNode }) {
 
       const onUp = (ev) => {
         finish()
-        // 普通点击：交回按钮 / 缩略图自己的点击语义
-        if (!dragging) {
-          onClick?.()
-          return
-        }
+        if (!dragging) return onClick?.() // 普通点击：交回按钮 / 缩略图自己的点击语义
         setGhost(null)
         dropOnCanvas(ev)
       }
@@ -102,7 +99,7 @@ export function useNoteDragCreate({ viewportRef, screenToWorld, addNode }) {
       window.addEventListener('pointerup', onUp)
       window.addEventListener('pointercancel', onCancel)
     },
-    [addNode, screenToWorld, viewportRef],
+    [addNode, onNoteCreated, screenToWorld, viewportRef],
   )
 
   return { ghost, press, wasDragRef }

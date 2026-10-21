@@ -10,7 +10,7 @@
    ============================================================ */
 
 import { buildCanvas } from '../constants/tasks'
-import { isNoteKind } from '../constants/noteStyles'
+import { isNoteKind, LEGACY_NOTE_DEFAULT_TEXT } from '../constants/noteStyles'
 import {
   TABLE_CELL_H,
   TABLE_CELL_W,
@@ -64,11 +64,10 @@ function normalizeNode(raw) {
   if (!raw || typeof raw.id !== 'string') return null
   if (![raw.x, raw.y, raw.w, raw.h].every(isNum)) return null
   // kind 白名单：合法便签（note-<样式id>）原样保留，其余只认 accent / muted
-  const kind = isNoteKind(raw.kind)
-    ? raw.kind
-    : raw.kind === 'accent'
-      ? 'accent'
-      : 'muted'
+  const isNote = isNoteKind(raw.kind)
+  const kind = isNote ? raw.kind : raw.kind === 'accent' ? 'accent' : 'muted'
+  // 旧版便签的默认文案「便签」迁移为空：与新建便签一致，显示占位符
+  const text = typeof raw.text === 'string' ? raw.text : ''
   return {
     id: raw.id,
     x: raw.x,
@@ -76,7 +75,7 @@ function normalizeNode(raw) {
     w: Math.max(40, raw.w),
     h: Math.max(24, raw.h),
     kind,
-    text: typeof raw.text === 'string' ? raw.text : '',
+    text: isNote && text === LEGACY_NOTE_DEFAULT_TEXT ? '' : text,
   }
 }
 

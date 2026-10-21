@@ -26,6 +26,9 @@ export const NOTE_STYLES = [
 
 export const DEFAULT_NOTE_STYLE_ID = NOTE_STYLES[0].id
 
+/** 旧版本便签的默认文案：历史存档里的该文本按「空内容」迁移（显示占位符） */
+export const LEGACY_NOTE_DEFAULT_TEXT = '便签'
+
 const NOTE_STYLE_ID_SET = new Set(NOTE_STYLES.map((s) => s.id))
 
 /** 面板样式 id → 画布节点 kind */

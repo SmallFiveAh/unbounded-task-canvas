@@ -8,7 +8,7 @@
 
 import { useCallback, useState } from 'react'
 import { NOTE_H, NOTE_W, NODE_H, NODE_W } from '../lib/constants'
-import { noteStyleIdFromKind } from '../../../constants/noteStyles'
+import { isNoteKind, noteStyleIdFromKind } from '../../../constants/noteStyles'
 
 /**
  * @param {object} params
@@ -62,11 +62,17 @@ export function useCanvasNodes({
     [onElementRemoved],
   )
 
-  // 提交节点文案：空白内容视为「不改」，保留原文字
+  // 提交节点文案：便签允许清空（空内容落库，画布显示占位符）；
+  // 普通节点没有占位符，空白仍视为「不改」保留原文字
   const commitNodeText = useCallback((id, raw) => {
     const text = raw.trim()
-    if (!text) return
-    setNodes((ns) => ns.map((n) => (n.id === id ? { ...n, text } : n)))
+    setNodes((ns) =>
+      ns.map((n) => {
+        if (n.id !== id) return n
+        if (!text && !isNoteKind(n.kind)) return n
+        return { ...n, text }
+      }),
+    )
   }, [])
 
   return { nodes, setNodes, addNode, addNodeAtCenter, removeNode, commitNodeText }

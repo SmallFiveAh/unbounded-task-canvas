@@ -3,7 +3,7 @@ import PropTypes from 'prop-types'
 import { noteStyleIdFromKind } from '../../../../constants/noteStyles'
 import visualStyles from '../../../../components/NoteStyles/NoteStyles.module.css'
 import { cornerRadius } from '../../../../utils/canvasRadius'
-import { NODE_RADIUS } from '../../lib/constants'
+import { NODE_RADIUS, NOTE_PLACEHOLDER } from '../../lib/constants'
 import styles from './CanvasNodeLayer.module.css'
 
 /**
@@ -30,13 +30,16 @@ function CanvasNodeItem({
 }) {
   // 便签节点：kind 形如 note-<样式id>，额外挂上共享视觉类
   // （纸张底色 / 墨色 / 装饰由 NoteStyles.module.css 统一供给）
+  const isNote = noteStyleIdFromKind(node.kind) !== null
   const noteVisual = visualStyles[noteStyleIdFromKind(node.kind) || '']
+  // 空内容便签显示占位文案（仅展示，不写入数据）
+  const showPlaceholder = isNote && !node.text
   return (
     <div
       data-node-id={node.id}
       className={`${styles.node} ${styles[node.kind] || ''}${
         noteVisual ? ` ${noteVisual}` : ''
-      }${selected ? ` ${styles.selected}` : ''}${primary ? ` ${styles.primary}` : ''}`}
+      }${isNote ? ` ${styles.noteNode}` : ''}${selected ? ` ${styles.selected}` : ''}${primary ? ` ${styles.primary}` : ''}`}
       style={{
         // 用 transform 定位而不是 left/top：拖拽每帧只动 x/y，
         // transform 走合成器，跳过整层 reflow + 重绘（box-shadow 很贵）
@@ -58,6 +61,7 @@ function CanvasNodeItem({
         <textarea
           className={styles.nodeInput}
           value={draft}
+          placeholder={isNote ? NOTE_PLACEHOLDER : undefined}
           autoFocus
           rows={2}
           onChange={(e) => onDraftChange(e.target.value)}
@@ -75,7 +79,13 @@ function CanvasNodeItem({
           }}
         />
       ) : (
-        <span className={styles.nodeText}>{node.text}</span>
+        <span
+          className={`${styles.nodeText}${
+            showPlaceholder ? ` ${styles.nodeTextPlaceholder}` : ''
+          }`}
+        >
+          {showPlaceholder ? NOTE_PLACEHOLDER : node.text}
+        </span>
       )}
     </div>
   )

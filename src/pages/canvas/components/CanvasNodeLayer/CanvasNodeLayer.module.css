@@ -79,6 +79,13 @@
   z-index: 3;
 }
 
+/* 便签节点专属：内边距收紧到 2px，内容贴纸张左上角
+   （声明顺序在 .node 之后，同优先级下后到者胜） */
+.noteNode {
+  padding: 2px;
+  align-items: flex-start;
+}
+
 .nodeText {
   /* 抬到便签纸张装饰层（伪元素）之上，保证文字可读 */
   position: relative;
@@ -98,6 +105,11 @@
 .accent .nodeText {
   color: var(--color-accent-ink);
   font-weight: 600;
+}
+
+/* 空便签的占位文案：半透明弱化，提示可输入但不与真实内容混淆 */
+.nodeTextPlaceholder {
+  opacity: 0.45;
 }
 
 .nodeInput {
