@@ -158,8 +158,8 @@ function CanvasTable({
       tabIndex={-1}
       className={`${styles.table}${selected ? ` ${styles.selected}` : ''}`}
       style={{
-        left: table.x,
-        top: table.y,
+        // transform 定位（同节点层）：拖动表格每帧走合成器，不触发 reflow
+        transform: `translate3d(${table.x}px, ${table.y}px, 0)`,
         width: size.w,
         // 圆角随缩放补偿（缩小时仍看得出圆角，放大时不额外变圆）
         borderRadius: cornerRadius(5, size.w, size.h, scale),

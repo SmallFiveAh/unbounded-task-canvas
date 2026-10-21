@@ -52,7 +52,13 @@ function SelectionFrame({
   return (
     <div
       className={styles.frame}
-      style={{ left, top, width, height, borderRadius: radius }}
+      style={{
+        // transform 定位：拖拽/缩放时随元素同帧移动，走合成器不触发 reflow
+        transform: `translate3d(${left}px, ${top}px, 0)`,
+        width,
+        height,
+        borderRadius: radius,
+      }}
       aria-hidden="true"
     >
       {showLinkStrips &&

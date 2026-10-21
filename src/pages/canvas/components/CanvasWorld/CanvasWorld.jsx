@@ -44,8 +44,6 @@ function CanvasWorld({
         draft={draft}
         scale={scale}
         onNodePointerDown={drag.onNodePointerDown}
-        onNodePointerMove={drag.onNodePointerMove}
-        onNodePointerUp={drag.onNodePointerUp}
         onStartEdit={selection.startEditNode}
         onDraftChange={selection.setDraft}
         onCommitEdit={commitNodeEdit}
@@ -60,8 +58,6 @@ function CanvasWorld({
           selected={table.id === selectedId || selectedIds.includes(table.id)}
           primary={table.id === selectedId}
           onPointerDown={drag.onTablePointerDown}
-          onPointerMove={drag.onTablePointerMove}
-          onPointerUp={drag.onTablePointerUp}
           onActivate={selection.selectOnly}
           onCellChange={doc.updateTableCell}
           onClearCells={doc.clearTableCells}

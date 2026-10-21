@@ -36,6 +36,9 @@
    所以画布缩放到 500% 时线宽依然是 1px，不会变粗。 */
 .node {
   position: absolute;
+  /* 定位交给内联 transform（translate3d）：拖拽每帧走合成器，不触发 reflow */
+  left: 0;
+  top: 0;
   display: flex;
   align-items: center;
   padding: var(--space-3);

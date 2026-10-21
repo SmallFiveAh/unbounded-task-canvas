@@ -12,6 +12,9 @@
    那是内容结构（行列闭合），不是选中态的边框。 */
 .table {
   position: absolute;
+  /* 定位交给内联 transform（translate3d），这里锚定原点 */
+  left: 0;
+  top: 0;
   background: var(--color-surface);
   border-radius: 5px;
   overflow: hidden;

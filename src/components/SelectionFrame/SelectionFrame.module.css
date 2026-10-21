@@ -6,6 +6,9 @@
 
 .frame {
   position: absolute;
+  /* 定位交给内联 transform（translate3d），这里锚定原点 */
+  left: 0;
+  top: 0;
   z-index: 6;
   box-sizing: border-box;
   border: 1px solid var(--color-accent);

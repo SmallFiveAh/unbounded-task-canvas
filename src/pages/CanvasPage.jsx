@@ -1,4 +1,4 @@
-import { useMemo } from 'react'
+import { useCallback, useMemo } from 'react'
 import PropTypes from 'prop-types'
 import InsertTablePanel from '../components/InsertTablePanel/InsertTablePanel'
 import { TASKS } from '../constants/tasks'
@@ -94,11 +94,13 @@ export default function CanvasPage({ taskId }) {
 
   /* ---------- 节点编辑 ---------- */
 
-  // 节点文案落库：空白内容视为「不改」，只退出编辑态
-  const commitNodeEdit = () => {
+  // 节点文案落库：空白内容视为「不改」，只退出编辑态。
+  // useCallback 固定身份：它是每个 memo 化节点子组件的 prop，
+  // 每帧换新引用会把 memo 浅比较打穿（拖拽期间全量重渲染）
+  const commitNodeEdit = useCallback(() => {
     doc.commitNodeText(selection.editingId, selection.draft)
     selection.stopEditing()
-  }
+  }, [doc.commitNodeText, selection.editingId, selection.draft, selection.stopEditing])
 
   /* ---------- 派生视图数据 ---------- */
 
