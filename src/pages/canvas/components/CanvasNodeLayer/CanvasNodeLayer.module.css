@@ -104,6 +104,9 @@
   color: var(--note-ink, var(--color-text));
   word-break: break-word;
   overflow-wrap: anywhere;
+  /* 与编辑态 textarea 的默认 white-space 保持一致：
+     保留换行符与连续空格，两态切换时行数/行高不变，文本不跳动 */
+  white-space: pre-wrap;
   /* 节点高度由用户拖动控制点决定：文字超出就裁掉，不撑破卡片 */
   max-height: 100%;
   overflow: hidden;
@@ -122,8 +125,13 @@
 .nodeInput {
   position: relative;
   z-index: 1; /* 抬到便签纸张装饰层之上 */
+  /* 完全填满节点内容区：与显示态 span 共用同一容器尺寸，
+     进入/退出编辑时节点盒子与文字位置零偏移（不随内容增高/回弹） */
   width: 100%;
-  max-height: 100%;
+  height: 100%;
+  box-sizing: border-box;
+  /* 重置 textarea 默认 padding（约 2px），与显示态 span 的内容起点对齐 */
+  padding: 0;
   overflow-y: auto;
   border: none;
   outline: none;
@@ -139,5 +147,15 @@
   color: var(--note-ink, var(--color-text));
   cursor: text;
   user-select: text;
-  field-sizing: content;
+}
+
+/* accent 节点编辑态：与显示态 .accent .nodeText 的字色/字重保持一致 */
+.accent .nodeInput {
+  color: var(--color-accent-ink);
+  font-weight: 600;
+}
+
+/* 编辑态空内容占位：与显示态 .nodeTextPlaceholder 同样的弱化程度 */
+.nodeInput::placeholder {
+  opacity: 0.45;
 }
