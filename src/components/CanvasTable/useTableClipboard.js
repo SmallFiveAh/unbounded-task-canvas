@@ -1,15 +1,18 @@
 /* ============================================================
-   表格剪贴板交互 —— 复制 / 剪切 / 粘贴 + 轻提示
+   表格剪贴板交互 —— 复制 / 剪切 / 粘贴 + 反馈动效
    ------------------------------------------------------------
    两条粘贴通道，靠「时间戳 + 事件序号」去重：
    · paste 事件：能同步拿到 clipboardData，是主通道
    · Ctrl+V 的 keydown 兜底：少数环境下 paste 事件不派发，改用异步 API
-   复制 / 粘贴成功后，在选区右下角内侧弹一个 1.2 秒的轻提示。
+   反馈形态（见 constants.js 的 FLASH_KIND）：
+   · 复制 / 剪切：选区四周一圈流动虚线「蚂蚁线」，常驻不消失
+   · 粘贴：选区右下角内侧的文本轻提示，1.2 秒后消失
    ============================================================ */
 
 import { useEffect, useRef, useState } from 'react'
 import { CLIP_COL_SEP, CLIP_ROW_SEP, parseClipText, writeClipText } from './tableClipboard'
 import { keyToCoord, rectKeys, selectionBox } from './tableGeometry'
+import { FLASH_DURATION_MS, FLASH_KIND } from './constants'
 
 export function useTableClipboard({
   table,
@@ -26,16 +29,27 @@ export function useTableClipboard({
   const lastPasteAtRef = useRef(0) // 上次真正落地粘贴的时间，防止双通道重复粘贴
   const flashTimerRef = useRef(null)
 
-  const [flash, setFlash] = useState(null) // { text, r1, r2, c1, c2 } 复制 / 粘贴后的轻提示
+  const [flash, setFlash] = useState(null) // { kind, text?, r1, r2, c1, c2 } 复制动效 / 粘贴轻提示
 
-  // 短暂提示（复制成功 / 粘贴了几行几列）—— 1.2 秒后自动消失
+  // 粘贴成功提示（几行几列）—— 1.2 秒后自动消失
   const showFlash = (text, box) => {
-    setFlash({ text, ...box })
+    setFlash({ kind: FLASH_KIND.PASTE, text, ...box })
     if (flashTimerRef.current) clearTimeout(flashTimerRef.current)
     flashTimerRef.current = setTimeout(() => {
       flashTimerRef.current = null
       setFlash(null)
-    }, 1200)
+    }, FLASH_DURATION_MS)
+  }
+
+  // 复制 / 剪切成功：在选区四周亮起流动虚线框。
+  // 不自动消失 —— 一直亮到下一次粘贴（被文字提示替换）或表格取消选中（clearFlash）。
+  // 顺带清掉可能挂着的粘贴提示定时器，防止它误把常驻的虚线框清掉。
+  const showCopyBox = (kind, box) => {
+    if (flashTimerRef.current) {
+      clearTimeout(flashTimerRef.current)
+      flashTimerRef.current = null
+    }
+    setFlash({ kind, ...box })
   }
 
   useEffect(
@@ -63,7 +77,7 @@ export function useTableClipboard({
     wrapRef.current?.focus({ preventScroll: true })
     if (!ok) return
 
-    showFlash(cut ? '已剪切' : '已复制', box)
+    showCopyBox(cut ? FLASH_KIND.CUT : FLASH_KIND.COPY, box)
     if (cut) onClearCells?.(table.id, [...selection].map(keyToCoord))
   }
 

@@ -36,9 +36,9 @@ import styles from './CanvasTable.module.css'
  * - useTablePointer      单击多选 / 拖拽框选 / 双击判定
  * - useTableKeyboard     窗口捕获阶段的键盘操作
  * - useTablePaste        window paste 监听
- * - useTableClipboard    复制 / 剪切 / 粘贴 + 轻提示
+ * - useTableClipboard    复制 / 剪切 / 粘贴 + 反馈动效
  * - TableGrid.jsx        网格与单元格渲染
- * - TableFlash.jsx       复制 / 粘贴后的轻提示
+ * - TableFlash.jsx       复制/剪切的蚂蚁线虚线框 + 粘贴轻提示
  */
 function CanvasTable({
   table,
