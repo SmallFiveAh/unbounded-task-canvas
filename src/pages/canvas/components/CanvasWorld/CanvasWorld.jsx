@@ -48,6 +48,7 @@ function CanvasWorld({
         onDraftChange={selection.setDraft}
         onCommitEdit={commitNodeEdit}
         onCancelEdit={selection.stopEditing}
+        onNodeSizeChange={doc.updateNodeSize}
       />
 
       {/* 表格层（Excel 风格） */}

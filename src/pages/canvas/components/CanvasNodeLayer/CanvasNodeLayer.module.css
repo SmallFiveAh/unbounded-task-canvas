@@ -79,11 +79,12 @@
   z-index: 3;
 }
 
-/* 便签节点专属：内边距收紧到 2px，内容贴纸张左上角
-   （声明顺序在 .node 之后，同优先级下后到者胜） */
+/* 便签节点专属：内边距收紧到 2px，内容贴纸张左上角。
+   高度随内容自适应（内联 height:auto）：不裁剪、不滚动、不溢出隐藏 */
 .noteNode {
   padding: 2px;
   align-items: flex-start;
+  overflow: visible;
 }
 
 /* 带边框式纸张装饰的便签（小黑板粉笔框等，见 NoteStyles.module.css）：
@@ -165,6 +166,27 @@
   overflow: auto;
   cursor: text;
   user-select: text;
+}
+
+/* 便签展示态：高度由内容决定（节点容器 height:auto），
+   文字完整可见，不裁剪不滚动；普通节点仍保持 height:100% 裁剪策略。
+   两端对齐：中文逐字换行后每行右侧的剩余空隙不再裸露，
+   左右留白恒等于节点内边距，两侧视觉一致 */
+.noteNode .nodeText {
+  height: auto;
+  overflow: visible;
+  text-align: justify;
+}
+
+/* 便签编辑态：textarea 由 JS 依 scrollHeight 自动增高
+   （见 CanvasNodeItem），关掉滚动条与裁剪，
+   输入 / 粘贴多行时整张便签实时撑开；
+   text-align 与展示态同步 justify，两态换行点一致 */
+.noteNode .nodeInput {
+  height: auto;
+  min-height: 100%;
+  overflow: hidden;
+  text-align: justify;
 }
 
 /* accent 节点编辑态：与显示态 .accent .nodeText 的字色/字重保持一致 */

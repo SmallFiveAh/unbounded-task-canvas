@@ -26,6 +26,7 @@ function CanvasNodeLayer({
   onDraftChange,
   onCommitEdit,
   onCancelEdit,
+  onNodeSizeChange,
 }) {
   return (
     <>
@@ -87,6 +88,7 @@ function CanvasNodeLayer({
           onDraftChange={onDraftChange}
           onCommitEdit={onCommitEdit}
           onCancelEdit={onCancelEdit}
+          onNodeSizeChange={onNodeSizeChange}
         />
       ))}
     </>
@@ -122,6 +124,7 @@ CanvasNodeLayer.propTypes = {
   onDraftChange: PropTypes.func.isRequired,
   onCommitEdit: PropTypes.func.isRequired,
   onCancelEdit: PropTypes.func.isRequired,
+  onNodeSizeChange: PropTypes.func.isRequired,
 }
 
 export default memo(CanvasNodeLayer)

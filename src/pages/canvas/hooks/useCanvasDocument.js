@@ -91,6 +91,7 @@ export function useCanvasDocument({
     addNodeAtCenter: nodeApi.addNodeAtCenter,
     removeNode: nodeApi.removeNode,
     commitNodeText: nodeApi.commitNodeText,
+    updateNodeSize: nodeApi.updateNodeSize,
     addEdge,
     addTable: tableApi.addTable,
     removeTable: tableApi.removeTable,

@@ -1,4 +1,4 @@
-import { memo } from 'react'
+import { memo, useEffect, useRef } from 'react'
 import PropTypes from 'prop-types'
 import { noteStyleIdFromKind, NOTE_BORDERED_STYLE_IDS } from '../../../../constants/noteStyles'
 import visualStyles from '../../../../components/NoteStyles/NoteStyles.module.css'
@@ -27,6 +27,7 @@ function CanvasNodeItem({
   onDraftChange,
   onCommitEdit,
   onCancelEdit,
+  onNodeSizeChange,
 }) {
   // 便签节点：kind 形如 note-<样式id>，额外挂上共享视觉类
   // （纸张底色 / 墨色 / 装饰由 NoteStyles.module.css 统一供给）
@@ -38,8 +39,48 @@ function CanvasNodeItem({
   const hasBorderDecor = NOTE_BORDERED_STYLE_IDS.has(noteStyleId)
   // 空内容便签显示占位文案（仅展示，不写入数据）
   const showPlaceholder = isNote && !node.text
+
+  // 便签高度自适应：节点容器 height:auto，由内容撑开；
+  // ResizeObserver 把实测高度回写 store（node.h 是连线锚点 /
+  // 选中框 / 缩略图的几何来源），实测与已落库值一致时不触发更新，
+  // 避免「测量 → 回写 → 再测量」的抖动循环
+  const nodeRef = useRef(null)
+  // node.h 经 ref 读取：effect 只依赖节点身份，打字引起的高度变化
+  // 全部走测量回调，不重建 ResizeObserver
+  const nodeHRef = useRef(node.h)
+  useEffect(() => {
+    nodeHRef.current = node.h
+  }, [node.h])
+
+  useEffect(() => {
+    if (!isNote) return undefined
+    const el = nodeRef.current
+    if (!el) return undefined
+    const syncHeight = () => {
+      // 取整比较：亚像素差异（缩放、字体度量）不落库，防止高频抖动
+      const measured = Math.ceil(el.offsetHeight)
+      if (Math.abs(measured - nodeHRef.current) >= 1) {
+        onNodeSizeChange(node.id, { h: measured })
+      }
+    }
+    const observer = new ResizeObserver(syncHeight)
+    observer.observe(el)
+    return () => observer.disconnect()
+  }, [isNote, node.id, onNodeSizeChange])
+
+  // 编辑态 textarea 自动增高：height:auto 后由 scrollHeight 决定实际高度，
+  // 与展示态 span 的换行行为一致（排版属性两态共用一套，见 module.css 注释）
+  const inputRef = useRef(null)
+  useEffect(() => {
+    if (!isNote || !editing) return
+    const el = inputRef.current
+    if (!el) return
+    el.style.height = 'auto'
+    el.style.height = `${el.scrollHeight}px`
+  }, [isNote, editing, draft])
   return (
     <div
+      ref={nodeRef}
       data-node-id={node.id}
       className={`${styles.node} ${styles[node.kind] || ''}${
         noteVisual ? ` ${noteVisual}` : ''
@@ -51,7 +92,10 @@ function CanvasNodeItem({
         // transform 走合成器，跳过整层 reflow + 重绘（box-shadow 很贵）
         transform: `translate3d(${node.x}px, ${node.y}px, 0)`,
         width: node.w,
-        height: node.h,
+        // 便签：高度交给内容撑开（minHeight 兜住用户手动拉大的下限）；
+        // 普通节点：仍由 store 的固定 h 决定
+        height: isNote ? 'auto' : node.h,
+        minHeight: isNote ? node.h : undefined,
         // 圆角随缩放补偿：缩小时至少保留 3.5 个屏幕像素，避免「看起来是直角」
         borderRadius: cornerRadius(NODE_RADIUS, node.w, node.h, scale),
       }}
@@ -65,6 +109,7 @@ function CanvasNodeItem({
     >
       {editing ? (
         <textarea
+          ref={inputRef}
           className={styles.nodeInput}
           value={draft}
           placeholder={isNote ? NOTE_PLACEHOLDER : undefined}
@@ -117,6 +162,7 @@ CanvasNodeItem.propTypes = {
   onDraftChange: PropTypes.func.isRequired,
   onCommitEdit: PropTypes.func.isRequired,
   onCancelEdit: PropTypes.func.isRequired,
+  onNodeSizeChange: PropTypes.func.isRequired,
 }
 
 export default memo(CanvasNodeItem)

@@ -62,6 +62,12 @@ export function useCanvasNodes({
     [onElementRemoved],
   )
 
+  // 便签内容自适应：实测高度回写节点数据（宽高是连线锚点 / 选中框 /
+  // 缩略图的几何来源，必须同步落库，否则画布元素会与新盒子错位）
+  const updateNodeSize = useCallback((id, patch) => {
+    setNodes((ns) => ns.map((n) => (n.id === id ? { ...n, ...patch } : n)))
+  }, [])
+
   // 提交节点文案：便签允许清空（空内容落库，画布显示占位符）；
   // 普通节点没有占位符，空白仍视为「不改」保留原文字
   const commitNodeText = useCallback((id, raw) => {
@@ -75,5 +81,5 @@ export function useCanvasNodes({
     )
   }, [])
 
-  return { nodes, setNodes, addNode, addNodeAtCenter, removeNode, commitNodeText }
+  return { nodes, setNodes, addNode, addNodeAtCenter, removeNode, commitNodeText, updateNodeSize }
 }
