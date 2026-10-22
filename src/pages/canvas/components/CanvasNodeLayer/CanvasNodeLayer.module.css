@@ -93,22 +93,40 @@
   padding: 8px;
 }
 
+/* ---------- 文本（显示态 / 编辑态共用一套排版基线） ----------
+   两态的文字排版必须逐项显式声明、不依赖继承：
+   textarea 不继承父级 letter-spacing（默认 normal），且自带隐式边框，
+   若只写「看起来一样」的字号行高，行内可容纳字符数会差一个字，
+   切换编辑时换行点与整段文本位置都会跳。
+   修改任何一项时，两处必须同步改。 */
+.nodeText,
+.nodeInput {
+  font-family: var(--font-body);
+  font-size: var(--text-sm);
+  font-weight: 500;
+  font-style: normal;
+  line-height: 1.45;
+  /* 与 html 的 0.02em 保持一致：textarea 不会继承这个值 */
+  letter-spacing: 0.02em;
+  word-spacing: normal;
+  text-align: start;
+  text-transform: none;
+  text-indent: 0;
+  /* 两态同一套换行/空白策略：保留手动换行与连续空格 */
+  white-space: pre-wrap;
+  overflow-wrap: break-word;
+  word-break: normal;
+  tab-size: 4;
+  color: var(--note-ink, var(--color-text));
+}
+
 .nodeText {
   /* 抬到便签纸张装饰层（伪元素）之上，保证文字可读 */
   position: relative;
   z-index: 1;
-  font-size: var(--text-sm);
-  font-weight: 500;
-  line-height: 1.45;
-  /* 便签节点用注入的墨色，普通节点回退全局文字色 */
-  color: var(--note-ink, var(--color-text));
-  word-break: break-word;
-  overflow-wrap: anywhere;
-  /* 与编辑态 textarea 的默认 white-space 保持一致：
-     保留换行符与连续空格，两态切换时行数/行高不变，文本不跳动 */
-  white-space: pre-wrap;
+  display: block;
   /* 节点高度由用户拖动控制点决定：文字超出就裁掉，不撑破卡片 */
-  max-height: 100%;
+  height: 100%;
   overflow: hidden;
 }
 
@@ -125,26 +143,26 @@
 .nodeInput {
   position: relative;
   z-index: 1; /* 抬到便签纸张装饰层之上 */
+  /* 排版属性见上方 .nodeText / .nodeInput 共用块 */
   /* 完全填满节点内容区：与显示态 span 共用同一容器尺寸，
      进入/退出编辑时节点盒子与文字位置零偏移（不随内容增高/回弹） */
+  display: block;
   width: 100%;
   height: 100%;
   box-sizing: border-box;
-  /* 重置 textarea 默认 padding（约 2px），与显示态 span 的内容起点对齐 */
+  margin: 0;
+  /* padding / border 必须显式归零：textarea 的隐式 1px 边框会占掉内容区，
+     与显示态比可用宽度少 2px，长文本会因此提前换行 */
   padding: 0;
-  overflow-y: auto;
-  border: none;
+  border: 0;
   outline: none;
   resize: none;
   /* 编辑态输入框强制直角：仅作用于 textarea 自身，
      外层节点容器圆角不受影响；无 hover/focus 圆角规则可覆盖 */
   border-radius: 0;
   background: transparent;
-  font: inherit;
-  font-size: var(--text-sm);
-  font-weight: 500;
-  line-height: 1.45;
-  color: var(--note-ink, var(--color-text));
+  /* overflow 用 auto：内容超高时允许滚动查看，不放大盒子 */
+  overflow: auto;
   cursor: text;
   user-select: text;
 }
