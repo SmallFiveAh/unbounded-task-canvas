@@ -128,6 +128,9 @@
   border: none;
   outline: none;
   resize: none;
+  /* 编辑态输入框强制直角：仅作用于 textarea 自身，
+     外层节点容器圆角不受影响；无 hover/focus 圆角规则可覆盖 */
+  border-radius: 0;
   background: transparent;
   font: inherit;
   font-size: var(--text-sm);
