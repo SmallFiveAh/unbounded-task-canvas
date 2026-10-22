@@ -66,6 +66,14 @@ export function useCanvasTables({
     [onElementRemoved],
   )
 
+  // 批量删除（框选后按 Delete）：与 removeNodes 对称，一次 setState 删掉整批；
+  // 连线清理与选中态收口交给 useCanvasDocument / 上层
+  const removeTables = useCallback((ids) => {
+    const removed = new Set(ids)
+    if (!removed.size) return
+    setTables((ts) => ts.filter((t) => !removed.has(t.id)))
+  }, [])
+
   const updateTableCell = useCallback((tableId, r, c, value) => {
     setTables((ts) =>
       ts.map((t) =>
@@ -103,5 +111,14 @@ export function useCanvasTables({
     )
   }, [])
 
-  return { tables, setTables, addTable, removeTable, updateTableCell, clearTableCells, pasteTableCells }
+  return {
+    tables,
+    setTables,
+    addTable,
+    removeTable,
+    removeTables,
+    updateTableCell,
+    clearTableCells,
+    pasteTableCells,
+  }
 }

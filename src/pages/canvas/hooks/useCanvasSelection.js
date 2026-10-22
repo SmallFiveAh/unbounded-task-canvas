@@ -47,6 +47,16 @@ export function useCanvasSelection() {
     setSelectedId(null)
   }, [])
 
+  // 批量删除（框选后按 Delete）：把被删的元素一次性从选区里摘掉；
+  // 主选中 / 编辑态若正好指向其中某个，也一并清空（用函数式更新避开闭包旧值）
+  const removeElementsFromSelection = useCallback((ids) => {
+    const removed = new Set(ids)
+    if (!removed.size) return
+    setSelectedIds((list) => list.filter((id) => !removed.has(id)))
+    setSelectedId((id) => (id && removed.has(id) ? null : id))
+    setEditingId((id) => (id && removed.has(id) ? null : id))
+  }, [])
+
   // 双击节点进入编辑：选中它，并把原文字放进草稿
   const startEditNode = useCallback((node) => {
     setSelectedIds([node.id])
@@ -72,6 +82,7 @@ export function useCanvasSelection() {
     clearSelection,
     removeNodeFromSelection,
     removeTableFromSelection,
+    removeElementsFromSelection,
     startEditNode,
   }
 }

@@ -34,7 +34,8 @@ import styles from './CanvasPage.module.css'
  *
  * 行为约定（与拆分前一致）：
  * - 拖拽空白处平移，滚轮平移；激活「鼠标滚轮」按钮后滚轮缩放（每次 5%，光标为中心）
- * - Ctrl/⌘ + 滚轮也可缩放；双击空白添加节点，节点可拖拽、双击编辑、Delete 删除
+ * - Ctrl/⌘ + 滚轮也可缩放；双击空白添加节点，节点可拖拽、双击编辑
+ * - Delete 删除整个选区：框选多个元素（节点 + 表格）后一次全部删除
  * - 选中后出现 1px 橙色选中框 + 四角控制点，四边可拉出连线（贝塞尔 + 实心箭头）
  * - 内容与视图都持久化到 localStorage；任务列表缩略图实时同步结构
  */
@@ -61,12 +62,13 @@ export default function CanvasPage({ taskId }) {
     onSelect: selection.selectOnly,
     onNodeRemoved: selection.removeNodeFromSelection,
     onTableRemoved: selection.removeTableFromSelection,
+    onElementsRemoved: selection.removeElementsFromSelection,
   })
 
+  // Delete 删除的是整个选区（selectedIds）：框选多个元素后一次删干净
   const { spaceDown } = useCanvasKeyboard({
-    selectedId: selection.selectedId,
-    removeNode: doc.removeNode,
-    removeTable: doc.removeTable,
+    selectedIds: selection.selectedIds,
+    removeElements: doc.removeElements,
     clearSelection: selection.clearSelection,
   })
 

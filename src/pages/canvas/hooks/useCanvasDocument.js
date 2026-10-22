@@ -7,7 +7,8 @@
    · useCanvasTables 表格（addTable / updateTableCell / pasteTableCells …）
    所有写操作都以「不可变更新」产出新数组，方便持久化 effect 用
    引用比较判断「是否变化」。选中态不在这里：通过 onSelect /
-   onNodeRemoved / onTableRemoved 回调交给 useCanvasSelection。
+   onNodeRemoved / onTableRemoved / onElementsRemoved 回调交给
+   useCanvasSelection（后者用于框选后的批量删除）。
 
    对外返回与拆分前完全一致的对象，CanvasPage 的调用方式不变。
    ============================================================ */
@@ -23,6 +24,7 @@ export function useCanvasDocument({
   onSelect,
   onNodeRemoved,
   onTableRemoved,
+  onElementsRemoved,
 }) {
   const idSeq = useRef(0)
 
@@ -80,6 +82,24 @@ export function useCanvasDocument({
     screenToWorld,
   })
 
+  // 批量删除（框选后按 Delete）：框选里可能节点与表格混在一起，
+  // 这里不猜 id 前缀，而是让两个集合各过滤一遍 —— 一次事件内完成全部删除。
+  // 关联连线一把摘掉；选中态交给上层（onElementsRemoved）统一收口，
+  // 不再逐个 id 触发 onNodeRemoved / onTableRemoved（那会把主选中反复清空）。
+  const { removeNodes } = nodeApi
+  const { removeTables } = tableApi
+  const removeElements = useCallback(
+    (ids) => {
+      const removed = new Set(ids)
+      if (!removed.size) return
+      removeNodes(ids)
+      removeTables(ids)
+      setEdges((es) => es.filter((e) => !removed.has(e.from) && !removed.has(e.to)))
+      onElementsRemoved(ids)
+    },
+    [removeNodes, removeTables, onElementsRemoved],
+  )
+
   return {
     nodes: nodeApi.nodes,
     edges,
@@ -90,6 +110,8 @@ export function useCanvasDocument({
     addNode: nodeApi.addNode,
     addNodeAtCenter: nodeApi.addNodeAtCenter,
     removeNode: nodeApi.removeNode,
+    // 批量删除：一次删掉框选命中的全部节点 + 表格
+    removeElements,
     commitNodeText: nodeApi.commitNodeText,
     updateNodeSize: nodeApi.updateNodeSize,
     addEdge,

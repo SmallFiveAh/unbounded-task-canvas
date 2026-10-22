@@ -62,6 +62,14 @@ export function useCanvasNodes({
     [onElementRemoved],
   )
 
+  // 批量删除（框选后按 Delete）：一次 setState 干掉整批，避免逐个 id 反复渲染。
+  // 连线清理与选中态收口由 useCanvasDocument / 上层统一负责。
+  const removeNodes = useCallback((ids) => {
+    const removed = new Set(ids)
+    if (!removed.size) return
+    setNodes((ns) => ns.filter((n) => !removed.has(n.id)))
+  }, [])
+
   // 便签内容自适应：实测高度回写节点数据（宽高是连线锚点 / 选中框 /
   // 缩略图的几何来源，必须同步落库，否则画布元素会与新盒子错位）
   const updateNodeSize = useCallback((id, patch) => {
@@ -81,5 +89,14 @@ export function useCanvasNodes({
     )
   }, [])
 
-  return { nodes, setNodes, addNode, addNodeAtCenter, removeNode, commitNodeText, updateNodeSize }
+  return {
+    nodes,
+    setNodes,
+    addNode,
+    addNodeAtCenter,
+    removeNode,
+    removeNodes,
+    commitNodeText,
+    updateNodeSize,
+  }
 }
