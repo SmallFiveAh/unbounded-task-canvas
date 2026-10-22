@@ -107,6 +107,11 @@ CanvasSelectionLayer.propTypes = {
       w: PropTypes.number.isRequired,
       h: PropTypes.number.isRequired,
       baseRadius: PropTypes.number.isRequired,
+      // 便签专用：是否便签 / 内容实测高度
+      isNote: PropTypes.bool,
+      contentH: PropTypes.number,
+      rows: PropTypes.number,
+      cols: PropTypes.number,
     }),
   ).isRequired,
   view: PropTypes.shape({

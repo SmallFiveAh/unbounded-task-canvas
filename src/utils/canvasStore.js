@@ -68,7 +68,7 @@ function normalizeNode(raw) {
   const kind = isNote ? raw.kind : raw.kind === 'accent' ? 'accent' : 'muted'
   // 旧版便签的默认文案「便签」迁移为空：与新建便签一致，显示占位符
   const text = typeof raw.text === 'string' ? raw.text : ''
-  return {
+  const node = {
     id: raw.id,
     x: raw.x,
     y: raw.y,
@@ -77,6 +77,14 @@ function normalizeNode(raw) {
     kind,
     text: isNote && text === LEGACY_NOTE_DEFAULT_TEXT ? '' : text,
   }
+  // 便签的高度有两个来源（见 pages/canvas/lib/noteSize.js）：
+  // minH 是用户设定的下限，contentH 是内容实测高度，必须一起存档 ——
+  // 丢了 minH，刷新后下限会被「已撑开的高度」顶替，便签再也缩不回去
+  if (isNote) {
+    node.minH = isNum(raw.minH) ? Math.max(24, raw.minH) : node.h
+    node.contentH = isNum(raw.contentH) ? Math.max(0, raw.contentH) : 0
+  }
+  return node
 }
 
 /** 连线锚点：端点在元素矩形内的相对位置（∈[0,1]），缺失 / 脏数据按「无锚点」处理 */

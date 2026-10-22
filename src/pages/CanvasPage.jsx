@@ -186,7 +186,9 @@ export default function CanvasPage({ taskId }) {
       />
       <CanvasZoomBadge scale={view.scale} onReset={() => zoomByStep(1 / view.scale)} />
 
-      {/* 无限画布视口 */}
+      {/* 无限画布视口
+          pointercancel 也走 up 收口：指针被系统取消（触摸被接管 / 拖出窗口）时
+          若不收尾，缩放态会一直挂着，便签会持续被「固定边」往上贴，连拖都拖不动 */}
       <div
         ref={viewportRef}
         data-canvas-viewport
@@ -196,6 +198,7 @@ export default function CanvasPage({ taskId }) {
         onPointerDownCapture={commitEditOnPointerDown}
         onPointerMove={pointer.onViewportPointerMove}
         onPointerUp={pointer.onViewportPointerUp}
+        onPointerCancel={pointer.onViewportPointerUp}
         onDoubleClick={pointer.onViewportDoubleClick}
         style={gridBackgroundStyle(view)}
       >

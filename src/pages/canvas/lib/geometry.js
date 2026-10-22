@@ -42,6 +42,20 @@ export function marqueeToWorldRect(mq, bounds, view) {
 }
 
 /**
+ * 缩放时的「对边固定」：已知新宽高，反推左上角。
+ * 从东/南侧拖 → 左上角不动；从西/北侧拖 → 对边贴住原位。
+ * ⚠️ h 必须传「生效高度」（便签会被内容高度夹取），
+ * 传指针位移量会让固定边跟着一起走 —— 那就是缩放漂移。
+ * @param {{x:number, y:number, w:number, h:number}} rect 缩放起始矩形（世界坐标）
+ */
+export function pinOppositeEdge(rect, w, h, fromWest, fromNorth) {
+  return {
+    x: fromWest ? rect.x + rect.w - w : rect.x,
+    y: fromNorth ? rect.y + rect.h - h : rect.y,
+  }
+}
+
+/**
  * 屏幕坐标 → 世界坐标
  * @param {{x:number, y:number, scale:number}} view  当前视口（平移偏移 + 缩放）
  * @param {{left:number, top:number}} bounds        视口在屏幕中的包围盒（getBoundingClientRect）
