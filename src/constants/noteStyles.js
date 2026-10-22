@@ -26,6 +26,13 @@ export const NOTE_STYLES = [
 
 export const DEFAULT_NOTE_STYLE_ID = NOTE_STYLES[0].id
 
+/**
+ * 带边框式纸张装饰的样式 id 集合（装饰画在伪元素边框上，如小黑板的粉笔框）。
+ * 这类样式的内容若贴边会压在装饰边线上，画布节点需额外内边距避让
+ * （见 CanvasNodeLayer.module.css 的 .noteFramed）。
+ */
+export const NOTE_BORDERED_STYLE_IDS = new Set(['slate'])
+
 /** 旧版本便签的默认文案：历史存档里的该文本按「空内容」迁移（显示占位符） */
 export const LEGACY_NOTE_DEFAULT_TEXT = '便签'
 

@@ -1,6 +1,6 @@
 import { memo } from 'react'
 import PropTypes from 'prop-types'
-import { noteStyleIdFromKind } from '../../../../constants/noteStyles'
+import { noteStyleIdFromKind, NOTE_BORDERED_STYLE_IDS } from '../../../../constants/noteStyles'
 import visualStyles from '../../../../components/NoteStyles/NoteStyles.module.css'
 import { cornerRadius } from '../../../../utils/canvasRadius'
 import { NODE_RADIUS, NOTE_PLACEHOLDER } from '../../lib/constants'
@@ -30,8 +30,12 @@ function CanvasNodeItem({
 }) {
   // 便签节点：kind 形如 note-<样式id>，额外挂上共享视觉类
   // （纸张底色 / 墨色 / 装饰由 NoteStyles.module.css 统一供给）
-  const isNote = noteStyleIdFromKind(node.kind) !== null
-  const noteVisual = visualStyles[noteStyleIdFromKind(node.kind) || '']
+  const noteStyleId = noteStyleIdFromKind(node.kind)
+  const isNote = noteStyleId !== null
+  const noteVisual = visualStyles[noteStyleId || '']
+  // 带边框式纸张装饰的便签（小黑板粉笔框等）：
+  // 内容加内边距退到装饰边线内侧，避免文字/占位符压住虚线框
+  const hasBorderDecor = NOTE_BORDERED_STYLE_IDS.has(noteStyleId)
   // 空内容便签显示占位文案（仅展示，不写入数据）
   const showPlaceholder = isNote && !node.text
   return (
@@ -39,7 +43,9 @@ function CanvasNodeItem({
       data-node-id={node.id}
       className={`${styles.node} ${styles[node.kind] || ''}${
         noteVisual ? ` ${noteVisual}` : ''
-      }${isNote ? ` ${styles.noteNode}` : ''}${selected ? ` ${styles.selected}` : ''}${primary ? ` ${styles.primary}` : ''}`}
+      }${isNote ? ` ${styles.noteNode}` : ''}${
+        hasBorderDecor ? ` ${styles.noteFramed}` : ''
+      }${selected ? ` ${styles.selected}` : ''}${primary ? ` ${styles.primary}` : ''}`}
       style={{
         // 用 transform 定位而不是 left/top：拖拽每帧只动 x/y，
         // transform 走合成器，跳过整层 reflow + 重绘（box-shadow 很贵）

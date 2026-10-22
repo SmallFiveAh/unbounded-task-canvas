@@ -7,6 +7,7 @@ import {
 } from '../../pages/canvas/lib/constants'
 import nodeStyles from '../../pages/canvas/components/CanvasNodeLayer/CanvasNodeLayer.module.css'
 import { cornerRadius } from '../../utils/canvasRadius'
+import { NOTE_BORDERED_STYLE_IDS } from '../../constants/noteStyles'
 import visualStyles from '../NoteStyles/NoteStyles.module.css'
 import styles from './NoteDragGhost.module.css'
 
@@ -25,11 +26,13 @@ import styles from './NoteDragGhost.module.css'
  */
 function NoteDragGhost({ ghost, scale }) {
   if (!ghost) return null
+  // 带边框式纸张装饰的便签（小黑板粉笔框等）：与画布节点同样退避到边线内侧
+  const hasBorderDecor = NOTE_BORDERED_STYLE_IDS.has(ghost.styleId)
   return (
     <div
-      className={`${styles.ghost} ${nodeStyles.node} ${nodeStyles.noteNode} ${
-        nodeStyles.selected
-      } ${visualStyles[ghost.styleId] || ''}`}
+      className={`${styles.ghost} ${nodeStyles.node} ${nodeStyles.noteNode}${
+        hasBorderDecor ? ` ${nodeStyles.noteFramed}` : ''
+      } ${nodeStyles.selected} ${visualStyles[ghost.styleId] || ''}`}
       style={{
         position: 'fixed',
         left: ghost.x,

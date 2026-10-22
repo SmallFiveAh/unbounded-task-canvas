@@ -86,6 +86,13 @@
   align-items: flex-start;
 }
 
+/* 带边框式纸张装饰的便签（小黑板粉笔框等，见 NoteStyles.module.css）：
+   装饰伪元素 inset 4px + 1px 边线，内容再留 3px 呼吸空隙，
+   避免文字 / 占位符压在虚线框上（声明顺序在 .noteNode 之后，覆盖其 padding） */
+.noteFramed {
+  padding: 8px;
+}
+
 .nodeText {
   /* 抬到便签纸张装饰层（伪元素）之上，保证文字可读 */
   position: relative;
