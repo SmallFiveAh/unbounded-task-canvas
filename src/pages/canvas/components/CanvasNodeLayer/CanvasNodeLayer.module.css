@@ -40,7 +40,9 @@
   left: 0;
   top: 0;
   display: flex;
-  align-items: center;
+  /* 文本贴盒子左上角（与便签一致的纸张式顶对齐）：
+     短文本停在盒顶，长文本向下撑开容器（height:auto，见 CanvasNodeItem） */
+  align-items: flex-start;
   padding: 5px;
   border: 1px solid transparent;
   border-radius: var(--radius-md);
@@ -79,11 +81,10 @@
   z-index: 3;
 }
 
-/* 便签节点专属：内边距收紧到 2px，内容贴纸张左上角。
+/* 便签节点专属：内边距收紧到 2px（顶对齐 flex-start 已由基础 .node 提供）。
    高度随内容自适应（内联 height:auto）：不裁剪、不滚动、不溢出隐藏 */
 .noteNode {
   padding: 2px;
-  align-items: flex-start;
   overflow: visible;
 }
 
@@ -129,9 +130,11 @@
   position: relative;
   z-index: 1;
   display: block;
-  /* 容器 height:auto（内容自适应，见 CanvasNodeItem），
-     height:100% 在 auto 容器内解析为内容高度：文字撑开盒子而非被裁掉 */
-  height: 100%;
+  /* 高度按内容自适应：不给 100% 填满盒子 —— 填满会让文字从盒顶开始排
+     （视觉上贴左上角），且架空 .node 的 align-items 垂直居中。
+     短文本时由 flex 居中，长文本撑开容器（height:auto，见 CanvasNodeItem），
+     两种情况都与编辑态 textarea 的位置逐像素一致 */
+  height: auto;
   overflow: hidden;
 }
 
@@ -150,12 +153,12 @@
   z-index: 1; /* 抬到便签纸张装饰层之上 */
   /* 排版属性见上方 .nodeText / .nodeInput 共用块 */
   /* 由 JS 依 scrollHeight 自动增高（见 CanvasNodeItem）：
-     height:auto 后实际高度 = 内容高度，min-height:100% 兜住
-     内容比节点下限矮时的场景（不缩破盒子，两态零偏移） */
+     height:auto 后实际高度 = 内容高度。不加 min-height:100% 填满盒子 ——
+     填满会让文字贴盒顶（左上角），与展示态居中位置不一致；
+     内容比下限矮时由 .node 的 align-items 居中，两态零偏移 */
   display: block;
   width: 100%;
   height: auto;
-  min-height: 100%;
   box-sizing: border-box;
   margin: 0;
   /* padding / border 必须显式归零：textarea 的隐式 1px 边框会占掉内容区，
