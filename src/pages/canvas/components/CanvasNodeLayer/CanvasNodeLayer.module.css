@@ -41,7 +41,7 @@
   top: 0;
   display: flex;
   align-items: center;
-  padding: var(--space-3);
+  padding: 5px;
   border: 1px solid transparent;
   border-radius: var(--radius-md);
   /* 便签节点由 NoteStyles 样式类注入 --note-bg 覆写；普通节点走默认面 */
@@ -110,7 +110,10 @@
   /* 与 html 的 0.02em 保持一致：textarea 不会继承这个值 */
   letter-spacing: 0.02em;
   word-spacing: normal;
-  text-align: start;
+  text-align: justify;
+  /* 两端对齐：中文逐字换行后每行右侧的剩余空隙不再裸露，
+     左右留白恒等于节点内边距（2px），两侧视觉一致。
+     注意 justify 不作用于末行/单行 —— 短文本右侧仍会留文字自身的自然空隙 */
   text-transform: none;
   text-indent: 0;
   /* 两态同一套换行/空白策略：保留手动换行与连续空格 */
@@ -162,8 +165,8 @@
      外层节点容器圆角不受影响；无 hover/focus 圆角规则可覆盖 */
   border-radius: 0;
   background: transparent;
-  /* overflow 用 auto：内容超高时允许滚动查看，不放大盒子 */
-  overflow: auto;
+  /* overflow 用 hidden：内容超高直接裁掉，不出滚动条（与展示态裁剪策略一致） */
+  overflow: hidden;
   cursor: text;
   user-select: text;
 }
