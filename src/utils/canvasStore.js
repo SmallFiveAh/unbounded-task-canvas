@@ -77,13 +77,11 @@ function normalizeNode(raw) {
     kind,
     text: isNote && text === LEGACY_NOTE_DEFAULT_TEXT ? '' : text,
   }
-  // 便签的高度有两个来源（见 pages/canvas/lib/noteSize.js）：
+  // 节点高度有两个来源（见 pages/canvas/lib/noteSize.js），全部节点通用：
   // minH 是用户设定的下限，contentH 是内容实测高度，必须一起存档 ——
-  // 丢了 minH，刷新后下限会被「已撑开的高度」顶替，便签再也缩不回去
-  if (isNote) {
-    node.minH = isNum(raw.minH) ? Math.max(24, raw.minH) : node.h
-    node.contentH = isNum(raw.contentH) ? Math.max(0, raw.contentH) : 0
-  }
+  // 丢了 minH，刷新后下限会被「已撑开的高度」顶替，节点再也缩不回去
+  node.minH = isNum(raw.minH) ? Math.max(24, raw.minH) : node.h
+  node.contentH = isNum(raw.contentH) ? Math.max(0, raw.contentH) : 0
   return node
 }
 

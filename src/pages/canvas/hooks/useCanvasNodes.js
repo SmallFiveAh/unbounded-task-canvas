@@ -36,11 +36,9 @@ export function useCanvasNodes({
       const isNote = noteStyleIdFromKind(kind) !== null
       const w = isNote ? NOTE_W : NODE_W
       const h = isNote ? NOTE_H : NODE_H
-      // 便签：h 是测量结果，初始下限取默认尺寸，内容高度待实测
-      // （minH / contentH 的含义见 lib/noteSize.js）
-      const node = isNote
-        ? { id, x, y, w, h, minH: h, contentH: 0, kind, text }
-        : { id, x, y, w, h, kind, text }
+      // 全部节点都走「内容自适应」：h 是测量结果，初始下限取默认尺寸，
+      // 内容高度待实测（minH / contentH 的含义见 lib/noteSize.js）
+      const node = { id, x, y, w, h, minH: h, contentH: 0, kind, text }
       setNodes((ns) => [...ns, node])
       // 选中集合与主选中同步：新节点落地即带选中框
       onSelect(id)
@@ -75,7 +73,7 @@ export function useCanvasNodes({
     setNodes((ns) => ns.filter((n) => !removed.has(n.id)))
   }, [])
 
-  // 便签内容自适应：实测高度回写节点数据（宽高是连线锚点 / 选中框 /
+  // 节点内容自适应：实测高度回写节点数据（宽高是连线锚点 / 选中框 /
   // 缩略图的几何来源，必须同步落库，否则画布元素会与新盒子错位）。
   // 回写的是 h（实测盒高）与 contentH（内容高度），不会动用户下限 minH
   const updateNodeSize = useCallback((id, patch) => {

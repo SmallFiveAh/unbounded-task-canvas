@@ -129,7 +129,8 @@
   position: relative;
   z-index: 1;
   display: block;
-  /* 节点高度由用户拖动控制点决定：文字超出就裁掉，不撑破卡片 */
+  /* 容器 height:auto（内容自适应，见 CanvasNodeItem），
+     height:100% 在 auto 容器内解析为内容高度：文字撑开盒子而非被裁掉 */
   height: 100%;
   overflow: hidden;
 }
@@ -148,11 +149,13 @@
   position: relative;
   z-index: 1; /* 抬到便签纸张装饰层之上 */
   /* 排版属性见上方 .nodeText / .nodeInput 共用块 */
-  /* 完全填满节点内容区：与显示态 span 共用同一容器尺寸，
-     进入/退出编辑时节点盒子与文字位置零偏移（不随内容增高/回弹） */
+  /* 由 JS 依 scrollHeight 自动增高（见 CanvasNodeItem）：
+     height:auto 后实际高度 = 内容高度，min-height:100% 兜住
+     内容比节点下限矮时的场景（不缩破盒子，两态零偏移） */
   display: block;
   width: 100%;
-  height: 100%;
+  height: auto;
+  min-height: 100%;
   box-sizing: border-box;
   margin: 0;
   /* padding / border 必须显式归零：textarea 的隐式 1px 边框会占掉内容区，
@@ -165,31 +168,16 @@
      外层节点容器圆角不受影响；无 hover/focus 圆角规则可覆盖 */
   border-radius: 0;
   background: transparent;
-  /* overflow 用 hidden：内容超高直接裁掉，不出滚动条（与展示态裁剪策略一致） */
+  /* overflow 用 hidden：增高交给 JS，内容再多撑开盒子而不是出滚动条 */
   overflow: hidden;
   cursor: text;
   user-select: text;
 }
 
-/* 便签展示态：高度由内容决定（节点容器 height:auto），
-   文字完整可见，不裁剪不滚动；普通节点仍保持 height:100% 裁剪策略。
-   两端对齐：中文逐字换行后每行右侧的剩余空隙不再裸露，
-   左右留白恒等于节点内边距，两侧视觉一致 */
+/* 便签展示态：文字完整可见，不裁剪不滚动（基础态 overflow:hidden 之外放开）。
+   高度自适应已是全部节点的通用行为（容器 height:auto，见 CanvasNodeItem） */
 .noteNode .nodeText {
-  height: auto;
   overflow: visible;
-  text-align: justify;
-}
-
-/* 便签编辑态：textarea 由 JS 依 scrollHeight 自动增高
-   （见 CanvasNodeItem），关掉滚动条与裁剪，
-   输入 / 粘贴多行时整张便签实时撑开；
-   text-align 与展示态同步 justify，两态换行点一致 */
-.noteNode .nodeInput {
-  height: auto;
-  min-height: 100%;
-  overflow: hidden;
-  text-align: justify;
 }
 
 /* accent 节点编辑态：与显示态 .accent .nodeText 的字色/字重保持一致 */
