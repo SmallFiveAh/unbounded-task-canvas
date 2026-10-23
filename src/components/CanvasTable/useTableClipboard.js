@@ -1,19 +1,16 @@
 /* ============================================================
-   表格剪贴板交互 —— 复制 / 剪切 / 粘贴 + 反馈动效
+   表格剪贴板交互 —— 复制 / 剪切 / 粘贴
    ------------------------------------------------------------
    两条粘贴通道，靠「时间戳 + 事件序号」去重：
    · paste 事件：能同步拿到 clipboardData，是主通道
    · Ctrl+V 的 keydown 兜底：少数环境下 paste 事件不派发，改用异步 API
-   反馈形态（见 constants.js 的 FLASH_KIND）：
-   · 复制 / 剪切：选区四周一圈流动虚线「蚂蚁线」，常驻不自动消失，
-     直到粘贴（被文字提示替换）/ 进入单元格编辑 / 表格取消选中
-   · 粘贴：选区右下角内侧的文本轻提示，1.2 秒后消失
+   反馈形态：复制 / 剪切后选区四周亮起一圈流动虚线「蚂蚁线」，
+   常驻不自动消失，直到粘贴 / 进入单元格编辑 / 表格取消选中。
    ============================================================ */
 
-import { useEffect, useRef, useState } from 'react'
+import { useRef, useState } from 'react'
 import { CLIP_COL_SEP, CLIP_ROW_SEP, parseClipText, writeClipText } from './tableClipboard'
 import { keyToCoord, rectKeys, selectionBox } from './tableGeometry'
-import { FLASH_DURATION_MS, FLASH_KIND } from './constants'
 
 export function useTableClipboard({
   table,
@@ -28,38 +25,9 @@ export function useTableClipboard({
 }) {
   const pasteStampRef = useRef(0) // 粘贴事件序号：给 keydown 的异步兜底去重
   const lastPasteAtRef = useRef(0) // 上次真正落地粘贴的时间，防止双通道重复粘贴
-  const flashTimerRef = useRef(null)
 
-  const [flash, setFlash] = useState(null) // { kind, text?, r1, r2, c1, c2 } 复制动效 / 粘贴轻提示
-
-  // 粘贴成功提示（几行几列）—— 1.2 秒后自动消失
-  const showFlash = (text, box) => {
-    setFlash({ kind: FLASH_KIND.PASTE, text, ...box })
-    if (flashTimerRef.current) clearTimeout(flashTimerRef.current)
-    flashTimerRef.current = setTimeout(() => {
-      flashTimerRef.current = null
-      setFlash(null)
-    }, FLASH_DURATION_MS)
-  }
-
-  // 复制 / 剪切成功：在选区四周亮起流动虚线框。
-  // 不自动消失 —— 一直亮到粘贴（被文字提示替换）/ 进入单元格编辑 /
-  // 表格取消选中（clearFlash，由 CanvasTable 在上述时机调用）。
-  // 顺带清掉可能挂着的粘贴提示定时器，防止它误把常驻的虚线框清掉。
-  const showCopyBox = (kind, box) => {
-    if (flashTimerRef.current) {
-      clearTimeout(flashTimerRef.current)
-      flashTimerRef.current = null
-    }
-    setFlash({ kind, ...box })
-  }
-
-  useEffect(
-    () => () => {
-      if (flashTimerRef.current) clearTimeout(flashTimerRef.current)
-    },
-    [],
-  )
+  // 复制 / 剪切的蚂蚁线框：{ r1, r2, c1, c2 }，null 表示不显示
+  const [flash, setFlash] = useState(null)
 
   // 把选区按 TSV 写进系统剪贴板；cut=true 时写完后清空单元格
   const copySelection = async (cut) => {
@@ -79,7 +47,8 @@ export function useTableClipboard({
     wrapRef.current?.focus({ preventScroll: true })
     if (!ok) return
 
-    showCopyBox(cut ? FLASH_KIND.CUT : FLASH_KIND.COPY, box)
+    // 在选区四周亮起流动虚线框（复制 / 剪切同款），常驻不自动消失
+    setFlash(box)
     if (cut) onClearCells?.(table.id, [...selection].map(keyToCoord))
   }
 
@@ -131,7 +100,9 @@ export function useTableClipboard({
     rectKeys(r1, c1, r2, c2).forEach((k) => next.add(k))
     // 选区由调用方（组件）持有，这里通过回调把结果交回去
     onSelectionChange?.({ anchor: { r: r1, c: c1 }, selection: next, cursor: { r: r2, c: c2 } })
-    showFlash(multi ? `已填充 ${h}×${w}` : `已粘贴 ${h}×${w}`, { r1, r2, c1, c2 })
+
+    // 粘贴落地即熄灭复制 / 剪切的蚂蚁线框
+    setFlash(null)
   }
 
   /** paste 事件通道：先给事件序号打点，抑制 keydown 的异步兜底 */

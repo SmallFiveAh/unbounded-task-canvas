@@ -36,9 +36,9 @@ import styles from './CanvasTable.module.css'
  * - useTablePointer      单击多选 / 拖拽框选 / 双击判定
  * - useTableKeyboard     窗口捕获阶段的键盘操作
  * - useTablePaste        window paste 监听
- * - useTableClipboard    复制 / 剪切 / 粘贴 + 反馈动效
+ * - useTableClipboard    复制 / 剪切 / 粘贴
  * - TableGrid.jsx        网格与单元格渲染
- * - TableFlash.jsx       复制/剪切的蚂蚁线虚线框 + 粘贴轻提示
+ * - TableFlash.jsx       复制/剪切的蚂蚁线虚线框
  */
 function CanvasTable({
   table,
@@ -151,8 +151,8 @@ function CanvasTable({
     }
   }
 
-  // 进入单元格编辑（双击 / 直接敲字符）即撤下复制/剪切虚线框：
-  // 粘贴时虚线框由「已粘贴 H×W」文字提示自然替换，编辑则在这里显式清掉
+  // 进入单元格编辑（双击 / 直接敲字符）即熄灭复制/剪切虚线框；
+  // 粘贴落地时由 useTableClipboard 的 applyPaste 自行清掉
   const [prevEditing, setPrevEditing] = useState(sel.editing)
   if (prevEditing !== sel.editing) {
     setPrevEditing(sel.editing)

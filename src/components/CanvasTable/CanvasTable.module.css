@@ -164,47 +164,6 @@
   border-radius: 0;
 }
 
-/* 粘贴轻提示：右下角对齐落地区域末端格子，向内偏移 4px。
-   末端格子现在是橙色高亮，所以徽标反过来用「暖墨底 + 纸白字」，才压得住。
-   表格是 overflow:hidden，提示只能画在表格内部，超出部分会被裁掉。
-   （复制 / 剪切不落文字，用上方 .ants 的流动虚线表达） */
-.flash {
-  position: absolute;
-  z-index: 3;
-  transform: translate(-100%, -100%);
-  padding: 1px 8px;
-  border-radius: 999px;
-  background: var(--color-text);
-  color: var(--color-surface);
-  font-size: 11px;
-  font-weight: 600;
-  line-height: 1.7;
-  white-space: nowrap;
-  pointer-events: none;
-  box-shadow: var(--shadow-1);
-  animation: flash-in var(--dur-fast) var(--ease-out);
-}
-
-@keyframes flash-in {
-  from {
-    opacity: 0;
-    transform: translate(-100%, calc(-100% + 4px));
-  }
-  to {
-    opacity: 1;
-  }
-}
-
-@media (prefers-reduced-motion: reduce) {
-  .flash {
-    animation: none;
-  }
-
-  .antsRect {
-    animation: none;
-  }
-}
-
 /* 复制 / 剪切反馈：选区四周一圈流动虚线「蚂蚁线」。
    SVG rect 的 stroke-dashoffset 每个周期推进一个「dash+gap」长度（4+3=7），
    虚线便沿边框无缝流动；1px 描边由 JSX 里 x/y=0.5 居中在网格线上。
@@ -227,5 +186,11 @@
 @keyframes ants-march {
   to {
     stroke-dashoffset: -7;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .antsRect {
+    animation: none;
   }
 }
