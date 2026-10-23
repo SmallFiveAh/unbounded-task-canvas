@@ -16,6 +16,7 @@ export const NOTE_H = 200 // 便签节点默认高度（世界坐标）
 
 export const NOTE_DEFAULT_TEXT = '' // 新便签的初始内容：留空，画布上显示占位符
 export const NOTE_PLACEHOLDER = '便签...' // 便签内容为空时展示的占位文案（仅展示，不落库）
+export const NODE_PLACEHOLDER = '默认节点...' // 普通节点内容为空时展示的占位文案（仅展示，不落库）
 export const NODE_RADIUS = 8 // 节点圆角（世界坐标设计值，缩小时会自动补偿）
 
 export const NODE_MIN_W = 96 // 缩放节点时的最小宽度

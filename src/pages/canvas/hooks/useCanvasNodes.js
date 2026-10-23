@@ -8,7 +8,7 @@
 
 import { useCallback, useState } from 'react'
 import { NOTE_H, NOTE_W, NODE_H, NODE_W } from '../lib/constants'
-import { isNoteKind, noteStyleIdFromKind } from '../../../constants/noteStyles'
+import { noteStyleIdFromKind } from '../../../constants/noteStyles'
 
 /**
  * @param {object} params
@@ -30,7 +30,8 @@ export function useCanvasNodes({
   const [nodes, setNodes] = useState(initialNodes)
 
   const addNode = useCallback(
-    (x, y, text = '新节点', kind = 'muted') => {
+    // 初始内容留空：画布上显示占位符（与便签一致），不写入默认文案
+    (x, y, text = '', kind = 'muted') => {
       const id = nextId('n')
       // 便签节点用专属默认尺寸（200×200），其余节点维持 176×76
       const isNote = noteStyleIdFromKind(kind) !== null
@@ -80,17 +81,10 @@ export function useCanvasNodes({
     setNodes((ns) => ns.map((n) => (n.id === id ? { ...n, ...patch } : n)))
   }, [])
 
-  // 提交节点文案：便签允许清空（空内容落库，画布显示占位符）；
-  // 普通节点没有占位符，空白仍视为「不改」保留原文字
+  // 提交节点文案：全部节点允许清空（空内容落库，画布显示占位符）
   const commitNodeText = useCallback((id, raw) => {
     const text = raw.trim()
-    setNodes((ns) =>
-      ns.map((n) => {
-        if (n.id !== id) return n
-        if (!text && !isNoteKind(n.kind)) return n
-        return { ...n, text }
-      }),
-    )
+    setNodes((ns) => ns.map((n) => (n.id === id ? { ...n, text } : n)))
   }, [])
 
   return {

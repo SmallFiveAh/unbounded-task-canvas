@@ -3,7 +3,7 @@ import PropTypes from 'prop-types'
 import { noteStyleIdFromKind, NOTE_BORDERED_STYLE_IDS } from '../../../../constants/noteStyles'
 import visualStyles from '../../../../components/NoteStyles/NoteStyles.module.css'
 import { cornerRadius } from '../../../../utils/canvasRadius'
-import { NODE_RADIUS, NOTE_PLACEHOLDER } from '../../lib/constants'
+import { NODE_PLACEHOLDER, NODE_RADIUS, NOTE_PLACEHOLDER } from '../../lib/constants'
 import { measureNoteContentHeight, resolveContentHeight, resolveMinHeight } from '../../lib/noteSize'
 import styles from './CanvasNodeLayer.module.css'
 
@@ -38,8 +38,9 @@ function CanvasNodeItem({
   // 带边框式纸张装饰的便签（小黑板粉笔框等）：
   // 内容加内边距退到装饰边线内侧，避免文字/占位符压住虚线框
   const hasBorderDecor = NOTE_BORDERED_STYLE_IDS.has(noteStyleId)
-  // 空内容便签显示占位文案（仅展示，不写入数据）
-  const showPlaceholder = isNote && !node.text
+  // 空内容节点显示占位文案（仅展示，不写入数据）：便签 / 普通节点各有专属文案
+  const placeholder = isNote ? NOTE_PLACEHOLDER : NODE_PLACEHOLDER
+  const showPlaceholder = !node.text
 
   // 节点高度自适应（全部节点，机制同便签）：容器 height:auto，由内容撑开；
   // ResizeObserver 把实测高度回写 store（node.h 是连线锚点 /
@@ -125,7 +126,7 @@ function CanvasNodeItem({
           ref={inputRef}
           className={styles.nodeInput}
           value={draft}
-          placeholder={isNote ? NOTE_PLACEHOLDER : undefined}
+          placeholder={placeholder}
           autoFocus
           rows={2}
           onChange={(e) => onDraftChange(e.target.value)}
@@ -148,7 +149,7 @@ function CanvasNodeItem({
             showPlaceholder ? ` ${styles.nodeTextPlaceholder}` : ''
           }`}
         >
-          {showPlaceholder ? NOTE_PLACEHOLDER : node.text}
+          {showPlaceholder ? placeholder : node.text}
         </span>
       )}
     </div>
