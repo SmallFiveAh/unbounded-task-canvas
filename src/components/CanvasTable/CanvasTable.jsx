@@ -151,6 +151,14 @@ function CanvasTable({
     }
   }
 
+  // 进入单元格编辑（双击 / 直接敲字符）即撤下复制/剪切虚线框：
+  // 粘贴时虚线框由「已粘贴 H×W」文字提示自然替换，编辑则在这里显式清掉
+  const [prevEditing, setPrevEditing] = useState(sel.editing)
+  if (prevEditing !== sel.editing) {
+    setPrevEditing(sel.editing)
+    if (sel.editing) clipboard.clearFlash()
+  }
+
   return (
     <div
       ref={wrapRef}
