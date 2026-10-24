@@ -12,6 +12,10 @@ import {
   loadStoredNoteStyleId,
   saveStoredNoteStyleId,
 } from '../../../constants/noteStyles'
+import {
+  loadStoredMindMapStyleId,
+  saveStoredMindMapStyleId,
+} from '../../../constants/mindMapStyles'
 
 export function useCanvasToolbar() {
   const [tool, setTool] = useState('select')
@@ -28,6 +32,11 @@ export function useCanvasToolbar() {
   const [notePanelOpen, setNotePanelOpen] = useState(false)
   const [noteStyleId, setNoteStyleId] = useState(loadStoredNoteStyleId)
   const noteBtnRef = useRef(null)
+  // 思维导图样式面板：点击左侧「思维导图」按钮时显示，样式选中后被记住
+  // （localStorage 持久化，同便签面板）
+  const [mindPanelOpen, setMindPanelOpen] = useState(false)
+  const [mindStyleId, setMindStyleId] = useState(loadStoredMindMapStyleId)
+  const mindBtnRef = useRef(null)
 
   const selectTool = useCallback(() => setTool('select'), [])
 
@@ -74,6 +83,16 @@ export function useCanvasToolbar() {
 
   const closeNotePanel = useCallback(() => setNotePanelOpen(false), [])
 
+  // 思维导图样式选中即记住：状态 + 本地存档同步落盘
+  const selectMindStyle = useCallback((id) => {
+    setMindStyleId(id)
+    saveStoredMindMapStyleId(id)
+  }, [])
+
+  const toggleMindPanel = useCallback(() => setMindPanelOpen((o) => !o), [])
+
+  const closeMindPanel = useCallback(() => setMindPanelOpen(false), [])
+
   return {
     tool,
     sideTool,
@@ -96,5 +115,11 @@ export function useCanvasToolbar() {
     selectNoteStyle,
     toggleNotePanel,
     closeNotePanel,
+    mindPanelOpen,
+    mindStyleId,
+    mindBtnRef,
+    selectMindStyle,
+    toggleMindPanel,
+    closeMindPanel,
   }
 }

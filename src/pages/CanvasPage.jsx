@@ -1,6 +1,7 @@
 import { useCallback, useMemo } from 'react'
 import PropTypes from 'prop-types'
 import InsertTablePanel from '../components/InsertTablePanel/InsertTablePanel'
+import { MindMapStylePanel } from '../components/MindMapStylePanel'
 import { NoteDragGhost, NoteStylePanel } from '../components/NoteStylePanel'
 import { TASKS } from '../constants/tasks'
 import { EMPTY_CANVAS, loadCanvas } from '../utils/canvasStore'
@@ -172,11 +173,14 @@ export default function CanvasPage({ taskId }) {
         sideTool={toolbar.sideTool}
         tablePanelOpen={toolbar.tablePanelOpen}
         notePanelOpen={toolbar.notePanelOpen}
+        mindPanelOpen={toolbar.mindPanelOpen}
         tableBtnRef={toolbar.tableBtnRef}
         noteBtnRef={toolbar.noteBtnRef}
+        mindBtnRef={toolbar.mindBtnRef}
         toolbarRef={toolbar.sideToolbarRef}
         onToggleSideTool={toolbar.toggleSideTool}
         onToggleTablePanel={toolbar.toggleTablePanel}
+        onToggleMindPanel={toolbar.toggleMindPanel}
         onNotePress={(e) => noteDrag.press(e, toolbar.noteStyleId, toolbar.toggleNotePanel)}
         onNoteClick={(e) => {
           // 指针点击已在 pointerup 阶段由 useNoteDragCreate 的 onClick 处理；
@@ -269,6 +273,17 @@ export default function CanvasPage({ taskId }) {
         onSelect={toolbar.selectNoteStyle}
         onClose={toolbar.closeNotePanel}
         onSwatchPress={(e, styleId) => noteDrag.press(e, styleId, () => toolbar.selectNoteStyle(styleId))}
+      />
+
+      {/* 思维导图样式面板（点击左侧「思维导图」按钮显示，紧贴按钮右侧）：
+          点缩略图记住样式，交互与便签面板一致 */}
+      <MindMapStylePanel
+        open={toolbar.mindPanelOpen}
+        anchorRef={toolbar.mindBtnRef}
+        toolbarRef={toolbar.sideToolbarRef}
+        selectedId={toolbar.mindStyleId}
+        onSelect={toolbar.selectMindStyle}
+        onClose={toolbar.closeMindPanel}
       />
 
       {/* 便签拖拽幽灵：按住拖动时钉在光标下方，尺寸随画布缩放同步 */}

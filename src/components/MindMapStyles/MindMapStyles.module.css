@@ -1,0 +1,103 @@
+/* ============================================
+   思维导图视觉原型 —— 面板缩略图用
+   ------------------------------------------------------------
+   参考经典导图缩略图：描边胶囊根节点 → 三条弧线分支
+   向右扇出 → 末端三根文本条（SVG 由面板基座绘制）。
+   每个样式类只做一件事：注入一组 CSS 变量（SVG 消费）：
+   · --mm-bg          缩略图画布底色
+   · --mm-root        根节点描边色
+   · --mm-root-fill   根节点填充色（缺省白）
+   · --mm-b1/b2/b3    上 / 中 / 下三条分支的颜色
+   · --mm-bar         文本条颜色
+   ============================================ */
+
+.classic {
+  --mm-bg: #eef1fb;
+  --mm-root: #6366f1;
+  --mm-b1: #8b5cf6;
+  --mm-b2: #38bdf8;
+  --mm-b3: #34d399;
+  --mm-bar: #dcdce2;
+}
+
+.sakura {
+  --mm-bg: #fdf0f4;
+  --mm-root: #ec4899;
+  --mm-b1: #f472b6;
+  --mm-b2: #fb7185;
+  --mm-b3: #f0abfc;
+  --mm-bar: #eed3dd;
+}
+
+.mint {
+  --mm-bg: #edfaf3;
+  --mm-root: #10b981;
+  --mm-b1: #34d399;
+  --mm-b2: #22d3ee;
+  --mm-b3: #a3e635;
+  --mm-bar: #d3e6dc;
+}
+
+.sunset {
+  --mm-bg: #fdf3e7;
+  --mm-root: #f97316;
+  --mm-b1: #fb923c;
+  --mm-b2: #fbbf24;
+  --mm-b3: #f87171;
+  --mm-bar: #ecdfd0;
+}
+
+.grape {
+  --mm-bg: #f3effd;
+  --mm-root: #8b5cf6;
+  --mm-b1: #a78bfa;
+  --mm-b2: #c084fc;
+  --mm-b3: #818cf8;
+  --mm-bar: #ddd6ec;
+}
+
+.forest {
+  --mm-bg: #f0f4ea;
+  --mm-root: #16a34a;
+  --mm-b1: #4ade80;
+  --mm-b2: #a3e635;
+  --mm-b3: #2dd4bf;
+  --mm-bar: #d6e2cf;
+}
+
+.ocean {
+  --mm-bg: #e9f7f7;
+  --mm-root: #0891b2;
+  --mm-b1: #22d3ee;
+  --mm-b2: #38bdf8;
+  --mm-b3: #2dd4bf;
+  --mm-bar: #d0e4e6;
+}
+
+.ink {
+  --mm-bg: #f4f4f5;
+  --mm-root: #3f3f46;
+  --mm-b1: #71717a;
+  --mm-b2: #a1a1aa;
+  --mm-b3: #52525b;
+  --mm-bar: #d4d4d8;
+}
+
+.night {
+  --mm-bg: #1f2430;
+  --mm-root: #facc15;
+  --mm-root-fill: #262b38;
+  --mm-b1: #fbbf24;
+  --mm-b2: #60a5fa;
+  --mm-b3: #a78bfa;
+  --mm-bar: #4b5563;
+}
+
+.candy {
+  --mm-bg: #fff7fb;
+  --mm-root: #ec4899;
+  --mm-b1: #f9a8d4;
+  --mm-b2: #fbbf24;
+  --mm-b3: #22d3ee;
+  --mm-bar: #ecdce4;
+}
