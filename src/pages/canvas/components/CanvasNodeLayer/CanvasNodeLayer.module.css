@@ -243,7 +243,8 @@
   padding: 6px 12px;
   box-sizing: border-box;
   background: var(--c-cover, var(--color-border));
-  cursor: text;
+  /* 默认态不覆写光标：继承 .node 的 grab / :active 的 grabbing，
+     保持「按住可拖」的手感；只有进入编辑（.cardTitleInput）才是文本光标 */
 }
 
 /* 封面标题：加粗，墨色由 --c-cover-ink 决定
