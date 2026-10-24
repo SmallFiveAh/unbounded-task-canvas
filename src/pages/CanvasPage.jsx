@@ -1,18 +1,12 @@
-import { useCallback, useMemo } from 'react'
+import { useMemo } from 'react'
 import PropTypes from 'prop-types'
-import InsertTablePanel from '../components/InsertTablePanel/InsertTablePanel'
-import { CardStylePanel } from '../components/CardStylePanel'
-import { ListCardStylePanel } from '../components/ListCardStylePanel'
-import { MindMapStylePanel } from '../components/MindMapStylePanel'
-import FlowChartStylePanel from '../components/FlowChartStylePanel'
-import { NoteDragGhost, NoteStylePanel } from '../components/NoteStylePanel'
 import { TASKS } from '../constants/tasks'
 import { EMPTY_CANVAS, loadCanvas } from '../utils/canvasStore'
+import CanvasPanels from './canvas/components/CanvasPanels'
 import CanvasSaveHint from './canvas/components/CanvasSaveHint'
-import CanvasSelectionLayer from './canvas/components/CanvasSelectionLayer'
 import CanvasSideToolbar from './canvas/components/CanvasSideToolbar'
 import CanvasToolbar from './canvas/components/CanvasToolbar'
-import CanvasWorld from './canvas/components/CanvasWorld'
+import CanvasViewport from './canvas/components/CanvasViewport'
 import CanvasZoomBadge from './canvas/components/CanvasZoomBadge'
 import { useCanvasDocument } from './canvas/hooks/useCanvasDocument'
 import { useCanvasInteractions } from './canvas/hooks/useCanvasInteractions'
@@ -21,9 +15,9 @@ import { useCanvasPersistence } from './canvas/hooks/useCanvasPersistence'
 import { useCanvasSelection } from './canvas/hooks/useCanvasSelection'
 import { useCanvasToolbar } from './canvas/hooks/useCanvasToolbar'
 import { useCanvasViewport } from './canvas/hooks/useCanvasViewport'
+import { useCommitNodeEdit } from './canvas/hooks/useCommitNodeEdit'
 import { useNoteDragCreate } from './canvas/hooks/useNoteDragCreate'
 import { previewEdgePath, resolveEdgePath } from './canvas/lib/edges'
-import { gridBackgroundStyle } from './canvas/lib/gridStyle'
 import styles from './CanvasPage.module.css'
 
 /**
@@ -114,28 +108,12 @@ export default function CanvasPage({ taskId }) {
 
   /* ---------- 节点编辑 ---------- */
 
-  // 节点文案落库：便签空白会清空为占位符，普通节点空白视为「不改」（见 commitNodeText）。
-  // useCallback 固定身份：它是每个 memo 化节点子组件的 prop，
-  // 每帧换新引用会把 memo 浅比较打穿（拖拽期间全量重渲染）
-  const commitNodeEdit = useCallback(() => {
-    doc.commitNodeText(selection.editingId, selection.draft)
-    selection.stopEditing()
-  }, [doc.commitNodeText, selection.editingId, selection.draft, selection.stopEditing])
-
-  // 点击画布（捕获阶段）先把正在编辑的草稿提交落库。
-  // 不能只靠 textarea 的 blur：点击其他节点时 useItemDrag 的 preventDefault
-  // 会拦下焦点转移（blur 不触发），框选/平移收口又在 pointerup 卸载编辑框
-  // ——两条路都会绕过 blur 把已输入的文本弄丢，这里在源头统一兜底。
-  const commitEditOnPointerDown = useCallback(
-    (e) => {
-      if (e.button !== 0 || e.nativeEvent.isComposing) return // 右键 / IME 组合输入中：交给默认流程
-      if (!selection.editingId) return
-      const textarea = viewportRef.current?.querySelector('textarea')
-      if (textarea && textarea.contains(e.target)) return // 点在编辑框内部：光标定位，不提交
-      commitNodeEdit()
-    },
-    [commitNodeEdit, selection.editingId, viewportRef],
-  )
+  // 编辑草稿落库 + 点击画布（捕获阶段）的提交兜底（细节见 useCommitNodeEdit）
+  const { commitNodeEdit, commitEditOnPointerDown } = useCommitNodeEdit({
+    doc,
+    selection,
+    viewportRef,
+  })
 
   /* ---------- 派生视图数据 ---------- */
 
@@ -200,137 +178,35 @@ export default function CanvasPage({ taskId }) {
       />
       <CanvasZoomBadge scale={view.scale} onReset={() => zoomByStep(1 / view.scale)} />
 
-      {/* 无限画布视口
-          pointercancel 也走 up 收口：指针被系统取消（触摸被接管 / 拖出窗口）时
-          若不收尾，缩放态会一直挂着，便签会持续被「固定边」往上贴，连拖都拖不动 */}
-      <div
-        ref={viewportRef}
-        data-canvas-viewport
-        data-tool={toolbar.tool}
-        className={`${styles.viewport}${pointer.panning ? ` ${styles.panning}` : ''}${spaceDown ? ` ${styles.spacePan}` : ''}`}
-        onPointerDown={pointer.onViewportPointerDown}
+      {/* 无限画布视口：世界层 + 选中框层 + 空画布引导
+          （pointercancel 也走 up 收口，避免缩放态挂死、便签贴死——见 useViewportPointer） */}
+      <CanvasViewport
+        viewportRef={viewportRef}
+        tool={toolbar.tool}
+        view={view}
+        spaceDown={spaceDown}
+        pointer={pointer}
         onPointerDownCapture={commitEditOnPointerDown}
-        onPointerMove={pointer.onViewportPointerMove}
-        onPointerUp={pointer.onViewportPointerUp}
-        onPointerCancel={pointer.onViewportPointerUp}
-        onDoubleClick={pointer.onViewportDoubleClick}
-        style={gridBackgroundStyle(view)}
-      >
-        {/* 世界层：平移 + 缩放（连线 + 节点 + 表格） */}
-        <CanvasWorld
-          view={view}
-          nodes={nodes}
-          tables={tables}
-          edgeViews={edgeViews}
-          previewPath={edgePreviewPath}
-          selectedIds={selection.selectedIds}
-          selectedId={selection.selectedId}
-          editingId={selection.editingId}
-          draft={selection.draft}
-          scale={view.scale}
-          drag={drag}
-          selection={selection}
-          doc={doc}
-          commitNodeEdit={commitNodeEdit}
-        />
-
-        {/* 选中框层（屏幕坐标）：1px 定宽橙框 + 四角控制点 + 四边拉线命中条 + 框选矩形 */}
-        <CanvasSelectionLayer
-          rects={resize.selectionRects}
-          view={view}
-          selectedId={selection.selectedId}
-          editingId={selection.editingId}
-          resizeLabel={resize.resizeLabel}
-          onResizeStart={resize.beginResize}
-          onLinkStart={edgeDrag.beginEdgeDrag}
-          linkTargetRect={linkTargetRect}
-          marquee={pointer.marquee}
-          viewportRef={viewportRef}
-        />
-
-        {/* 空画布引导 */}
-        {nodes.length === 0 && tables.length === 0 && (
-          <div className={styles.emptyOverlay}>
-            <i className="bi bi-plus-square" aria-hidden="true"></i>
-            <p>双击空白处，或点击「添加节点」开始创作</p>
-          </div>
-        )}
-      </div>
-
-      {/* 表格插入面板（点击左侧「表格」按钮显示，紧贴按钮右侧） */}
-      <InsertTablePanel
-        open={toolbar.tablePanelOpen}
-        rows={toolbar.tableRows}
-        cols={toolbar.tableCols}
-        anchorRef={toolbar.tableBtnRef}
-        toolbarRef={toolbar.sideToolbarRef}
-        onClose={toolbar.closeTablePanel}
-        onConfirm={(r, c) => {
-          // 在画布中央插入所选行列的表格
-          doc.addTable(r, c)
-          toolbar.closeTablePanel()
-        }}
-        onChange={toolbar.setTableSize}
+        nodes={nodes}
+        tables={tables}
+        drag={drag}
+        selection={selection}
+        doc={doc}
+        commitNodeEdit={commitNodeEdit}
+        edgeViews={edgeViews}
+        edgePreviewPath={edgePreviewPath}
+        linkTargetRect={linkTargetRect}
+        resize={resize}
+        edgeDrag={edgeDrag}
       />
 
-      {/* 便签样式面板（点击左侧「便签」按钮显示，紧贴按钮右侧）：
-          点缩略图记住样式；按住缩略图可直接拖到画布，拖拽中面板保持可见 */}
-      <NoteStylePanel
-        open={toolbar.notePanelOpen}
-        anchorRef={toolbar.noteBtnRef}
-        toolbarRef={toolbar.sideToolbarRef}
-        selectedId={toolbar.noteStyleId}
-        onSelect={toolbar.selectNoteStyle}
-        onClose={toolbar.closeNotePanel}
-        onSwatchPress={(e, styleId) => noteDrag.press(e, styleId, () => toolbar.selectNoteStyle(styleId))}
+      {/* 全部插入 / 样式面板 + 便签拖拽幽灵（展示层，见 CanvasPanels） */}
+      <CanvasPanels
+        toolbar={toolbar}
+        noteDrag={noteDrag}
+        view={view}
+        onInsertTable={doc.addTable}
       />
-
-      {/* 思维导图样式面板（点击左侧「思维导图」按钮显示，紧贴按钮右侧）：
-          点缩略图记住样式，交互与便签面板一致 */}
-      <MindMapStylePanel
-        open={toolbar.mindPanelOpen}
-        anchorRef={toolbar.mindBtnRef}
-        toolbarRef={toolbar.sideToolbarRef}
-        selectedId={toolbar.mindStyleId}
-        onSelect={toolbar.selectMindStyle}
-        onClose={toolbar.closeMindPanel}
-      />
-
-      {/* 流程图节点面板（点击左侧「流程图」按钮显示，紧贴按钮右侧）：
-          点缩略图记住节点，位置 / 关闭交互与便签面板一致 */}
-      <FlowChartStylePanel
-        open={toolbar.flowPanelOpen}
-        anchorRef={toolbar.flowBtnRef}
-        toolbarRef={toolbar.sideToolbarRef}
-        selectedId={toolbar.flowNodeId}
-        onSelect={toolbar.selectFlowNode}
-        onClose={toolbar.closeFlowPanel}
-      />
-
-      {/* 列表卡片样式面板（点击左侧「列表卡片」按钮显示，紧贴按钮右侧）：
-          点缩略图记住样式，交互与便签面板一致 */}
-      <ListCardStylePanel
-        open={toolbar.listPanelOpen}
-        anchorRef={toolbar.listBtnRef}
-        toolbarRef={toolbar.sideToolbarRef}
-        selectedId={toolbar.listStyleId}
-        onSelect={toolbar.selectListStyle}
-        onClose={toolbar.closeListPanel}
-      />
-
-      {/* 卡片样式面板（点击左侧「卡片」按钮显示，紧贴按钮右侧）：
-          点缩略图记住样式，位置 / 关闭交互与便签面板一致 */}
-      <CardStylePanel
-        open={toolbar.cardPanelOpen}
-        anchorRef={toolbar.cardBtnRef}
-        toolbarRef={toolbar.sideToolbarRef}
-        selectedId={toolbar.cardStyleId}
-        onSelect={toolbar.selectCardStyle}
-        onClose={toolbar.closeCardPanel}
-      />
-
-      {/* 便签拖拽幽灵：按住拖动时钉在光标下方，尺寸随画布缩放同步 */}
-      <NoteDragGhost ghost={noteDrag.ghost} scale={view.scale} />
     </div>
   )
 }

@@ -42,6 +42,35 @@ export function marqueeToWorldRect(mq, bounds, view) {
 }
 
 /**
+ * 让一组内容矩形（世界坐标）在视口中居中（自适应 / 初次进入的取景计算）。
+ * padding 与最大缩放上限与拆分前保持一致：留白 140px、最大 1.4 倍。
+ * @param {Array<{x:number, y:number, w:number, h:number}>} rects 内容包围盒列表
+ * @param {number} w 视口宽（clientWidth）
+ * @param {number} h 视口高（clientHeight）
+ * @returns {{x:number, y:number, scale:number}} 目标视口
+ */
+export function computeFitView(rects, w, h) {
+  if (!rects.length) return { x: w / 2, y: h / 2, scale: 1 }
+
+  const minX = Math.min(...rects.map((r) => r.x))
+  const minY = Math.min(...rects.map((r) => r.y))
+  const maxX = Math.max(...rects.map((r) => r.x + r.w))
+  const maxY = Math.max(...rects.map((r) => r.y + r.h))
+  const bw = Math.max(maxX - minX, 1)
+  const bh = Math.max(maxY - minY, 1)
+  const padding = 140
+
+  const scale = clampScale(
+    Math.min((w - padding * 2) / bw, (h - padding * 2) / bh, 1.4),
+  )
+  return {
+    scale,
+    x: w / 2 - (minX + bw / 2) * scale,
+    y: h / 2 - (minY + bh / 2) * scale,
+  }
+}
+
+/**
  * 缩放时的「对边固定」：已知新宽高，反推左上角。
  * 从东/南侧拖 → 左上角不动；从西/北侧拖 → 对边贴住原位。
  * ⚠️ h 必须传「生效高度」（便签会被内容高度夹取），

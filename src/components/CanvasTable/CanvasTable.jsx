@@ -1,14 +1,10 @@
-import { memo, useRef, useState } from 'react'
+import { memo } from 'react'
 import PropTypes from 'prop-types'
 import { getTableSize, tableCellH, tableCellW } from '../../constants/canvasTable'
 import { cornerRadius } from '../../utils/canvasRadius'
 import TableGrid from './TableGrid'
-import { useTableClipboard } from './useTableClipboard'
-import { useTableKeyboard } from './useTableKeyboard'
-import { useTablePaste } from './useTablePaste'
-import { useTablePointer } from './useTablePointer'
-import { useTableSelection } from './useTableSelection'
 import TableFlash from './TableFlash'
+import { useTableController } from './useTableController'
 import styles from './CanvasTable.module.css'
 
 /**
@@ -32,6 +28,7 @@ import styles from './CanvasTable.module.css'
  * 分工（同目录）：
  * - tableGeometry.js     行列 / 选区的纯计算
  * - tableClipboard.js    TSV 解析与写剪贴板
+ * - useTableController   选区 / 剪贴板 / 指针 / 键盘 / 粘贴的装配与状态重置
  * - useTableSelection    选区状态 + 编辑态
  * - useTablePointer      单击多选 / 拖拽框选 / 双击判定
  * - useTableKeyboard     窗口捕获阶段的键盘操作
@@ -51,113 +48,24 @@ function CanvasTable({
   onPasteCells,
   scale = 1,
 }) {
-  const { rows, cols, cells } = table
   // 单元格尺寸可由画布上的四角控制点拖动改变（见 CanvasPage 的 applyResize）
   const cellW = tableCellW(table)
   const cellH = tableCellH(table)
   const size = getTableSize(table)
 
-  const wrapRef = useRef(null)
-
-  const sel = useTableSelection({
-    rows,
-    cols,
-    cells,
-    tableId: table.id,
-    onCellChange,
-  })
-
-  const clipboard = useTableClipboard({
+  // 选区 / 剪贴板 / 指针 / 键盘 / 粘贴的装配与状态重置（细节见 useTableController）
+  const { sel, clipboard, pointer, wrapRef } = useTableController({
     table,
-    cells,
-    selection: sel.selection,
-    cursor: sel.cursor,
-    anchor: sel.anchor,
-    onClearCells,
-    onPasteCells,
-    // 粘贴后选区 / 光标的新落点由本组件写回
-    onSelectionChange: ({ anchor, selection, cursor }) => {
-      sel.setAnchor(anchor)
-      sel.setSelection(selection)
-      sel.setCursor(cursor)
-    },
-    wrapRef,
-  })
-
-  const pointer = useTablePointer({
-    table,
-    rows,
-    cols,
+    selected,
+    primary,
     cellW,
     cellH,
-    editing: sel.editing,
-    commitEditing: sel.commitEditing,
     onPointerDown,
     onActivate,
-    anchor: sel.anchor,
-    setAnchor: sel.setAnchor,
-    selection: sel.selection,
-    setSelection: sel.setSelection,
-    setCursor: sel.setCursor,
-    startEdit: sel.startEdit,
-    wrapRef,
-  })
-
-  useTableKeyboard({
-    selected,
-    primary,
-    editing: sel.editing,
-    cursor: sel.cursor,
-    anchor: sel.anchor,
-    selection: sel.selection,
-    rows,
-    cols,
-    cells,
-    tableId: table.id,
-    wrapRef,
-    onClearCells,
     onCellChange,
-    startEdit: sel.startEdit,
-    copySelection: clipboard.copySelection,
-    handlePasteShortcut: clipboard.handlePasteShortcut,
-    setSelection: sel.setSelection,
-    setAnchor: sel.setAnchor,
-    setCursor: sel.setCursor,
-  })
-
-  useTablePaste({
-    selected,
-    primary,
-    editing: sel.editing,
-    cursor: sel.cursor,
-    anchor: sel.anchor,
-    selection: sel.selection,
-    rows,
-    cols,
-    cells,
-    tableId: table.id,
+    onClearCells,
     onPasteCells,
-    wrapRef,
-    applyPastedText: clipboard.applyPastedText,
   })
-
-  // 属性变化时调整状态：表格取消选中即清除单元格选中/编辑态
-  const [prevSelected, setPrevSelected] = useState(selected)
-  if (prevSelected !== selected) {
-    setPrevSelected(selected)
-    if (!selected) {
-      sel.resetCellState()
-      clipboard.clearFlash()
-    }
-  }
-
-  // 进入单元格编辑（双击 / 直接敲字符）即熄灭复制/剪切虚线框；
-  // 粘贴落地时由 useTableClipboard 的 applyPaste 自行清掉
-  const [prevEditing, setPrevEditing] = useState(sel.editing)
-  if (prevEditing !== sel.editing) {
-    setPrevEditing(sel.editing)
-    if (sel.editing) clipboard.clearFlash()
-  }
 
   return (
     <div
@@ -181,9 +89,9 @@ function CanvasTable({
       onDoubleClick={pointer.handleDoubleClick}
     >
       <TableGrid
-        rows={rows}
-        cols={cols}
-        cells={cells}
+        rows={table.rows}
+        cols={table.cols}
+        cells={table.cells}
         cellW={cellW}
         selection={sel.selection}
         editing={sel.editing}

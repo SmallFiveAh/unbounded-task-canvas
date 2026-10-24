@@ -1,15 +1,16 @@
 /* ============================================================
-   画布视口 —— 平移与缩放
+   画布视口 —— 平移与缩放（状态与编排）
    ------------------------------------------------------------
    · view = { x, y, scale }：世界层的平移偏移与缩放比例
    · 滚轮：Ctrl/⌘ + 滚轮缩放到光标处；激活「鼠标滚轮」按钮后滚轮直接缩放
    · 首次进入：没有视口记忆时自适应全部内容，有记忆则原样恢复
    · viewRef 让「内容落盘」能读到当前视口而不必把它写进依赖
+   取景 / 缩放 / 坐标换算的纯计算见 lib/geometry.js。
    ============================================================ */
 
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { getTableSize } from '../../../constants/canvasTable'
-import { clampScale, screenToWorld as toWorld } from '../lib/geometry'
+import { clampScale, computeFitView, screenToWorld as toWorld } from '../lib/geometry'
 
 export function useCanvasViewport({ initial, wheelZoom }) {
   const viewportRef = useRef(null)
@@ -26,30 +27,7 @@ export function useCanvasViewport({ initial, wheelZoom }) {
   const frameContent = useCallback((rects) => {
     const el = viewportRef.current
     if (!el) return
-    const w = el.clientWidth
-    const h = el.clientHeight
-
-    if (!rects.length) {
-      setView({ x: w / 2, y: h / 2, scale: 1 })
-      return
-    }
-
-    const minX = Math.min(...rects.map((r) => r.x))
-    const minY = Math.min(...rects.map((r) => r.y))
-    const maxX = Math.max(...rects.map((r) => r.x + r.w))
-    const maxY = Math.max(...rects.map((r) => r.y + r.h))
-    const bw = Math.max(maxX - minX, 1)
-    const bh = Math.max(maxY - minY, 1)
-    const padding = 140
-
-    const scale = clampScale(
-      Math.min((w - padding * 2) / bw, (h - padding * 2) / bh, 1.4),
-    )
-    setView({
-      scale,
-      x: w / 2 - (minX + bw / 2) * scale,
-      y: h / 2 - (minY + bh / 2) * scale,
-    })
+    setView(computeFitView(rects, el.clientWidth, el.clientHeight))
   }, [])
 
   // 初次进入：没有视口记忆时才自适应全部内容；
