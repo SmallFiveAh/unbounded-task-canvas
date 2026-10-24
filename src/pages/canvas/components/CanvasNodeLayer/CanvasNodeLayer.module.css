@@ -44,7 +44,7 @@
      短文本停在盒顶，长文本向下撑开容器（height:auto，见 CanvasNodeItem） */
   align-items: flex-start;
   padding: 5px;
-  border: 1px solid transparent;
+  /* border: 1px solid transparent; */
   border-radius: var(--radius-md);
   /* 便签节点由 NoteStyles 样式类注入 --note-bg 覆写；普通节点走默认面 */
   background: var(--note-bg, var(--color-surface));
