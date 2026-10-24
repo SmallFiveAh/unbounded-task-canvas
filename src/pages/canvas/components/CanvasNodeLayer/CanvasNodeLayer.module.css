@@ -267,13 +267,21 @@
   padding: 10px 12px 12px;
 }
 
-/* 正文：保留手动换行与连续空格，与便签同一套换行策略 */
+/* 正文：保留手动换行与连续空格，与便签同一套换行策略。
+   排版逐项对齐便签 .nodeText（含两端对齐）—— 见下方 justify 说明 */
 .cardText {
   font-family: var(--font-body);
   font-size: var(--text-sm);
   font-weight: 400;
   line-height: 1.45;
   letter-spacing: 0.02em;
+  word-spacing: normal;
+  /* 两端对齐：内容一多换行后，每行两侧的留白恒等于 .cardBody 的
+     左右内边距（12px），不会出现右侧锯齿。
+     盒子是 fit-content（.cardBody 的 align-items:flex-start），
+     所以只在「长到需要换行」时才撑满可用宽度并对齐到内边距，
+     短文本不会被拉出额外字距；末行 / 单行不受 justify 影响，仍左对齐 */
+  text-align: justify;
   white-space: pre-wrap;
   overflow-wrap: break-word;
   word-break: normal;
@@ -320,4 +328,8 @@
   padding: 10px 12px 12px;
   font-weight: 400;
   color: var(--c-title, var(--color-text));
+  /* 与展示态 .cardText 同步两端对齐（textarea 不继承父级排版，
+     必须显式写）：编辑时看到的换行点与松手后的展示态逐像素一致 */
+  word-spacing: normal;
+  text-align: justify;
 }
