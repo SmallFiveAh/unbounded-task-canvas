@@ -4,12 +4,13 @@ import styles from './CanvasSideToolbar.module.css'
 
 /**
  * 左侧中间工具栏：便签 / 表格 / 思维导图 / 流程图 / 卡片 / 列表卡片
- * · 除便签 / 表格 / 思维导图外的按钮都是「再点一次取消」的开关，状态由 CanvasPage 持有
+ * · 除便签 / 表格 / 思维导图 / 卡片 / 列表卡片外的按钮都是
+ *   「再点一次取消」的开关，状态由 CanvasPage 持有
  * · 便签按钮特殊：按住可直接拖到画布创建节点（onNotePress 交接给
  *   useNoteDragCreate），普通点击弹出样式面板（onNoteClick，拖拽
  *   结束后的残余 click 由 CanvasPage 吞掉）
- * · 表格 / 思维导图按钮额外控制各自样式面板显隐，并把自己的
- *   DOM 节点作为面板锚点
+ * · 表格 / 思维导图 / 卡片 / 列表卡片按钮额外控制各自样式面板
+ *   显隐，并把自己的 DOM 节点作为面板锚点
  * 纯展示组件：只做点击 → 回调，不碰画布数据。
  */
 function CanvasSideToolbar({
@@ -18,15 +19,18 @@ function CanvasSideToolbar({
   notePanelOpen,
   mindPanelOpen,
   listPanelOpen,
+  cardPanelOpen,
   tableBtnRef,
   noteBtnRef,
   mindBtnRef,
   listBtnRef,
+  cardBtnRef,
   toolbarRef,
   onToggleSideTool,
   onToggleTablePanel,
   onToggleMindPanel,
   onToggleListPanel,
+  onToggleCardPanel,
   onNotePress,
   onNoteClick,
 }) {
@@ -70,9 +74,10 @@ function CanvasSideToolbar({
       </button>
       <button
         type="button"
-        className={`${styles.sideToolBtn}${sideTool === 'card' ? ` ${styles.active}` : ''}`}
+        ref={cardBtnRef}
+        className={`${styles.sideToolBtn}${cardPanelOpen ? ` ${styles.active}` : ''}`}
         title="卡片"
-        onClick={() => onToggleSideTool('card')}
+        onClick={onToggleCardPanel}
       >
         <i className="bi bi-card-checklist" aria-hidden="true"></i>
       </button>
@@ -90,20 +95,23 @@ function CanvasSideToolbar({
 }
 
 CanvasSideToolbar.propTypes = {
-  sideTool: PropTypes.oneOf(['flow', 'card', null]),
+  sideTool: PropTypes.oneOf(['flow', null]),
   tablePanelOpen: PropTypes.bool.isRequired,
   notePanelOpen: PropTypes.bool.isRequired,
   mindPanelOpen: PropTypes.bool.isRequired,
   listPanelOpen: PropTypes.bool.isRequired,
+  cardPanelOpen: PropTypes.bool.isRequired,
   tableBtnRef: PropTypes.object.isRequired,
   noteBtnRef: PropTypes.object.isRequired,
   mindBtnRef: PropTypes.object.isRequired,
   listBtnRef: PropTypes.object.isRequired,
+  cardBtnRef: PropTypes.object.isRequired,
   toolbarRef: PropTypes.object.isRequired,
   onToggleSideTool: PropTypes.func.isRequired,
   onToggleTablePanel: PropTypes.func.isRequired,
   onToggleMindPanel: PropTypes.func.isRequired,
   onToggleListPanel: PropTypes.func.isRequired,
+  onToggleCardPanel: PropTypes.func.isRequired,
   onNotePress: PropTypes.func.isRequired,
   onNoteClick: PropTypes.func.isRequired,
 }

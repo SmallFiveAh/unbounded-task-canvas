@@ -1,0 +1,102 @@
+/* ============================================
+   卡片视觉原型 —— 面板缩略图用
+   ------------------------------------------------------------
+   每个样式类只做一件事：注入一组 CSS 变量（迷你卡片消费）：
+   · --c-bg     卡片底色
+   · --c-cover  封面条颜色（可为渐变）
+   · --c-title  标题条颜色
+   · --c-line   正文条颜色
+   · --c-chip   标签胶囊颜色
+   特殊质感（纸纹 / 毛玻璃 / 渐变）在各自类里追加装饰，
+   布局骨架由面板基座负责。
+   ============================================ */
+
+.ivory {
+  --c-bg: #fafaf8;
+  --c-cover: #e4e4e7;
+  --c-title: #3f3f46;
+  --c-line: #d4d4d8;
+  --c-chip: #e4e4e7;
+}
+
+.sky {
+  --c-bg: #e9f4fd;
+  --c-cover: #38bdf8;
+  --c-title: #0284c7;
+  --c-line: #c3e2f5;
+  --c-chip: #bae6fd;
+}
+
+.mint {
+  --c-bg: #edfaf3;
+  --c-cover: #34d399;
+  --c-title: #059669;
+  --c-line: #c5ead9;
+  --c-chip: #bbf7d0;
+}
+
+.blush {
+  --c-bg: #fdf0f4;
+  --c-cover: #f472b6;
+  --c-title: #db2777;
+  --c-line: #f3d4e3;
+  --c-chip: #fbcfe8;
+}
+
+.amber {
+  --c-bg: #fdf3e7;
+  --c-cover: #fb923c;
+  --c-title: #ea580c;
+  --c-line: #efd9c2;
+  --c-chip: #fed7aa;
+}
+
+.grape {
+  --c-bg: #f3effd;
+  --c-cover: #a78bfa;
+  --c-title: #7c3aed;
+  --c-line: #ddd3f2;
+  --c-chip: #ddd6fe;
+}
+
+.night {
+  --c-bg: #262b38;
+  --c-cover: #facc15;
+  --c-title: #fde68a;
+  --c-line: #4b5563;
+  --c-chip: #374151;
+}
+
+/* 牛皮纸：暖棕底 + 细纸纹（repeating 渐变模拟横纹肌理） */
+.kraft {
+  --c-bg: #e8d9bd;
+  --c-cover: #b08968;
+  --c-title: #7f5539;
+  --c-line: #d6c3a1;
+  --c-chip: #d4b483;
+  background-image: repeating-linear-gradient(
+    0deg,
+    rgba(127, 85, 57, 0.05) 0 1px,
+    transparent 1px 4px
+  );
+}
+
+/* 玻璃拟态：半透明渐变底 + 内侧高光描边 */
+.glass {
+  --c-bg: rgba(255, 255, 255, 0.55);
+  --c-cover: linear-gradient(90deg, #93c5fd, #c4b5fd);
+  --c-title: #64748b;
+  --c-line: rgba(148, 163, 184, 0.5);
+  --c-chip: rgba(203, 213, 225, 0.7);
+  background-image: linear-gradient(135deg, rgba(147, 197, 253, 0.25), rgba(196, 181, 253, 0.25));
+  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.6);
+}
+
+/* 极光渐变：深底 + 彩虹渐变封面 */
+.aurora {
+  --c-bg: #1e2433;
+  --c-cover: linear-gradient(90deg, #2dd4bf, #818cf8, #e879f9);
+  --c-title: #a5f3fc;
+  --c-line: #3b4254;
+  --c-chip: #312e52;
+}

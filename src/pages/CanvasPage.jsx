@@ -1,6 +1,7 @@
 import { useCallback, useMemo } from 'react'
 import PropTypes from 'prop-types'
 import InsertTablePanel from '../components/InsertTablePanel/InsertTablePanel'
+import { CardStylePanel } from '../components/CardStylePanel'
 import { ListCardStylePanel } from '../components/ListCardStylePanel'
 import { MindMapStylePanel } from '../components/MindMapStylePanel'
 import { NoteDragGhost, NoteStylePanel } from '../components/NoteStylePanel'
@@ -176,15 +177,18 @@ export default function CanvasPage({ taskId }) {
         notePanelOpen={toolbar.notePanelOpen}
         mindPanelOpen={toolbar.mindPanelOpen}
         listPanelOpen={toolbar.listPanelOpen}
+        cardPanelOpen={toolbar.cardPanelOpen}
         tableBtnRef={toolbar.tableBtnRef}
         noteBtnRef={toolbar.noteBtnRef}
         mindBtnRef={toolbar.mindBtnRef}
         listBtnRef={toolbar.listBtnRef}
+        cardBtnRef={toolbar.cardBtnRef}
         toolbarRef={toolbar.sideToolbarRef}
         onToggleSideTool={toolbar.toggleSideTool}
         onToggleTablePanel={toolbar.toggleTablePanel}
         onToggleMindPanel={toolbar.toggleMindPanel}
         onToggleListPanel={toolbar.toggleListPanel}
+        onToggleCardPanel={toolbar.toggleCardPanel}
         onNotePress={(e) => noteDrag.press(e, toolbar.noteStyleId, toolbar.toggleNotePanel)}
         onNoteClick={(e) => {
           // 指针点击已在 pointerup 阶段由 useNoteDragCreate 的 onClick 处理；
@@ -299,6 +303,17 @@ export default function CanvasPage({ taskId }) {
         selectedId={toolbar.listStyleId}
         onSelect={toolbar.selectListStyle}
         onClose={toolbar.closeListPanel}
+      />
+
+      {/* 卡片样式面板（点击左侧「卡片」按钮显示，紧贴按钮右侧）：
+          点缩略图记住样式，位置 / 关闭交互与便签面板一致 */}
+      <CardStylePanel
+        open={toolbar.cardPanelOpen}
+        anchorRef={toolbar.cardBtnRef}
+        toolbarRef={toolbar.sideToolbarRef}
+        selectedId={toolbar.cardStyleId}
+        onSelect={toolbar.selectCardStyle}
+        onClose={toolbar.closeCardPanel}
       />
 
       {/* 便签拖拽幽灵：按住拖动时钉在光标下方，尺寸随画布缩放同步 */}

@@ -20,6 +20,10 @@ import {
   loadStoredListCardStyleId,
   saveStoredListCardStyleId,
 } from '../../../constants/listCardStyles'
+import {
+  loadStoredCardStyleId,
+  saveStoredCardStyleId,
+} from '../../../constants/cardStyles'
 
 export function useCanvasToolbar() {
   const [tool, setTool] = useState('select')
@@ -46,6 +50,11 @@ export function useCanvasToolbar() {
   const [listPanelOpen, setListPanelOpen] = useState(false)
   const [listStyleId, setListStyleId] = useState(loadStoredListCardStyleId)
   const listBtnRef = useRef(null)
+  // 卡片样式面板：点击左侧「卡片」按钮时显示，样式选中后被记住
+  // （localStorage 持久化，同便签面板）
+  const [cardPanelOpen, setCardPanelOpen] = useState(false)
+  const [cardStyleId, setCardStyleId] = useState(loadStoredCardStyleId)
+  const cardBtnRef = useRef(null)
 
   const selectTool = useCallback(() => setTool('select'), [])
 
@@ -112,6 +121,16 @@ export function useCanvasToolbar() {
 
   const closeListPanel = useCallback(() => setListPanelOpen(false), [])
 
+  // 卡片样式选中即记住：状态 + 本地存档同步落盘
+  const selectCardStyle = useCallback((id) => {
+    setCardStyleId(id)
+    saveStoredCardStyleId(id)
+  }, [])
+
+  const toggleCardPanel = useCallback(() => setCardPanelOpen((o) => !o), [])
+
+  const closeCardPanel = useCallback(() => setCardPanelOpen(false), [])
+
   return {
     tool,
     sideTool,
@@ -146,5 +165,11 @@ export function useCanvasToolbar() {
     selectListStyle,
     toggleListPanel,
     closeListPanel,
+    cardPanelOpen,
+    cardStyleId,
+    cardBtnRef,
+    selectCardStyle,
+    toggleCardPanel,
+    closeCardPanel,
   }
 }
