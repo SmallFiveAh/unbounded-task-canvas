@@ -1,0 +1,81 @@
+/* ============================================
+   列表卡片视觉原型 —— 面板缩略图用
+   ------------------------------------------------------------
+   参考任务清单卡片：标题条 + 三行待办（勾选框 + 文本条），
+   SVG 由面板基座绘制。每个样式类只做一件事：注入一组
+   CSS 变量（SVG 消费）：
+   · --lc-bg     卡片底色
+   · --lc-title  标题条颜色
+   · --lc-box    勾选框颜色（描边 / 选中填充）
+   · --lc-bar    待办文本条颜色
+   ============================================ */
+
+.ivory {
+  --lc-bg: #fafaf8;
+  --lc-title: #3f3f46;
+  --lc-box: #71717a;
+  --lc-bar: #d4d4d8;
+}
+
+.mint {
+  --lc-bg: #edfaf3;
+  --lc-title: #10b981;
+  --lc-box: #34d399;
+  --lc-bar: #c9e8d8;
+}
+
+.sky {
+  --lc-bg: #e9f4fd;
+  --lc-title: #0ea5e9;
+  --lc-box: #38bdf8;
+  --lc-bar: #cbe4f5;
+}
+
+.blush {
+  --lc-bg: #fdf0f4;
+  --lc-title: #ec4899;
+  --lc-box: #f472b6;
+  --lc-bar: #f2d7e2;
+}
+
+.amber {
+  --lc-bg: #fdf3e7;
+  --lc-title: #f97316;
+  --lc-box: #fb923c;
+  --lc-bar: #f0ddc9;
+}
+
+.grape {
+  --lc-bg: #f3effd;
+  --lc-title: #8b5cf6;
+  --lc-box: #a78bfa;
+  --lc-bar: #ddd6ec;
+}
+
+.forest {
+  --lc-bg: #f0f4ea;
+  --lc-title: #16a34a;
+  --lc-box: #4ade80;
+  --lc-bar: #d2dfc9;
+}
+
+.ocean {
+  --lc-bg: #e9f7f7;
+  --lc-title: #0891b2;
+  --lc-box: #22d3ee;
+  --lc-bar: #cde6e8;
+}
+
+.ink {
+  --lc-bg: #f4f4f5;
+  --lc-title: #3f3f46;
+  --lc-box: #52525b;
+  --lc-bar: #d4d4d8;
+}
+
+.night {
+  --lc-bg: #262b38;
+  --lc-title: #facc15;
+  --lc-box: #fbbf24;
+  --lc-bar: #4b5563;
+}

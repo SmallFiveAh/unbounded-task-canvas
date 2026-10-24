@@ -17,13 +17,16 @@ function CanvasSideToolbar({
   tablePanelOpen,
   notePanelOpen,
   mindPanelOpen,
+  listPanelOpen,
   tableBtnRef,
   noteBtnRef,
   mindBtnRef,
+  listBtnRef,
   toolbarRef,
   onToggleSideTool,
   onToggleTablePanel,
   onToggleMindPanel,
+  onToggleListPanel,
   onNotePress,
   onNoteClick,
 }) {
@@ -75,9 +78,10 @@ function CanvasSideToolbar({
       </button>
       <button
         type="button"
-        className={`${styles.sideToolBtn}${sideTool === 'list' ? ` ${styles.active}` : ''}`}
+        ref={listBtnRef}
+        className={`${styles.sideToolBtn}${listPanelOpen ? ` ${styles.active}` : ''}`}
         title="列表卡片"
-        onClick={() => onToggleSideTool('list')}
+        onClick={onToggleListPanel}
       >
         <i className="bi bi-list-ul" aria-hidden="true"></i>
       </button>
@@ -86,17 +90,20 @@ function CanvasSideToolbar({
 }
 
 CanvasSideToolbar.propTypes = {
-  sideTool: PropTypes.oneOf(['flow', 'card', 'list', null]),
+  sideTool: PropTypes.oneOf(['flow', 'card', null]),
   tablePanelOpen: PropTypes.bool.isRequired,
   notePanelOpen: PropTypes.bool.isRequired,
   mindPanelOpen: PropTypes.bool.isRequired,
+  listPanelOpen: PropTypes.bool.isRequired,
   tableBtnRef: PropTypes.object.isRequired,
   noteBtnRef: PropTypes.object.isRequired,
   mindBtnRef: PropTypes.object.isRequired,
+  listBtnRef: PropTypes.object.isRequired,
   toolbarRef: PropTypes.object.isRequired,
   onToggleSideTool: PropTypes.func.isRequired,
   onToggleTablePanel: PropTypes.func.isRequired,
   onToggleMindPanel: PropTypes.func.isRequired,
+  onToggleListPanel: PropTypes.func.isRequired,
   onNotePress: PropTypes.func.isRequired,
   onNoteClick: PropTypes.func.isRequired,
 }
