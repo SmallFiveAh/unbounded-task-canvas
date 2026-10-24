@@ -248,17 +248,25 @@
 
 /* 封面标题：加粗，墨色由 --c-cover-ink 决定
   （浅色封面在样式里覆写为深墨，其余默认白）。
-  排版与编辑态 .cardTitleInput 逐项对齐（含换行策略），
-  保证进入 / 退出编辑时文本换行点与封面带高度不跳变 */
+  排版与编辑态 .cardTitleInput 逐项对齐（含换行策略与两端对齐），
+  保证进入 / 退出编辑时文本换行点、对齐与封面带高度都不跳变。
+  flex:1 让标题盒占满封面带的可用宽度（左右内边距内侧），
+  配合 justify 使换行后每行两侧留白恒等于 .cardCover 的 12px 内边距 */
 .cardCoverTitle {
+  flex: 1 1 auto;
+  min-width: 0;
   font-family: var(--font-body);
   font-size: var(--text-sm);
   font-weight: 700;
   line-height: 1.35;
   letter-spacing: 0.02em;
+  word-spacing: normal;
   white-space: pre-wrap;
   overflow-wrap: break-word;
   word-break: break-word;
+  /* 两端对齐：文本多到换行后贴齐左右内边距，消除右侧锯齿；
+     末行 / 单行不受 justify 影响，仍左对齐（与正文 .cardText 同策略） */
+  text-align: justify;
   color: var(--c-cover-ink, #ffffff);
 }
 
@@ -302,9 +310,13 @@
   font-weight: 700;
   line-height: 1.35;
   letter-spacing: 0.02em;
+  word-spacing: normal;
   white-space: pre-wrap;
   overflow-wrap: break-word;
   word-break: break-word;
+  /* 与展示态 .cardCoverTitle 同步两端对齐（textarea 不继承父级排版，
+     必须显式写）：编辑时看到的换行点与松手后的展示态逐像素一致 */
+  text-align: justify;
   display: block;
   width: 100%;
   box-sizing: border-box;
