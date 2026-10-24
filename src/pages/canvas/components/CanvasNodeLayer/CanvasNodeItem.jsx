@@ -106,14 +106,19 @@ function CanvasNodeItem({
   // 编辑态 textarea 自动增高：height:auto 后由 scrollHeight 决定实际高度，
   // 与展示态 span 的换行行为一致（排版属性两态共用一套，见 module.css 注释）
   const inputRef = useRef(null)
-  // 卡片标题编辑框 ref（单行 input，无需自动增高）
+  // 卡片标题编辑框 ref（多行 textarea，随内容自动增高）
   const titleInputRef = useRef(null)
-  useEffect(() => {
+  // 用 useLayoutEffect 在绘制前完成增高：先 auto 再由 scrollHeight 定高，
+  // 两态（标题 / 正文）都不出现「先按 1 行渲染再被撑高」的闪跳
+  useLayoutEffect(() => {
     if (!editing) return
-    const el = inputRef.current
-    if (!el) return
-    el.style.height = 'auto'
-    el.style.height = `${el.scrollHeight}px`
+    const autoGrow = (el) => {
+      if (!el) return
+      el.style.height = 'auto'
+      el.style.height = `${el.scrollHeight}px`
+    }
+    autoGrow(inputRef.current)
+    autoGrow(titleInputRef.current)
   }, [editing, draft])
 
   // 编辑态输入框：普通节点与卡片正文共用同一份 textarea
@@ -142,20 +147,22 @@ function CanvasNodeItem({
     />
   )
 
-  // 卡片标题编辑框：单行 input，落在封面带内（flex 垂直居中由带负责）
+  // 卡片标题编辑框：多行 textarea，落在封面带内（flex 垂直居中由带负责），
+  // 换行策略与展示态一致（见 .cardTitleInput），高度随内容自动增高
   const titleInput = (
-    <input
+    <textarea
       ref={titleInputRef}
       className={styles.cardTitleInput}
       value={draft}
       placeholder={CARD_TITLE_PLACEHOLDER}
       autoFocus
+      rows={1}
       onChange={(e) => onDraftChange(e.target.value)}
       onPointerDown={(e) => e.stopPropagation()}
       onDoubleClick={(e) => e.stopPropagation()}
       onBlur={onCommitEdit}
       onKeyDown={(e) => {
-        if (e.key === 'Enter') {
+        if (e.key === 'Enter' && !e.shiftKey) {
           e.preventDefault()
           onCommitEdit()
         } else if (e.key === 'Escape') {

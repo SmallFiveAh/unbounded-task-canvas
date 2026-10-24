@@ -247,13 +247,17 @@
 }
 
 /* 封面标题：加粗，墨色由 --c-cover-ink 决定
-  （浅色封面在样式里覆写为深墨，其余默认白） */
+  （浅色封面在样式里覆写为深墨，其余默认白）。
+  排版与编辑态 .cardTitleInput 逐项对齐（含换行策略），
+  保证进入 / 退出编辑时文本换行点与封面带高度不跳变 */
 .cardCoverTitle {
   font-family: var(--font-body);
   font-size: var(--text-sm);
   font-weight: 700;
   line-height: 1.35;
   letter-spacing: 0.02em;
+  white-space: pre-wrap;
+  overflow-wrap: break-word;
   word-break: break-word;
   color: var(--c-cover-ink, #ffffff);
 }
@@ -288,14 +292,19 @@
   color: var(--c-title, var(--color-text));
 }
 
-/* 标题编辑态输入框：单行 input，落在封面带内（flex 垂直居中生效），
-   排版与展示态 .cardCoverTitle 逐项一致，避免进入编辑时文本跳动 */
+/* 标题编辑态输入框：多行 textarea（自动增高），落在封面带内
+   （flex 垂直居中生效）。排版与展示态 .cardCoverTitle 逐项一致
+   —— 字体 / 字号 / 字重 / 行高 / 字距 / 换行策略全部同源，
+   换行点相同，进入编辑时文本与封面带高度都不跳变 */
 .cardTitleInput {
   font-family: var(--font-body);
   font-size: var(--text-sm);
   font-weight: 700;
   line-height: 1.35;
   letter-spacing: 0.02em;
+  white-space: pre-wrap;
+  overflow-wrap: break-word;
+  word-break: break-word;
   display: block;
   width: 100%;
   box-sizing: border-box;
@@ -303,12 +312,14 @@
   padding: 0;
   border: 0;
   outline: none;
+  overflow: hidden;
+  resize: none;
   background: transparent;
   color: var(--c-cover-ink, #ffffff);
   cursor: text;
   user-select: text;
   /* 强制直角：base.css 的 ：focus-visible 会给聚焦元素追加圆角（--radius-sm），
-     input 进入编辑即聚焦、正好被波及；这里连同 focus 态一起钉死为 0 */
+     输入框进入编辑即聚焦、正好被波及；这里连同 focus 态一起钉死为 0 */
   border-radius: 0;
 }
 
