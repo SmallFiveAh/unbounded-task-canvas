@@ -4,6 +4,7 @@ import InsertTablePanel from '../components/InsertTablePanel/InsertTablePanel'
 import { CardStylePanel } from '../components/CardStylePanel'
 import { ListCardStylePanel } from '../components/ListCardStylePanel'
 import { MindMapStylePanel } from '../components/MindMapStylePanel'
+import FlowChartStylePanel from '../components/FlowChartStylePanel'
 import { NoteDragGhost, NoteStylePanel } from '../components/NoteStylePanel'
 import { TASKS } from '../constants/tasks'
 import { EMPTY_CANVAS, loadCanvas } from '../utils/canvasStore'
@@ -172,21 +173,22 @@ export default function CanvasPage({ taskId }) {
         onToggleWheelZoom={toolbar.toggleWheelZoom}
       />
       <CanvasSideToolbar
-        sideTool={toolbar.sideTool}
         tablePanelOpen={toolbar.tablePanelOpen}
         notePanelOpen={toolbar.notePanelOpen}
         mindPanelOpen={toolbar.mindPanelOpen}
+        flowPanelOpen={toolbar.flowPanelOpen}
         listPanelOpen={toolbar.listPanelOpen}
         cardPanelOpen={toolbar.cardPanelOpen}
         tableBtnRef={toolbar.tableBtnRef}
         noteBtnRef={toolbar.noteBtnRef}
         mindBtnRef={toolbar.mindBtnRef}
+        flowBtnRef={toolbar.flowBtnRef}
         listBtnRef={toolbar.listBtnRef}
         cardBtnRef={toolbar.cardBtnRef}
         toolbarRef={toolbar.sideToolbarRef}
-        onToggleSideTool={toolbar.toggleSideTool}
         onToggleTablePanel={toolbar.toggleTablePanel}
         onToggleMindPanel={toolbar.toggleMindPanel}
+        onToggleFlowPanel={toolbar.toggleFlowPanel}
         onToggleListPanel={toolbar.toggleListPanel}
         onToggleCardPanel={toolbar.toggleCardPanel}
         onNotePress={(e) => noteDrag.press(e, toolbar.noteStyleId, toolbar.toggleNotePanel)}
@@ -292,6 +294,17 @@ export default function CanvasPage({ taskId }) {
         selectedId={toolbar.mindStyleId}
         onSelect={toolbar.selectMindStyle}
         onClose={toolbar.closeMindPanel}
+      />
+
+      {/* 流程图节点面板（点击左侧「流程图」按钮显示，紧贴按钮右侧）：
+          点缩略图记住节点，位置 / 关闭交互与便签面板一致 */}
+      <FlowChartStylePanel
+        open={toolbar.flowPanelOpen}
+        anchorRef={toolbar.flowBtnRef}
+        toolbarRef={toolbar.sideToolbarRef}
+        selectedId={toolbar.flowNodeId}
+        onSelect={toolbar.selectFlowNode}
+        onClose={toolbar.closeFlowPanel}
       />
 
       {/* 列表卡片样式面板（点击左侧「列表卡片」按钮显示，紧贴按钮右侧）：

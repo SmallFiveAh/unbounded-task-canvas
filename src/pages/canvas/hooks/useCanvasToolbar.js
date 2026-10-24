@@ -3,7 +3,7 @@
    ------------------------------------------------------------
    纯 UI 状态，不碰画布数据：
    · 当前工具（选择 / 平移）、鼠标滚轮缩放开关
-   · 左侧元素工具栏的当前选中项（便签 / 思维导图 / 流程图 / 卡片 / 列表）
+   · 各元素样式面板的显隐与选中值（便签 / 思维导图 / 流程图 / 卡片 / 列表）
    · 表格插入面板的显隐与所选行列、以及面板定位用的两个 ref
    ============================================================ */
 
@@ -24,10 +24,13 @@ import {
   loadStoredCardStyleId,
   saveStoredCardStyleId,
 } from '../../../constants/cardStyles'
+import {
+  loadStoredFlowChartNodeId,
+  saveStoredFlowChartNodeId,
+} from '../../../constants/flowchartStyles'
 
 export function useCanvasToolbar() {
   const [tool, setTool] = useState('select')
-  const [sideTool, setSideTool] = useState(null)
   const [wheelZoom, setWheelZoom] = useState(false)
   // 表格插入面板：点击左侧「表格」按钮时显示，参考 Word 插入表格
   const [tablePanelOpen, setTablePanelOpen] = useState(false)
@@ -55,6 +58,11 @@ export function useCanvasToolbar() {
   const [cardPanelOpen, setCardPanelOpen] = useState(false)
   const [cardStyleId, setCardStyleId] = useState(loadStoredCardStyleId)
   const cardBtnRef = useRef(null)
+  // 流程图节点面板：点击左侧「流程图」按钮时显示，节点选中后被记住
+  // （localStorage 持久化，同便签面板）
+  const [flowPanelOpen, setFlowPanelOpen] = useState(false)
+  const [flowNodeId, setFlowNodeId] = useState(loadStoredFlowChartNodeId)
+  const flowBtnRef = useRef(null)
 
   const selectTool = useCallback(() => setTool('select'), [])
 
@@ -65,12 +73,6 @@ export function useCanvasToolbar() {
   )
 
   const toggleWheelZoom = useCallback(() => setWheelZoom((w) => !w), [])
-
-  // 左侧工具：再点一次取消
-  const toggleSideTool = useCallback(
-    (key) => setSideTool((t) => (t === key ? null : key)),
-    [],
-  )
 
   const toggleTablePanel = useCallback(() => {
     if (tablePanelOpen) {
@@ -131,9 +133,18 @@ export function useCanvasToolbar() {
 
   const closeCardPanel = useCallback(() => setCardPanelOpen(false), [])
 
+  // 流程图节点选中即记住：状态 + 本地存档同步落盘
+  const selectFlowNode = useCallback((id) => {
+    setFlowNodeId(id)
+    saveStoredFlowChartNodeId(id)
+  }, [])
+
+  const toggleFlowPanel = useCallback(() => setFlowPanelOpen((o) => !o), [])
+
+  const closeFlowPanel = useCallback(() => setFlowPanelOpen(false), [])
+
   return {
     tool,
-    sideTool,
     wheelZoom,
     tablePanelOpen,
     tableRows,
@@ -146,7 +157,6 @@ export function useCanvasToolbar() {
     selectTool,
     togglePan,
     toggleWheelZoom,
-    toggleSideTool,
     toggleTablePanel,
     closeTablePanel,
     setTableSize,
@@ -171,5 +181,11 @@ export function useCanvasToolbar() {
     selectCardStyle,
     toggleCardPanel,
     closeCardPanel,
+    flowPanelOpen,
+    flowNodeId,
+    flowBtnRef,
+    selectFlowNode,
+    toggleFlowPanel,
+    closeFlowPanel,
   }
 }
