@@ -69,6 +69,51 @@
   background: var(--color-selection);
 }
 
+/* ---------- 默认节点（普通节点：muted / accent）的左侧边带 ----------
+   默认节点通体一色、没有封面带也没有纸张装饰，在纸面上缺少视觉抓手。
+   左边缘加一条贯通上下的竖边带，把「盒子」读成一张带书脊的卡片，
+   同时给拖抓手一个明确的起始边界。
+   实现要点：
+   · 用 ::before 而不是真实 DOM 节点 —— 高度度量以 el.firstElementChild
+     为单位（见 lib/noteSize.js 的 measureNoteContentHeight），
+     多塞一个兄弟节点会直接把内容高度量错导致盒子漂移。
+   · 边带用绝对定位贴左（不占流），容器只需让出 padding-left 即可，
+     文本的换行策略 / 两态排版对齐完全不受影响。
+   · .node 自带 overflow:hidden + 圆角，边带上下两端会被同一个圆角自然裁切，
+     缩放时对 rounding 补偿（内联 borderRadius）也跟着走。 */
+.nodeBand {
+  /* 左边距 = 边带宽 5px + 8px 呼吸空隙；右 / 上下沿用基础 padding */
+  padding-right: 8px;
+  padding-left: 13px;
+}
+
+.nodeBand::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: 0;
+  width: 5px;
+  /* 常态是暖灰低调的一条，选中 / 悬停才点亮成信号橙
+     （--color-accent 是「仅关键动作与激活标记」的稀缺色，不宜铺满） */
+  background: var(--color-muted);
+  opacity: 0.25;
+  transition:
+    background var(--dur-fast) var(--ease-out),
+    opacity var(--dur-fast) var(--ease-out);
+}
+
+.nodeBand:hover::before {
+  opacity: 0.45;
+}
+
+/* 选中态边带点亮：即使视线不在 SelectionFrame 的细橙框上，也能一眼看清选中了谁。
+   声明在 :hover 之后，同特异性（两个类）时后者胜出 */
+.selected.nodeBand::before {
+  background: var(--color-accent);
+  opacity: 1;
+}
+
 /* 选中态：抬升投影 + 提高层级（选中框与四角控制点由 SelectionFrame 负责） */
 .selected {
   box-shadow: var(--shadow-2);

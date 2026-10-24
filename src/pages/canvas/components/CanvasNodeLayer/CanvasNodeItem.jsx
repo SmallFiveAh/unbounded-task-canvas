@@ -55,6 +55,9 @@ function CanvasNodeItem({
   const cardStyleId = cardStyleIdFromKind(node.kind)
   const isCard = cardStyleId !== null
   const cardVisual = cardVisualStyles[cardStyleId || '']
+  // 普通节点（默认节点 muted 及其 accent 变体）：既不是便签也不是卡片，
+  // 左边缘挂一条竖边带作为视觉抓手（见 module.css 的 .nodeBand）
+  const isPlain = !isNote && !isCard
   // 空内容节点显示占位文案（仅展示，不写入数据）：便签 / 卡片 / 普通节点各有专属文案
   // 卡片的占位显示在正文区；标题为空时封面带只留色带
   const placeholder = isNote ? NOTE_PLACEHOLDER : isCard ? CARD_PLACEHOLDER : NODE_PLACEHOLDER
@@ -177,8 +180,8 @@ function CanvasNodeItem({
       ref={nodeRef}
       data-node-id={node.id}
       className={`${styles.node} ${styles[node.kind] || ''}${
-        noteVisual ? ` ${noteVisual}` : ''
-      }${isNote ? ` ${styles.noteNode}` : ''}${
+        isPlain ? ` ${styles.nodeBand}` : ''
+      }${noteVisual ? ` ${noteVisual}` : ''}${isNote ? ` ${styles.noteNode}` : ''}${
         hasBorderDecor ? ` ${styles.noteFramed}` : ''
       }${cardVisual ? ` ${cardVisual}` : ''}${
         isCard ? ` ${styles.cardNode}` : ''
