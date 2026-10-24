@@ -6,9 +6,10 @@ import styles from './CanvasSideToolbar.module.css'
  * 左侧中间工具栏：便签 / 表格 / 思维导图 / 流程图 / 卡片 / 列表卡片
  * · 每个按钮控制各自面板显隐（「再点一次取消」），并把
  *   自己的 DOM 节点作为面板锚点
- * · 便签按钮特殊：按住可直接拖到画布创建节点（onNotePress 交接给
- *   useNoteDragCreate），普通点击弹出样式面板（onNoteClick，拖拽
- *   结束后的残余 click 由 CanvasPage 吞掉）
+ * · 便签 / 卡片按钮特殊：按住可直接拖到画布创建节点（onNotePress /
+ *   onCardPress 交接给 useNoteDragCreate / useCardDragCreate），普通点击
+ *   弹出样式面板（onNoteClick / onCardClick，拖拽结束后的残余 click 由
+ *   CanvasPage 吞掉）
  * 纯展示组件：只做点击 → 回调，不碰画布数据。
  */
 function CanvasSideToolbar({
@@ -29,9 +30,10 @@ function CanvasSideToolbar({
   onToggleMindPanel,
   onToggleFlowPanel,
   onToggleListPanel,
-  onToggleCardPanel,
   onNotePress,
   onNoteClick,
+  onCardPress,
+  onCardClick,
 }) {
   return (
     <div ref={toolbarRef} className={styles.sideToolbar} role="toolbar" aria-label="元素工具栏">
@@ -77,7 +79,8 @@ function CanvasSideToolbar({
         ref={cardBtnRef}
         className={`${styles.sideToolBtn}${cardPanelOpen ? ` ${styles.active}` : ''}`}
         title="卡片"
-        onClick={onToggleCardPanel}
+        onPointerDown={onCardPress}
+        onClick={onCardClick}
       >
         <i className="bi bi-card-checklist" aria-hidden="true"></i>
       </button>
@@ -112,9 +115,10 @@ CanvasSideToolbar.propTypes = {
   onToggleMindPanel: PropTypes.func.isRequired,
   onToggleFlowPanel: PropTypes.func.isRequired,
   onToggleListPanel: PropTypes.func.isRequired,
-  onToggleCardPanel: PropTypes.func.isRequired,
   onNotePress: PropTypes.func.isRequired,
   onNoteClick: PropTypes.func.isRequired,
+  onCardPress: PropTypes.func.isRequired,
+  onCardClick: PropTypes.func.isRequired,
 }
 
 export default memo(CanvasSideToolbar)

@@ -193,3 +193,131 @@
 .nodeInput::placeholder {
   opacity: 0.45;
 }
+
+/* ---------- 卡片节点 ----------
+   两个可编辑区域（各自独立双击编辑、独立落库字段）：
+   · 封面标题带（上，有色）：标题加粗、垂直居中 —— 字段 node.title
+   · 正文区（下，无色）：不加粗，占位 / 排版参考便签 —— 字段 node.text
+   各样式的颜色 / 渐变 / 纹理全部由 CardStyles.module.css 的样式类
+   注入 --c-* 变量，这里只搭骨架 —— 画布节点、面板缩略图、拖拽幽灵
+   三处同源同色。声明顺序在 .node / .nodeInput 之后，稳定覆盖。 */
+
+/* 卡片容器：封面贴边（内边距归零交给内层），底色 / 纹理 / 描边取样式变量 */
+.cardNode {
+  flex-direction: column;
+  align-items: stretch;
+  padding: 0;
+  background-color: var(--c-bg, var(--color-surface));
+  background-image: var(--c-card-texture, none);
+  box-shadow: var(--c-card-ring, var(--shadow-1));
+}
+
+/* 悬停 / 选中的投影抬升保留：玻璃拟态的高光描边随变量一起生效 */
+.cardNode:hover {
+  box-shadow: var(--c-card-ring, var(--shadow-2));
+}
+
+.cardNode.selected {
+  box-shadow: var(--c-card-ring, var(--shadow-2));
+}
+
+/* 内容包裹层：封面标题带 + 内容区的整体。
+   它是容器的第一个子元素 —— ResizeObserver / 内容高度测量
+   （见 lib/noteSize.js 的 measureNoteContentHeight）都以它为单位，
+   编辑态也不能把它拆开（输入框嵌在里面，量到的才是完整内容高度）。 */
+.cardInner {
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  min-width: 0;
+}
+
+/* 封面标题带：颜色 / 渐变走 --c-cover（与面板缩略图同一变量）；
+   标题在带内垂直居中，带高随标题行数自适应（min-height 兜底单行） */
+.cardCover {
+  flex: none;
+  display: flex;
+  align-items: center;
+  min-height: 52px;
+  min-width: 0;
+  padding: 6px 12px;
+  box-sizing: border-box;
+  background: var(--c-cover, var(--color-border));
+  cursor: text;
+}
+
+/* 封面标题：加粗，墨色由 --c-cover-ink 决定
+  （浅色封面在样式里覆写为深墨，其余默认白） */
+.cardCoverTitle {
+  font-family: var(--font-body);
+  font-size: var(--text-sm);
+  font-weight: 700;
+  line-height: 1.35;
+  letter-spacing: 0.02em;
+  word-break: break-word;
+  color: var(--c-cover-ink, #ffffff);
+}
+
+/* 内容区：正文（排版参考便签文本，但不加粗） */
+.cardBody {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  min-width: 0;
+  padding: 10px 12px 12px;
+}
+
+/* 正文：保留手动换行与连续空格，与便签同一套换行策略 */
+.cardText {
+  font-family: var(--font-body);
+  font-size: var(--text-sm);
+  font-weight: 400;
+  line-height: 1.45;
+  letter-spacing: 0.02em;
+  white-space: pre-wrap;
+  overflow-wrap: break-word;
+  word-break: normal;
+  color: var(--c-title, var(--color-text));
+}
+
+/* 标题编辑态输入框：单行 input，落在封面带内（flex 垂直居中生效），
+   排版与展示态 .cardCoverTitle 逐项一致，避免进入编辑时文本跳动 */
+.cardTitleInput {
+  font-family: var(--font-body);
+  font-size: var(--text-sm);
+  font-weight: 700;
+  line-height: 1.35;
+  letter-spacing: 0.02em;
+  display: block;
+  width: 100%;
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+  border: 0;
+  outline: none;
+  background: transparent;
+  color: var(--c-cover-ink, #ffffff);
+  cursor: text;
+  user-select: text;
+  /* 强制直角：base.css 的 ：focus-visible 会给聚焦元素追加圆角（--radius-sm），
+     input 进入编辑即聚焦、正好被波及；这里连同 focus 态一起钉死为 0 */
+  border-radius: 0;
+}
+
+/* focus 态单独钉一次：更高优先级，不依赖模块样式表的注入顺序 */
+.cardTitleInput:focus-visible {
+  border-radius: 0;
+}
+
+.cardTitleInput::placeholder {
+  opacity: 0.45;
+}
+
+/* 卡片正文编辑态：textarea 落在封面带下方，内边距对齐 .cardBody，
+   墨色跟随 --c-title（星夜 / 极光等深底样式下保持可读），
+   字重与展示态 .cardText 一致（400，不加粗） */
+.cardNode .nodeInput {
+  padding: 10px 12px 12px;
+  font-weight: 400;
+  color: var(--c-title, var(--color-text));
+}

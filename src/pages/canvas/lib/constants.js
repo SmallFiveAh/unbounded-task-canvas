@@ -14,6 +14,11 @@ export const NODE_H = 76
 export const NOTE_W = 200 // 便签节点默认宽度（世界坐标）
 export const NOTE_H = 200 // 便签节点默认高度（世界坐标）
 
+export const CARD_W = 240 // 卡片节点默认宽度（世界坐标）：比便签宽扁，贴合卡片比例
+export const CARD_H = 180 // 卡片节点默认高度（世界坐标）
+export const CARD_PLACEHOLDER = '内容...' // 卡片正文为空时展示的占位文案（仅展示，不落库）
+export const CARD_TITLE_PLACEHOLDER = '标题...' // 卡片标题为空时编辑框内的占位文案（仅展示，不落库）
+
 export const NOTE_DEFAULT_TEXT = '' // 新便签的初始内容：留空，画布上显示占位符
 export const NOTE_PLACEHOLDER = '便签...' // 便签内容为空时展示的占位文案（仅展示，不落库）
 export const NODE_PLACEHOLDER = '默认节点...' // 普通节点内容为空时展示的占位文案（仅展示，不落库）
@@ -29,3 +34,11 @@ export const EDGE_CURVE_MAX = 160 // 外扩上限（世界坐标）
 export const EDGE_TARGET_PAD = 2 // 终点裁剪到目标边框之外的距离，给实心箭头留位（世界坐标）
 
 export const SAVED_HINT_DURATION = 5000 // 「已保存到本地」提示停留时长（ms），之后淡出
+
+/* ---------- 节点编辑字段 ----------
+   普通节点 / 便签只有正文；卡片有两个可编辑区域：
+   · title  标题（封面色带内，加粗、垂直居中）
+   · text   正文（下方内容区，编辑交互与便签一致）
+   编辑态用 editingId + editingField 二元组定位「正在编辑哪个框」。 */
+export const EDIT_FIELD_TEXT = 'text'
+export const EDIT_FIELD_TITLE = 'title'

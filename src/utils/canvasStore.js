@@ -10,6 +10,7 @@
    ============================================================ */
 
 import { buildCanvas } from '../constants/tasks'
+import { isCardKind } from '../constants/cardStyles'
 import { isNoteKind, LEGACY_NOTE_DEFAULT_TEXT } from '../constants/noteStyles'
 import {
   TABLE_CELL_H,
@@ -63,9 +64,11 @@ const isNum = (v) => typeof v === 'number' && Number.isFinite(v)
 function normalizeNode(raw) {
   if (!raw || typeof raw.id !== 'string') return null
   if (![raw.x, raw.y, raw.w, raw.h].every(isNum)) return null
-  // kind 白名单：合法便签（note-<样式id>）原样保留，其余只认 accent / muted
+  // kind 白名单：合法便签（note-<样式id>）与卡片（card-<样式id>）原样保留，
+  // 其余只认 accent / muted
   const isNote = isNoteKind(raw.kind)
-  const kind = isNote ? raw.kind : raw.kind === 'accent' ? 'accent' : 'muted'
+  const isCard = isCardKind(raw.kind)
+  const kind = isNote || isCard ? raw.kind : raw.kind === 'accent' ? 'accent' : 'muted'
   // 旧版便签的默认文案「便签」迁移为空：与新建便签一致，显示占位符
   const text = typeof raw.text === 'string' ? raw.text : ''
   const node = {
@@ -82,6 +85,18 @@ function normalizeNode(raw) {
   // 丢了 minH，刷新后下限会被「已撑开的高度」顶替，节点再也缩不回去
   node.minH = isNum(raw.minH) ? Math.max(24, raw.minH) : node.h
   node.contentH = isNum(raw.contentH) ? Math.max(0, raw.contentH) : 0
+  // 卡片节点独有标题字段：旧存档没有 title 时按「首行 = 标题」迁移
+  // （该版本的卡片把首行渲染为封面标题、其余行为正文）
+  if (isCard) {
+    if (typeof raw.title === 'string') {
+      node.title = raw.title
+    } else {
+      const legacy = typeof node.text === 'string' ? node.text : ''
+      const breakAt = legacy.indexOf('\n')
+      node.title = breakAt === -1 ? legacy : legacy.slice(0, breakAt)
+      node.text = breakAt === -1 ? '' : legacy.slice(breakAt + 1)
+    }
+  }
   return node
 }
 

@@ -41,6 +41,7 @@ function CanvasWorld({
         selectedIds={selectedIds}
         selectedId={selectedId}
         editingId={editingId}
+        editingField={selection.editingField}
         draft={draft}
         scale={scale}
         onNodePointerDown={drag.onNodePointerDown}

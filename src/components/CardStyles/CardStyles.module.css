@@ -17,6 +17,7 @@
   --c-title: #3f3f46;
   --c-line: #d4d4d8;
   --c-chip: #e4e4e7;
+  --c-cover-ink: #3f3f46; /* 浅灰封面：标题用深墨，不用默认白 */
 }
 
 .sky {
@@ -65,15 +66,23 @@
   --c-title: #fde68a;
   --c-line: #4b5563;
   --c-chip: #374151;
+  --c-cover-ink: #44403c; /* 明黄封面：标题用深墨，不用默认白 */
 }
 
-/* 牛皮纸：暖棕底 + 细纸纹（repeating 渐变模拟横纹肌理） */
+/* 牛皮纸：暖棕底 + 细纸纹（repeating 渐变模拟横纹肌理）
+   --c-card-texture 同时提供给画布节点基座（.cardNode）消费，
+   保证面板缩略图与画布节点的纹理同源 */
 .kraft {
   --c-bg: #e8d9bd;
   --c-cover: #b08968;
   --c-title: #7f5539;
   --c-line: #d6c3a1;
   --c-chip: #d4b483;
+  --c-card-texture: repeating-linear-gradient(
+    0deg,
+    rgba(127, 85, 57, 0.05) 0 1px,
+    transparent 1px 4px
+  );
   background-image: repeating-linear-gradient(
     0deg,
     rgba(127, 85, 57, 0.05) 0 1px,
@@ -81,13 +90,17 @@
   );
 }
 
-/* 玻璃拟态：半透明渐变底 + 内侧高光描边 */
+/* 玻璃拟态：半透明渐变底 + 内侧高光描边
+   渐变纹理 / 高光描边同样经变量提供给画布节点基座 */
 .glass {
   --c-bg: rgba(255, 255, 255, 0.55);
   --c-cover: linear-gradient(90deg, #93c5fd, #c4b5fd);
   --c-title: #64748b;
   --c-line: rgba(148, 163, 184, 0.5);
   --c-chip: rgba(203, 213, 225, 0.7);
+  --c-card-texture: linear-gradient(135deg, rgba(147, 197, 253, 0.25), rgba(196, 181, 253, 0.25));
+  --c-card-ring: inset 0 0 0 1px rgba(255, 255, 255, 0.6);
+  --c-cover-ink: #475569; /* 浅色渐变封面：标题用深墨，不用默认白 */
   background-image: linear-gradient(135deg, rgba(147, 197, 253, 0.25), rgba(196, 181, 253, 0.25));
   box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.6);
 }

@@ -13,6 +13,8 @@ import styles from './CardStylePanel.module.css'
  * · 水平在工具栏右侧，垂直以工具栏中间为锚点
  * · 点击缩略图选中样式（localStorage 记忆，关面板不丢）；
  *   选中效果只有样式本身的高亮描边，不附加对勾等元素
+ * · 按住缩略图可直接拖到画布创建节点（拖拽逻辑由
+ *   useCardDragCreate 接管，onPointerDown 即交接），拖拽中面板保持可见
  * · 点击面板外部 / Esc 关闭；窗口尺寸变化自动跟随重定位
  *
  * 注意：渲染期读取 anchorRef / toolbarRef 做定位沿用
@@ -27,6 +29,7 @@ export default function CardStylePanel({
   selectedId,
   onSelect,
   onClose,
+  onSwatchPress,
 }) {
   const panelRef = useRef(null)
   // Esc / 点击外部关闭；resize 时强制重渲染以重算位置
@@ -56,14 +59,18 @@ export default function CardStylePanel({
       tabIndex={-1}
     >
       <div className={styles.grid}>
-        {CARD_STYLES.map((styleItem) => (
-          <CardSwatch
-            key={styleItem.id}
-            styleItem={styleItem}
-            selected={styleItem.id === selectedId}
-            onSelect={onSelect}
-          />
-        ))}
+        {CARD_STYLES.map((styleItem) => {
+          const selected = styleItem.id === selectedId
+          return (
+            <CardSwatch
+              key={styleItem.id}
+              styleItem={styleItem}
+              selected={selected}
+              onSelect={onSelect}
+              onSwatchPress={onSwatchPress}
+            />
+          )
+        })}
       </div>
     </div>,
     document.body,
@@ -71,14 +78,19 @@ export default function CardStylePanel({
 }
 
 /** 单个样式缩略图：迷你卡片（封面条 + 标题条 + 正文条 + 标签胶囊） */
-function CardSwatch({ styleItem, selected, onSelect }) {
+function CardSwatch({ styleItem, selected, onSelect, onSwatchPress }) {
   return (
     <button
       type="button"
       className={`${styles.swatch} ${visualStyles[styleItem.id]}${
         selected ? ` ${styles.selected}` : ''
       }`}
-      onClick={() => onSelect(styleItem.id)}
+      onPointerDown={(e) => onSwatchPress(e, styleItem.id)}
+      onClick={(e) => {
+        // 指针点击已由 onSwatchPress → useCardDragCreate 在 pointerup 处理；
+        // 这里只响应键盘激活的 click（detail === 0），避免重复选中
+        if (e.detail === 0) onSelect(styleItem.id)
+      }}
       aria-pressed={selected}
       aria-label={styleItem.label}
       title={styleItem.label}
@@ -106,6 +118,7 @@ CardSwatch.propTypes = {
   }).isRequired,
   selected: PropTypes.bool.isRequired,
   onSelect: PropTypes.func.isRequired,
+  onSwatchPress: PropTypes.func.isRequired,
 }
 
 CardStylePanel.propTypes = {
@@ -115,4 +128,5 @@ CardStylePanel.propTypes = {
   selectedId: PropTypes.string.isRequired,
   onSelect: PropTypes.func.isRequired,
   onClose: PropTypes.func.isRequired,
+  onSwatchPress: PropTypes.func.isRequired,
 }

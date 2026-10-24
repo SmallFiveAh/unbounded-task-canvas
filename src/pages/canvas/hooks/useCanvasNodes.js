@@ -7,7 +7,17 @@
    ============================================================ */
 
 import { useCallback, useState } from 'react'
-import { NOTE_H, NOTE_W, NODE_H, NODE_W } from '../lib/constants'
+import {
+  CARD_H,
+  CARD_W,
+  EDIT_FIELD_TEXT,
+  EDIT_FIELD_TITLE,
+  NOTE_H,
+  NOTE_W,
+  NODE_H,
+  NODE_W,
+} from '../lib/constants'
+import { cardStyleIdFromKind } from '../../../constants/cardStyles'
 import { noteStyleIdFromKind } from '../../../constants/noteStyles'
 
 /**
@@ -33,13 +43,16 @@ export function useCanvasNodes({
     // 初始内容留空：画布上显示占位符（与便签一致），不写入默认文案
     (x, y, text = '', kind = 'muted') => {
       const id = nextId('n')
-      // 便签节点用专属默认尺寸（200×200），其余节点维持 176×76
+      // 节点默认尺寸按 kind 分派：便签 200×200、卡片 240×180，其余 176×76
       const isNote = noteStyleIdFromKind(kind) !== null
-      const w = isNote ? NOTE_W : NODE_W
-      const h = isNote ? NOTE_H : NODE_H
+      const isCard = cardStyleIdFromKind(kind) !== null
+      const w = isNote ? NOTE_W : isCard ? CARD_W : NODE_W
+      const h = isNote ? NOTE_H : isCard ? CARD_H : NODE_H
       // 全部节点都走「内容自适应」：h 是测量结果，初始下限取默认尺寸，
       // 内容高度待实测（minH / contentH 的含义见 lib/noteSize.js）
       const node = { id, x, y, w, h, minH: h, contentH: 0, kind, text }
+      // 卡片节点独有的标题字段（封面色带内编辑），正文仍走 text
+      if (isCard) node.title = ''
       setNodes((ns) => [...ns, node])
       // 选中集合与主选中同步：新节点落地即带选中框
       onSelect(id)
@@ -81,10 +94,16 @@ export function useCanvasNodes({
     setNodes((ns) => ns.map((n) => (n.id === id ? { ...n, ...patch } : n)))
   }, [])
 
-  // 提交节点文案：全部节点允许清空（空内容落库，画布显示占位符）
-  const commitNodeText = useCallback((id, raw) => {
-    const text = raw.trim()
-    setNodes((ns) => ns.map((n) => (n.id === id ? { ...n, text } : n)))
+  // 提交节点文案：按字段分派（卡片标题 → title，其余 → text）。
+  // 全部字段允许清空（空内容落库，画布显示占位符）
+  const commitNodeText = useCallback((id, raw, field = EDIT_FIELD_TEXT) => {
+    const value = raw.trim()
+    setNodes((ns) =>
+      ns.map((n) => {
+        if (n.id !== id) return n
+        return field === EDIT_FIELD_TITLE ? { ...n, title: value } : { ...n, text: value }
+      }),
+    )
   }, [])
 
   return {

@@ -8,11 +8,14 @@
    ============================================================ */
 
 import { useCallback, useState } from 'react'
+import { EDIT_FIELD_TEXT, EDIT_FIELD_TITLE } from '../lib/constants'
 
 export function useCanvasSelection() {
   const [selectedId, setSelectedId] = useState(null)
   const [selectedIds, setSelectedIds] = useState([])
   const [editingId, setEditingId] = useState(null)
+  // 正在编辑的字段：普通节点 / 便签恒为正文；卡片可编辑标题或正文
+  const [editingField, setEditingField] = useState(EDIT_FIELD_TEXT)
   const [draft, setDraft] = useState('')
 
   // 只选中一个元素（新建 / 单击表格 / 进入编辑都用它）
@@ -57,12 +60,14 @@ export function useCanvasSelection() {
     setEditingId((id) => (id && removed.has(id) ? null : id))
   }, [])
 
-  // 双击节点进入编辑：选中它，并把原文字放进草稿
-  const startEditNode = useCallback((node) => {
+  // 双击节点进入编辑：选中它，把对应字段的原文字放进草稿
+  // （field 缺省为正文；卡片的封面标题带传 title，正文区传 text）
+  const startEditNode = useCallback((node, field = EDIT_FIELD_TEXT) => {
     setSelectedIds([node.id])
     setSelectedId(node.id)
     setEditingId(node.id)
-    setDraft(node.text)
+    setEditingField(field)
+    setDraft(field === EDIT_FIELD_TITLE ? node.title || '' : node.text || '')
   }, [])
 
   const stopEditing = useCallback(() => setEditingId(null), [])
@@ -74,6 +79,8 @@ export function useCanvasSelection() {
     setSelectedIds,
     editingId,
     setEditingId,
+    editingField,
+    setEditingField,
     stopEditing,
     draft,
     setDraft,

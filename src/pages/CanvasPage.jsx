@@ -16,8 +16,10 @@ import { useCanvasSelection } from './canvas/hooks/useCanvasSelection'
 import { useCanvasToolbar } from './canvas/hooks/useCanvasToolbar'
 import { useCanvasViewport } from './canvas/hooks/useCanvasViewport'
 import { useCommitNodeEdit } from './canvas/hooks/useCommitNodeEdit'
+import { useCardDragCreate } from './canvas/hooks/useCardDragCreate'
 import { useNoteDragCreate } from './canvas/hooks/useNoteDragCreate'
 import { previewEdgePath, resolveEdgePath } from './canvas/lib/edges'
+import { EDIT_FIELD_TEXT, EDIT_FIELD_TITLE } from './canvas/lib/constants'
 import styles from './CanvasPage.module.css'
 
 /**
@@ -90,6 +92,21 @@ export default function CanvasPage({ taskId }) {
     addNode: doc.addNode,
     // 落库即进入编辑：新便签无需双击，创建后直接在左上角输入文案
     onNoteCreated: (id) => {
+      selection.setEditingField(EDIT_FIELD_TEXT)
+      selection.setDraft('')
+      selection.setEditingId(id)
+    },
+  })
+
+  // 卡片拖拽创建：按住「卡片」按钮 / 面板缩略图拖到画布落节点
+  // （交互约定与便签完全同构，见 useCardDragCreate）
+  const cardDrag = useCardDragCreate({
+    viewportRef,
+    viewRef,
+    addNode: doc.addNode,
+    // 落库即进入编辑：新卡片先编辑封面标题（双击正文区可继续编辑正文）
+    onCardCreated: (id) => {
+      selection.setEditingField(EDIT_FIELD_TITLE)
       selection.setDraft('')
       selection.setEditingId(id)
     },
@@ -168,12 +185,17 @@ export default function CanvasPage({ taskId }) {
         onToggleMindPanel={toolbar.toggleMindPanel}
         onToggleFlowPanel={toolbar.toggleFlowPanel}
         onToggleListPanel={toolbar.toggleListPanel}
-        onToggleCardPanel={toolbar.toggleCardPanel}
         onNotePress={(e) => noteDrag.press(e, toolbar.noteStyleId, toolbar.toggleNotePanel)}
         onNoteClick={(e) => {
           // 指针点击已在 pointerup 阶段由 useNoteDragCreate 的 onClick 处理；
           // 这里只响应键盘激活的 click（detail === 0），否则会开→关双切换
           if (e.detail === 0) toolbar.toggleNotePanel()
+        }}
+        onCardPress={(e) => cardDrag.press(e, toolbar.cardStyleId, toolbar.toggleCardPanel)}
+        onCardClick={(e) => {
+          // 指针点击已在 pointerup 阶段由 useCardDragCreate 的 onClick 处理；
+          // 这里只响应键盘激活的 click（detail === 0），否则会开→关双切换
+          if (e.detail === 0) toolbar.toggleCardPanel()
         }}
       />
       <CanvasZoomBadge scale={view.scale} onReset={() => zoomByStep(1 / view.scale)} />
@@ -200,10 +222,11 @@ export default function CanvasPage({ taskId }) {
         edgeDrag={edgeDrag}
       />
 
-      {/* 全部插入 / 样式面板 + 便签拖拽幽灵（展示层，见 CanvasPanels） */}
+      {/* 全部插入 / 样式面板 + 便签 / 卡片拖拽幽灵（展示层，见 CanvasPanels） */}
       <CanvasPanels
         toolbar={toolbar}
         noteDrag={noteDrag}
+        cardDrag={cardDrag}
         view={view}
         onInsertTable={doc.addTable}
       />

@@ -19,6 +19,7 @@ function CanvasNodeLayer({
   selectedIds,
   selectedId,
   editingId,
+  editingField,
   draft,
   scale,
   onNodePointerDown,
@@ -82,6 +83,7 @@ function CanvasNodeLayer({
           // 非编辑节点的 draft 恒为空串（字符串相等 → memo 跳过）：
           // 打字时只有正在编辑的那个节点跟着重渲染
           draft={node.id === editingId ? draft : ''}
+          editingField={node.id === editingId ? editingField : undefined}
           scale={scale}
           onNodePointerDown={onNodePointerDown}
           onStartEdit={onStartEdit}
@@ -117,6 +119,8 @@ CanvasNodeLayer.propTypes = {
   selectedIds: PropTypes.arrayOf(PropTypes.string).isRequired,
   selectedId: PropTypes.string,
   editingId: PropTypes.string,
+  // 正在编辑的字段：text（正文，默认）/ title（卡片标题）
+  editingField: PropTypes.string,
   draft: PropTypes.string,
   scale: PropTypes.number.isRequired,
   onNodePointerDown: PropTypes.func.isRequired,

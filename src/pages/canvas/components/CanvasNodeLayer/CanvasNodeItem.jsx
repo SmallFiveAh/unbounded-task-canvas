@@ -1,10 +1,21 @@
 import { memo, useEffect, useLayoutEffect, useRef } from 'react'
 import PropTypes from 'prop-types'
+import { cardStyleIdFromKind } from '../../../../constants/cardStyles'
 import { noteStyleIdFromKind, NOTE_BORDERED_STYLE_IDS } from '../../../../constants/noteStyles'
+import cardVisualStyles from '../../../../components/CardStyles/CardStyles.module.css'
 import visualStyles from '../../../../components/NoteStyles/NoteStyles.module.css'
 import { cornerRadius } from '../../../../utils/canvasRadius'
-import { NODE_PLACEHOLDER, NODE_RADIUS, NOTE_PLACEHOLDER } from '../../lib/constants'
+import {
+  CARD_PLACEHOLDER,
+  CARD_TITLE_PLACEHOLDER,
+  EDIT_FIELD_TEXT,
+  EDIT_FIELD_TITLE,
+  NODE_PLACEHOLDER,
+  NODE_RADIUS,
+  NOTE_PLACEHOLDER,
+} from '../../lib/constants'
 import { measureNoteContentHeight, resolveContentHeight, resolveMinHeight } from '../../lib/noteSize'
+import CardNodeFace from './CardNodeFace'
 import styles from './CanvasNodeLayer.module.css'
 
 /**
@@ -21,6 +32,7 @@ function CanvasNodeItem({
   selected,
   primary,
   editing,
+  editingField,
   draft,
   scale,
   onNodePointerDown,
@@ -38,9 +50,20 @@ function CanvasNodeItem({
   // 带边框式纸张装饰的便签（小黑板粉笔框等）：
   // 内容加内边距退到装饰边线内侧，避免文字/占位符压住虚线框
   const hasBorderDecor = NOTE_BORDERED_STYLE_IDS.has(noteStyleId)
-  // 空内容节点显示占位文案（仅展示，不写入数据）：便签 / 普通节点各有专属文案
-  const placeholder = isNote ? NOTE_PLACEHOLDER : NODE_PLACEHOLDER
+  // 卡片节点：kind 形如 card-<样式id>，视觉变量由 CardStyles.module.css 供给
+  // （封面 / 底色 / 墨色 / 胶囊与面板缩略图同一套 --c-* 变量）
+  const cardStyleId = cardStyleIdFromKind(node.kind)
+  const isCard = cardStyleId !== null
+  const cardVisual = cardVisualStyles[cardStyleId || '']
+  // 空内容节点显示占位文案（仅展示，不写入数据）：便签 / 卡片 / 普通节点各有专属文案
+  // 卡片的占位显示在正文区；标题为空时封面带只留色带
+  const placeholder = isNote ? NOTE_PLACEHOLDER : isCard ? CARD_PLACEHOLDER : NODE_PLACEHOLDER
   const showPlaceholder = !node.text
+  // 卡片两个可编辑区域各自的字段：标题（封面带）/ 正文（下方内容区）
+  const cardTitle = node.title || ''
+  const cardBody = node.text || ''
+  const isEditingTitle = editing && editingField === EDIT_FIELD_TITLE
+  const isEditingText = editing && editingField !== EDIT_FIELD_TITLE
 
   // 节点高度自适应（全部节点，机制同便签）：容器 height:auto，由内容撑开；
   // ResizeObserver 把实测高度回写 store（node.h 是连线锚点 /
@@ -83,6 +106,8 @@ function CanvasNodeItem({
   // 编辑态 textarea 自动增高：height:auto 后由 scrollHeight 决定实际高度，
   // 与展示态 span 的换行行为一致（排版属性两态共用一套，见 module.css 注释）
   const inputRef = useRef(null)
+  // 卡片标题编辑框 ref（单行 input，无需自动增高）
+  const titleInputRef = useRef(null)
   useEffect(() => {
     if (!editing) return
     const el = inputRef.current
@@ -90,6 +115,56 @@ function CanvasNodeItem({
     el.style.height = 'auto'
     el.style.height = `${el.scrollHeight}px`
   }, [editing, draft])
+
+  // 编辑态输入框：普通节点与卡片正文共用同一份 textarea
+  // （卡片正文排版参考便签：自动增高、Enter 提交、Shift+Enter 换行、Esc 取消）
+  const textInput = (
+    <textarea
+      ref={inputRef}
+      className={styles.nodeInput}
+      value={draft}
+      placeholder={placeholder}
+      autoFocus
+      rows={2}
+      onChange={(e) => onDraftChange(e.target.value)}
+      onPointerDown={(e) => e.stopPropagation()}
+      onDoubleClick={(e) => e.stopPropagation()}
+      onBlur={onCommitEdit}
+      onKeyDown={(e) => {
+        if (e.key === 'Enter' && !e.shiftKey) {
+          e.preventDefault()
+          onCommitEdit()
+        } else if (e.key === 'Escape') {
+          e.preventDefault()
+          onCancelEdit()
+        }
+      }}
+    />
+  )
+
+  // 卡片标题编辑框：单行 input，落在封面带内（flex 垂直居中由带负责）
+  const titleInput = (
+    <input
+      ref={titleInputRef}
+      className={styles.cardTitleInput}
+      value={draft}
+      placeholder={CARD_TITLE_PLACEHOLDER}
+      autoFocus
+      onChange={(e) => onDraftChange(e.target.value)}
+      onPointerDown={(e) => e.stopPropagation()}
+      onDoubleClick={(e) => e.stopPropagation()}
+      onBlur={onCommitEdit}
+      onKeyDown={(e) => {
+        if (e.key === 'Enter') {
+          e.preventDefault()
+          onCommitEdit()
+        } else if (e.key === 'Escape') {
+          e.preventDefault()
+          onCancelEdit()
+        }
+      }}
+    />
+  )
   return (
     <div
       ref={nodeRef}
@@ -98,6 +173,8 @@ function CanvasNodeItem({
         noteVisual ? ` ${noteVisual}` : ''
       }${isNote ? ` ${styles.noteNode}` : ''}${
         hasBorderDecor ? ` ${styles.noteFramed}` : ''
+      }${cardVisual ? ` ${cardVisual}` : ''}${
+        isCard ? ` ${styles.cardNode}` : ''
       }${selected ? ` ${styles.selected}` : ''}${primary ? ` ${styles.primary}` : ''}`}
       style={{
         // 用 transform 定位而不是 left/top：拖拽每帧只动 x/y，
@@ -118,31 +195,34 @@ function CanvasNodeItem({
       // 由 useViewportPointer 统一收口（挂两遍会把每次 move 跑两遍）
       onDoubleClick={(e) => {
         e.stopPropagation()
-        onStartEdit(node)
+        // 卡片的 dblclick target 会被拖拽的指针捕获重定向成本容器
+        // （startItemPointerDown 捕获指针，派生鼠标事件随之重定向），
+        // e.target 永远不是封面带/正文区 —— 用命中坐标还原真实元素判区
+        if (!isCard) {
+          onStartEdit(node)
+          return
+        }
+        const hit = document.elementFromPoint(e.clientX, e.clientY)
+        const region = hit?.closest('[data-card-region]')?.dataset.cardRegion
+        onStartEdit(node, region === 'title' ? EDIT_FIELD_TITLE : EDIT_FIELD_TEXT)
       }}
     >
-      {editing ? (
-        <textarea
-          ref={inputRef}
-          className={styles.nodeInput}
-          value={draft}
+      {isCard ? (
+        /* 卡片节点：两个可编辑区域交给 CardNodeFace ——
+           外层 cardInner 是容器的第一个子元素，内容高度测量以它为单位
+           （见 noteSize.js）；编辑中的区域经插槽换成输入框，不拆散包裹层。
+           双击封面带 → 编辑标题；双击正文区 → 编辑正文
+           （区域判定在容器 onDoubleClick 里按命中坐标完成） */
+        <CardNodeFace
+          title={cardTitle}
+          body={cardBody}
           placeholder={placeholder}
-          autoFocus
-          rows={2}
-          onChange={(e) => onDraftChange(e.target.value)}
-          onPointerDown={(e) => e.stopPropagation()}
-          onDoubleClick={(e) => e.stopPropagation()}
-          onBlur={onCommitEdit}
-          onKeyDown={(e) => {
-            if (e.key === 'Enter' && !e.shiftKey) {
-              e.preventDefault()
-              onCommitEdit()
-            } else if (e.key === 'Escape') {
-              e.preventDefault()
-              onCancelEdit()
-            }
-          }}
+          titlePlaceholder={CARD_TITLE_PLACEHOLDER}
+          titleSlot={isEditingTitle ? titleInput : undefined}
+          bodySlot={isEditingText ? textInput : undefined}
         />
+      ) : editing ? (
+        textInput
       ) : (
         <span
           className={`${styles.nodeText}${
@@ -165,6 +245,8 @@ CanvasNodeItem.propTypes = {
     h: PropTypes.number.isRequired,
     kind: PropTypes.string.isRequired,
     text: PropTypes.string,
+    // 卡片独有：封面标题带的标题字段
+    title: PropTypes.string,
     // 高度自适应度量：用户高度下限 / 内容实测高度（见 lib/noteSize.js）
     minH: PropTypes.number,
     contentH: PropTypes.number,
@@ -172,6 +254,8 @@ CanvasNodeItem.propTypes = {
   selected: PropTypes.bool.isRequired,
   primary: PropTypes.bool.isRequired,
   editing: PropTypes.bool.isRequired,
+  // 正在编辑的字段：text（正文，默认）/ title（卡片标题）
+  editingField: PropTypes.string,
   draft: PropTypes.string,
   scale: PropTypes.number.isRequired,
   onNodePointerDown: PropTypes.func.isRequired,
