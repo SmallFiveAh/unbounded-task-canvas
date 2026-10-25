@@ -25,6 +25,7 @@ function CanvasWorld({
   selection,
   doc,
   commitNodeEdit,
+  onDraftChange,
 }) {
   return (
     <div
@@ -46,7 +47,9 @@ function CanvasWorld({
         scale={scale}
         onNodePointerDown={drag.onNodePointerDown}
         onStartEdit={selection.startEditNode}
-        onDraftChange={selection.setDraft}
+        // 草稿变化走编排层回调（列表卡片行输入时自动追加空行），
+        // 不能直接用 selection.setDraft
+        onDraftChange={onDraftChange}
         onCommitEdit={commitNodeEdit}
         onCancelEdit={selection.stopEditing}
         onNodeSizeChange={doc.updateNodeSize}
@@ -98,6 +101,7 @@ CanvasWorld.propTypes = {
   selection: PropTypes.object.isRequired,
   doc: PropTypes.object.isRequired,
   commitNodeEdit: PropTypes.func.isRequired,
+  onDraftChange: PropTypes.func.isRequired,
 }
 
 export default memo(CanvasWorld)

@@ -8,8 +8,8 @@ import nodeStyles from '../../pages/canvas/components/CanvasNodeLayer/CanvasNode
 import ListCardNodeFace from '../../pages/canvas/components/CanvasNodeLayer/ListCardNodeFace'
 import { cornerRadius } from '../../utils/canvasRadius'
 import {
-  LIST_CARD_DEFAULT_ITEMS,
   LIST_CARD_DEFAULT_TITLE,
+  emptyListCardItem,
 } from '../../constants/listCardStyles'
 import visualStyles from '../ListCardStyles/ListCardStyles.module.css'
 import styles from './ListCardDragGhost.module.css'
@@ -25,8 +25,9 @@ import styles from './ListCardDragGhost.module.css'
  * 真实列表卡片的屏幕尺寸是 LIST_CARD_W × scale；幽灵用同样的比例变换，
  * 拖拽过程中看到的大小、内容与松手后生成的节点完全一致。
  *
- * 内容与落库后的默认内容一致（标题 + 默认待办项，第一条已勾选）。
- * 位置以光标为中心（translate(-50%, -50%)），不响应任何指针事件。
+ * 内容与落库后的默认内容一致（标题 + 一行输入位空行，空行显示
+ * 「添加待办...」占位文案）。位置以光标为中心（translate(-50%, -50%)），
+ * 不响应任何指针事件。
  */
 function ListCardDragGhost({ ghost, scale }) {
   if (!ghost) return null
@@ -50,7 +51,10 @@ function ListCardDragGhost({ ghost, scale }) {
       }}
       aria-hidden="true"
     >
-      <ListCardNodeFace title={LIST_CARD_DEFAULT_TITLE} items={LIST_CARD_DEFAULT_ITEMS} />
+      <ListCardNodeFace
+        title={LIST_CARD_DEFAULT_TITLE}
+        items={[emptyListCardItem()]}
+      />
     </div>
   )
 }

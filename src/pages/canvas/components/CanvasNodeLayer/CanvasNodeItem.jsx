@@ -1,6 +1,6 @@
 import { memo } from 'react'
 import PropTypes from 'prop-types'
-import { CARD_TITLE_PLACEHOLDER, NODE_RADIUS } from '../../lib/constants'
+import { CARD_TITLE_PLACEHOLDER, LIST_CARD_TITLE_PLACEHOLDER, NODE_RADIUS, listItemField } from '../../lib/constants'
 import { resolveMinHeight } from '../../lib/noteSize'
 import { cornerRadius } from '../../../../utils/canvasRadius'
 import CardNodeFace from './CardNodeFace'
@@ -84,6 +84,21 @@ function CanvasNodeItem({
       onCancelEdit={onCancelEdit}
     />
   )
+  // 列表卡片的标题编辑框：与卡片共用实现，占位文案换清单专属的
+  // 「待办清单...」—— 展示态（ListCardNodeFace）与编辑态同一份文案，
+  // 清空标题前后占位符不跳变
+  const listTitleInput = (
+    <NodeEditTextarea
+      inputRef={titleInputRef}
+      className={styles.cardTitleInput}
+      placeholder={LIST_CARD_TITLE_PLACEHOLDER}
+      rows={1}
+      draft={draft}
+      onDraftChange={onDraftChange}
+      onCommitEdit={onCommitEdit}
+      onCancelEdit={onCancelEdit}
+    />
+  )
 
   return (
     <div
@@ -124,13 +139,19 @@ function CanvasNodeItem({
         />
       ) : appearance.isListCard ? (
         /* 列表卡片节点：标题带（双击可编辑，复用卡片标题输入框）+
-           待办行（勾选框点击切换完成态，勾选截停指针不上抛拖拽），
+           待办行（行内编辑 / 勾选切换，交互细节见 ListItemRow），
            内容高度测量同样以 cardInner 为单位（见 noteSize.js） */
         <ListCardNodeFace
           title={appearance.cardTitle}
           items={node.items || []}
-          titleSlot={appearance.isEditingTitle ? titleInput : undefined}
+          titleSlot={appearance.isEditingTitle ? listTitleInput : undefined}
+          editingItemIndex={appearance.editingItemIndex}
+          draft={draft}
+          onDraftChange={onDraftChange}
+          onCommitEdit={onCommitEdit}
+          onCancelEdit={onCancelEdit}
           onToggleItem={(index) => onToggleListItem(node.id, index)}
+          onStartItemEdit={(index) => onStartEdit(node, listItemField(index))}
         />
       ) : editing ? (
         textInput
@@ -172,7 +193,7 @@ CanvasNodeItem.propTypes = {
   selected: PropTypes.bool.isRequired,
   primary: PropTypes.bool.isRequired,
   editing: PropTypes.bool.isRequired,
-  // 正在编辑的字段：text（正文，默认）/ title（卡片标题）
+  // 正在编辑的字段：text（正文，默认）/ title（卡片标题）/ item-<下标>（列表卡片待办行）
   editingField: PropTypes.string,
   draft: PropTypes.string,
   scale: PropTypes.number.isRequired,

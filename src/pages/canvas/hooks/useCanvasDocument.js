@@ -113,6 +113,8 @@ export function useCanvasDocument({
     // 批量删除：一次删掉框选命中的全部节点 + 表格
     removeElements,
     commitNodeText: nodeApi.commitNodeText,
+    // 列表卡片行输入的末行维护（起笔追加 / 擦空收起，见 useCanvasNodes）
+    syncListCardTrailingRow: nodeApi.syncListCardTrailingRow,
     toggleListCardItem: nodeApi.toggleListCardItem,
     updateNodeSize: nodeApi.updateNodeSize,
     addEdge,

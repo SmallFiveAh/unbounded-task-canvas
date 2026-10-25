@@ -45,17 +45,16 @@ export function isListCardKind(kind) {
 }
 
 /* ---------- 新建列表卡片的默认内容 ----------
-   拖拽落库即带上这份内容（标题 + 待办项），与面板缩略图的
-   「标题条 + 勾选框 + 文本条」意象一致；待办项默认第一条已完成，
-   让勾选态在画布上一眼可见。 */
+   内容默认为空：落库只带标题，待办区由用户逐行输入（见
+   ListCardNodeFace 的行内编辑与 useCanvasNodes 的自动追加）。
+   items 恒守一个不变量：末尾必有一行空行，作为「下一行」的
+   输入位 —— 空行获得内容即自动在下方追加新空行（无限续写），
+   清空失焦的行自动删除（末尾输入位行除外，删了就没有落笔处）。 */
 
 export const LIST_CARD_DEFAULT_TITLE = '待办清单'
 
-export const LIST_CARD_DEFAULT_ITEMS = [
-  { text: '欢迎来到无限画布', done: true },
-  { text: '双击标题重命名清单', done: false },
-  { text: '点击勾选框完成待办', done: false },
-]
+/** 一行全新的空待办（每次新对象，避免调用方共享可变引用） */
+export const emptyListCardItem = () => ({ text: '', done: false })
 
 /* ---------- 已选样式的本地记忆（面板关了也记得住） ---------- */
 

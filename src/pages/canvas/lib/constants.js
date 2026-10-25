@@ -21,7 +21,8 @@ export const CARD_TITLE_PLACEHOLDER = '标题...' // 卡片标题为空时编辑
 
 export const LIST_CARD_W = 240 // 列表卡片默认宽度（世界坐标）：与卡片同宽，纵向排待办项
 export const LIST_CARD_H = 152 // 列表卡片默认高度（世界坐标）：标题带 + 三行待办贴合内容，留一行余量
-export const LIST_CARD_TITLE_PLACEHOLDER = '清单名...' // 列表卡片标题为空时编辑框内的占位文案（仅展示，不落库）
+export const LIST_CARD_TITLE_PLACEHOLDER = '待办清单...' // 列表卡片标题为空时（展示态与编辑态共用）的占位文案（仅展示，不落库）
+export const LIST_CARD_ITEM_PLACEHOLDER = '添加待办...' // 末尾输入位空行的占位文案（仅展示，不落库）
 
 export const NOTE_DEFAULT_TEXT = '' // 新便签的初始内容：留空，画布上显示占位符
 export const NOTE_PLACEHOLDER = '便签...' // 便签内容为空时展示的占位文案（仅展示，不落库）
@@ -46,3 +47,18 @@ export const SAVED_HINT_DURATION = 5000 // 「已保存到本地」提示停留�
    编辑态用 editingId + editingField 二元组定位「正在编辑哪个框」。 */
 export const EDIT_FIELD_TEXT = 'text'
 export const EDIT_FIELD_TITLE = 'title'
+
+/* 列表卡片的待办行编辑字段：形如 item-<行下标>，同样落在这套
+   editingId + editingField 二元组里（一行一个输入框，草稿共用 draft）。
+   下标随「清空删行」会平移，但编辑是瞬态的（提交即退出），不会跨帧失效。 */
+export const EDIT_FIELD_LIST_ITEM = 'item'
+
+/** 行下标 → 编辑字段（item-<index>） */
+export const listItemField = (index) => `${EDIT_FIELD_LIST_ITEM}-${index}`
+
+/** 编辑字段 → 行下标；非待办行字段返回 null */
+export function listItemIndexFromField(field) {
+  if (typeof field !== 'string' || !field.startsWith(`${EDIT_FIELD_LIST_ITEM}-`)) return null
+  const index = Number(field.slice(EDIT_FIELD_LIST_ITEM.length + 1))
+  return Number.isInteger(index) && index >= 0 ? index : null
+}

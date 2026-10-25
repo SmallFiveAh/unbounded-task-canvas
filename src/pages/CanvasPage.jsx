@@ -1,4 +1,4 @@
-import { useMemo } from 'react'
+import { useCallback, useMemo } from 'react'
 import PropTypes from 'prop-types'
 import { TASKS } from '../constants/tasks'
 import { EMPTY_CANVAS, loadCanvas } from '../utils/canvasStore'
@@ -20,7 +20,8 @@ import { useCardDragCreate } from './canvas/hooks/useCardDragCreate'
 import { useListCardDragCreate } from './canvas/hooks/useListCardDragCreate'
 import { useNoteDragCreate } from './canvas/hooks/useNoteDragCreate'
 import { previewEdgePath, resolveEdgePath } from './canvas/lib/edges'
-import { EDIT_FIELD_TEXT, EDIT_FIELD_TITLE } from './canvas/lib/constants'
+import { EDIT_FIELD_TEXT, EDIT_FIELD_TITLE, listItemIndexFromField } from './canvas/lib/constants'
+import { useLatestPropsRef } from './canvas/hooks/useLatestPropsRef'
 import styles from './CanvasPage.module.css'
 
 /**
@@ -142,6 +143,31 @@ export default function CanvasPage({ taskId }) {
     viewportRef,
   })
 
+  // 列表卡片行输入：草稿进 selection 的同时维护「末尾恒有一行空行」——
+  // 末行起笔立即追加新空行（无限续写），擦空则收起刚追加的行。
+  // 回调身份必须稳定 —— 它作为 onDraftChange 传进每个 memo 化节点，
+  // 逐字换新引用会把 memo 浅比较打穿（每次输入全画布重渲染）；
+  // 所以最新状态经 props 快照 ref 读取
+  const draftChangeRef = useLatestPropsRef({
+    editingId: selection.editingId,
+    editingField: selection.editingField,
+    syncListCardTrailingRow: doc.syncListCardTrailingRow,
+    setDraft: selection.setDraft,
+  })
+  const handleDraftChange = useCallback(
+    (text) => {
+      const snapshot = draftChangeRef.current
+      snapshot.setDraft(text)
+      const index = listItemIndexFromField(snapshot.editingField)
+      if (index === null || !snapshot.editingId) return
+      // 幂等在 doc 侧由下标判定（追加后编辑行不再是末行），
+      // 这里逐字调用也不产生重复行；清空提交时的行清理由
+      // commitListCardItem 在提交侧兜底
+      snapshot.syncListCardTrailingRow(snapshot.editingId, index, text.trim() !== '')
+    },
+    [draftChangeRef],
+  )
+
   /* ---------- 派生视图数据 ---------- */
 
   const { nodes, edges, tables } = doc
@@ -230,6 +256,7 @@ export default function CanvasPage({ taskId }) {
         selection={selection}
         doc={doc}
         commitNodeEdit={commitNodeEdit}
+        onDraftChange={handleDraftChange}
         edgeViews={edgeViews}
         edgePreviewPath={edgePreviewPath}
         linkTargetRect={linkTargetRect}

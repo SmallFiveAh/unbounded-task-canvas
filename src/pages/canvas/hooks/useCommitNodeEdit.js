@@ -1,27 +1,52 @@
 import { useCallback } from 'react'
+import { listItemField, listItemIndexFromField } from '../lib/constants'
 
 /* ============================================================
    节点编辑提交（从 CanvasPage 拆出的行为 hook）
    ------------------------------------------------------------
-   · commitNodeEdit：编辑中的草稿按字段落库（卡片标题 / 正文）并退出编辑态
+   · commitNodeEdit：编辑中的草稿按字段落库（卡片标题 / 正文 /
+     列表卡片待办行）并退出编辑态
    · commitEditOnPointerDown：点击画布（捕获阶段）先把正在编辑的
      草稿提交落库，避免两条绕过 blur 的路径弄丢已输入的文本
    ============================================================ */
 
 /**
- * @param {object} doc         useCanvasDocument 返回值（commitNodeText 落库）
+ * @param {object} doc         useCanvasDocument 返回值（commitNodeText 落库 / nodes 查当前数据）
  * @param {object} selection   useCanvasSelection 返回值（editingId / editingField / draft / stopEditing）
  * @param {object} viewportRef 视口容器 ref（判断点击是否落在编辑框内部）
  */
 export function useCommitNodeEdit({ doc, selection, viewportRef }) {
   // 节点文案落库：按 editingField 分派字段（便签空白会清空为占位符，
-  // 普通节点空白视为「不改」——见 commitNodeText）。
+  // 普通节点空白视为「不改」——见 commitNodeText；列表卡片行见
+  // commitListCardItem：清空即删行、末尾恒补一行空行）。
   // useCallback 固定身份：它是每个 memo 化节点子组件的 prop，
   // 每帧换新引用会把 memo 浅比较打穿（拖拽期间全量重渲染）
   const commitNodeEdit = useCallback(() => {
+    const itemIndex = listItemIndexFromField(selection.editingField)
     doc.commitNodeText(selection.editingId, selection.draft, selection.editingField)
+    // 列表卡片行编辑：提交非空内容后自动落到下一行继续输入 ——
+    // 末尾空行已在输入期追加好，这里只把焦点交过去（无限续写的
+    // 关键一环）。下一行有内容（中间行按 Enter）或行数不足时不跳，
+    // 避免把既有文本装进输入框造成「误覆盖」的错觉；清空提交可能
+    // 整行删除、下标平移，同样不跳
+    if (itemIndex !== null && selection.draft.trim() !== '') {
+      const node = doc.nodes.find((n) => n.id === selection.editingId)
+      const next = node?.items?.[itemIndex + 1]
+      if (next && next.text === '' && !next.done) {
+        selection.startEditNode(node, listItemField(itemIndex + 1))
+        return
+      }
+    }
     selection.stopEditing()
-  }, [doc.commitNodeText, selection.editingId, selection.editingField, selection.draft, selection.stopEditing])
+  }, [
+    doc.commitNodeText,
+    doc.nodes,
+    selection.editingId,
+    selection.editingField,
+    selection.draft,
+    selection.startEditNode,
+    selection.stopEditing,
+  ])
 
   // 点击画布（捕获阶段）先把正在编辑的草稿提交落库。
   // 不能只靠编辑框的 blur：点击其他节点时 useItemDrag 的 preventDefault

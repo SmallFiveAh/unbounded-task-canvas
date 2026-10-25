@@ -121,7 +121,7 @@ CanvasNodeLayer.propTypes = {
   selectedIds: PropTypes.arrayOf(PropTypes.string).isRequired,
   selectedId: PropTypes.string,
   editingId: PropTypes.string,
-  // 正在编辑的字段：text（正文，默认）/ title（卡片标题）
+  // 正在编辑的字段：text（正文，默认）/ title（卡片标题）/ item-<下标>（列表卡片待办行）
   editingField: PropTypes.string,
   draft: PropTypes.string,
   scale: PropTypes.number.isRequired,

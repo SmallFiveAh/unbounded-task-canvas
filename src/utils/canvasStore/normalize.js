@@ -67,10 +67,13 @@ function normalizeNode(raw) {
     }
   }
   // 列表卡片独有字段：标题 + 待办项（items 里每项 { text, done }）。
-  // 缺字段 / 脏数据按「空标题 / 空清单」处理，样式 id 不合法的 kind 已在上面降级
+  // 缺字段 / 脏数据按「空标题 / 空清单」处理，样式 id 不合法的 kind 已在上面降级。
+  // 读档补齐不变量：末尾恒有一行空行（下一行的输入位），旧存档没有就补一行
   if (isListCard) {
     node.title = typeof raw.title === 'string' ? raw.title : ''
     node.items = normalizeListItems(raw.items)
+    const last = node.items[node.items.length - 1]
+    if (!last || last.text !== '') node.items.push({ text: '', done: false })
   }
   return node
 }

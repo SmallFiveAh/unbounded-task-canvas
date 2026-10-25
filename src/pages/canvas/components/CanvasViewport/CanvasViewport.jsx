@@ -26,6 +26,7 @@ import CanvasSelectionLayer from '../CanvasSelectionLayer'
  * @param {object} selection                useCanvasSelection 返回值（选中 / 编辑态）
  * @param {object} doc                      useCanvasDocument 返回值（数据与增删改）
  * @param {Function} commitNodeEdit         编辑草稿落库回调
+ * @param {Function} onDraftChange          编辑草稿变化回调（列表卡片行输入时自动追加空行）
  * @param {Array} edgeViews                 已落库连线的路径数据 [{ id, d }]
  * @param {string|null} edgePreviewPath     拉线预览路径（松手前）
  * @param {object|null} linkTargetRect      拉线悬停目标元素矩形（亮框提示）
@@ -45,6 +46,7 @@ function CanvasViewport({
   selection,
   doc,
   commitNodeEdit,
+  onDraftChange,
   edgeViews,
   edgePreviewPath,
   linkTargetRect,
@@ -81,6 +83,7 @@ function CanvasViewport({
         selection={selection}
         doc={doc}
         commitNodeEdit={commitNodeEdit}
+        onDraftChange={onDraftChange}
       />
 
       {/* 选中框层（屏幕坐标）：1px 定宽橙框 + 四角控制点 + 四边拉线命中条 + 框选矩形 */}
@@ -121,6 +124,7 @@ CanvasViewport.propTypes = {
   selection: PropTypes.object.isRequired,
   doc: PropTypes.object.isRequired,
   commitNodeEdit: PropTypes.func.isRequired,
+  onDraftChange: PropTypes.func.isRequired,
   edgeViews: PropTypes.array.isRequired,
   edgePreviewPath: PropTypes.string,
   linkTargetRect: PropTypes.object,

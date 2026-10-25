@@ -484,8 +484,12 @@
   opacity: 1;
 }
 
-/* 待办文本：墨色取 --lc-title（各样式下都与其标题条同源、可读） */
+/* 待办文本：墨色取 --lc-title（各样式下都与其标题条同源、可读）。
+   flex: 1 撑满剩余宽度：与行内输入框（.listItemInput）两态对齐，
+   编辑态出现 / 退出时行宽不跳变 */
 .listItemText {
+  flex: 1;
+  min-width: 0;
   font-family: var(--font-body);
   font-size: var(--text-sm);
   font-weight: 400;
@@ -494,6 +498,54 @@
   color: var(--lc-title, var(--color-text));
   overflow-wrap: break-word;
   word-break: normal;
+}
+
+/* 行内输入框：排版属性与 .listItemText 逐项相同（两态无跳变），
+   外观裸化 —— 边框 / 底色 / 圆角全部去掉（base.css 的 :focus-visible
+   会给聚焦元素追加圆角，见下方 focus-visible 钉直角），视觉上只是
+   文本「亮起了光标」 */
+.listItemInput {
+  flex: 1;
+  min-width: 0;
+  padding: 0;
+  border: none;
+  outline: none;
+  border-radius: 0;
+  background: transparent;
+  font-family: var(--font-body);
+  font-size: var(--text-sm);
+  font-weight: 400;
+  line-height: 1.45;
+  letter-spacing: 0.02em;
+  color: var(--lc-title, var(--color-text));
+  caret-color: var(--lc-title, var(--color-text));
+}
+
+.listItemInput::placeholder {
+  color: var(--lc-title, var(--color-text));
+  opacity: 0.45;
+}
+
+/* 强制直角：base.css 的 :focus-visible 会给聚焦元素追加圆角
+   （--radius-sm）与 accent 外框，输入框进入编辑即聚焦、正好被波及；
+   这里连同 focus 态一起钉死（与 .cardTitleInput 同一处理） */
+.listItemInput:focus-visible {
+  border-radius: 0;
+  outline: none;
+}
+
+/* 末尾输入位空行的占位文案（仅展示，不落库）：压淡但不引导点击误会 */
+.listItemTextPlaceholder {
+  opacity: 0.45;
+}
+
+/* 勾选框禁用（空行）与已完成行的锁定文本：不给出可编辑的可点击暗示 */
+.listCheck:disabled {
+  cursor: default;
+}
+
+.listItemDone .listItemText {
+  cursor: default;
 }
 
 /* 已完成项：压淡 + 删除线，与面板缩略图「文本条压淡」同一语义 */

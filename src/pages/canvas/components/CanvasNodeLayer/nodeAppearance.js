@@ -21,6 +21,8 @@ import {
   EDIT_FIELD_TITLE,
   NODE_PLACEHOLDER,
   NOTE_PLACEHOLDER,
+  listItemField,
+  listItemIndexFromField,
 } from '../../lib/constants'
 import styles from './CanvasNodeLayer.module.css'
 
@@ -48,6 +50,11 @@ export function resolveNodeAppearance(node, editing, editingField) {
   const isListCard = listStyleId !== null
   // 普通节点（muted 及其 accent 变体）：左边缘挂竖边带作视觉抓手（.nodeBand）
   const isPlain = !isNote && !isCard && !isListCard
+  // 列表卡片的行编辑态：editingField 形如 item-<下标>，下标越界（行已被删）
+  // 视为不在编辑，避免渲染出一行悬空输入框
+  const editingItemIndex = editing ? listItemIndexFromField(editingField) : null
+  const isEditingItem =
+    editingItemIndex !== null && editingItemIndex < (node.items?.length ?? 0)
   return {
     isNote,
     isCard,
@@ -64,9 +71,16 @@ export function resolveNodeAppearance(node, editing, editingField) {
     // 卡片 / 列表卡片标题带与正文区的内容（列表卡片正文区不使用 text）
     cardTitle: node.title || '',
     cardBody: node.text || '',
-    // 两个可编辑区域各自的激活标记：标题（封面带）/ 正文（下方内容区）
+    // 列表卡片待办区数据（双击命中行判定用；非列表卡片为 null）
+    listItems: isListCard ? node.items || [] : null,
+    // 两个可编辑区域各自的激活标记：标题（封面带）/ 正文（下方内容区）/
+    // 待办行（items 内的行内输入框）。行编辑不算正文编辑，
+    // 否则卡片正文插槽的判定会被误触发
     isEditingTitle: editing && editingField === EDIT_FIELD_TITLE,
-    isEditingText: editing && editingField !== EDIT_FIELD_TITLE,
+    isEditingText:
+      editing && editingField !== EDIT_FIELD_TITLE && editingItemIndex === null,
+    // 正在编辑的待办行下标（不在行编辑态时为 null）
+    editingItemIndex: isEditingItem ? editingItemIndex : null,
   }
 }
 
@@ -103,7 +117,7 @@ export function buildNodeClassName(node, appearance, selected, primary) {
  *
  * @param {MouseEvent} e          dblclick 事件（取命中坐标）
  * @param {object} appearance     resolveNodeAppearance 返回值
- * @returns {string|null} 编辑字段；列表卡片非标题区返回 null（不进入编辑）
+ * @returns {string|null} 编辑字段；列表卡片空白处 / 已完成的行返回 null（不可编辑）
  */
 export function resolveDoubleClickEditField(e, appearance) {
   const { isCard, isListCard } = appearance
@@ -111,8 +125,16 @@ export function resolveDoubleClickEditField(e, appearance) {
   if (!isCard && !isListCard) return EDIT_FIELD_TEXT
   const hit = document.elementFromPoint(e.clientX, e.clientY)
   const region = hit?.closest('[data-card-region]')?.dataset.cardRegion
-  // 卡片：双击封面带编辑标题、正文区编辑正文；
-  // 列表卡片：只开放标题编辑，待办区不进入文本编辑（勾选走点击）
-  if (isListCard && region !== 'title') return null
-  return region === 'title' ? EDIT_FIELD_TITLE : EDIT_FIELD_TEXT
+  // 卡片：双击封面带编辑标题、正文区编辑正文
+  if (isCard) return region === 'title' ? EDIT_FIELD_TITLE : EDIT_FIELD_TEXT
+  // 列表卡片：封面带编辑标题；待办区按命中行进入行编辑 ——
+  // 已完成的行文本锁定（勾选即完成，删除线只读），空白处不进入编辑
+  if (region === 'title') return EDIT_FIELD_TITLE
+  if (region !== 'items') return null
+  const row = hit?.closest('[data-list-row]')
+  if (!row) return null
+  const index = Number(row.dataset.listRow)
+  const item = appearance.listItems?.[index]
+  if (!item || item.done) return null
+  return listItemField(index)
 }
