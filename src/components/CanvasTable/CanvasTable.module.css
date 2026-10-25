@@ -40,6 +40,17 @@
   cursor: grabbing;
 }
 
+/* 拖表头调整行列尺寸：整表锁定调整光标（dataset.resizing 由 useHeaderResize 维护） */
+.table[data-resizing='col'],
+.table[data-resizing='col'] * {
+  cursor: col-resize !important;
+}
+
+.table[data-resizing='row'],
+.table[data-resizing='row'] * {
+  cursor: row-resize !important;
+}
+
 /* 选中态：只抬升投影（橙色 1px 选中框 + 四角控制点由 SelectionFrame 屏幕空间绘制，
    所以缩放画布时线宽与控制点大小恒定，不会跟着放大变粗）。 */
 .table.selected {
@@ -52,12 +63,12 @@
   width: 100%;
 }
 
-/* 列标 / 行号表头 */
+/* 列标 / 行号表头：高度由 .grid 的 gridTemplateRows 显式定轨
+   （行高逐行可调，见 useHeaderResize），item 默认 stretch 填满轨道 */
 .head {
   display: flex;
   align-items: center;
   justify-content: center;
-  height: var(--cell-h, 28px);
   background: var(--color-wash);
   color: var(--color-muted);
   font-size: 11px;
@@ -67,12 +78,11 @@
   border-bottom: 1px solid var(--color-border);
 }
 
-/* 单元格 */
+/* 单元格：高度同样交给网格轨道 */
 .cell {
   position: relative;
   display: flex;
   align-items: center;
-  height: var(--cell-h, 28px);
   padding: 0 8px;
   border-right: 1px solid var(--color-border);
   border-bottom: 1px solid var(--color-border);

@@ -7,7 +7,11 @@
    不依赖 React，也不读写状态。
    ============================================================ */
 
-import { TABLE_ROW_HEADER_W } from '../../constants/canvasTable'
+import {
+  TABLE_ROW_HEADER_W,
+  sizeOffsets,
+  sizesTotal,
+} from '../../constants/canvasTable'
 
 /** 列标 A, B, C … */
 export const colLetter = (i) => String.fromCharCode(65 + i) // A, B, C …
@@ -51,31 +55,57 @@ export function selectionBox(selection) {
   return { r1, r2, c1, c2 }
 }
 
+/** 按前缀和偏移把局部坐标换算成行 / 列下标（越界停在最后一位，clamp 与 inside 由调用方区分） */
+function indexFromOffset(offset, offsets, count) {
+  let i = 0
+  while (i < count - 1 && offsets[i + 1] <= offset) i += 1
+  return i
+}
+
 /**
  * 屏幕坐标 → 单元格坐标（按网格实测尺寸与设计尺寸之比换算缩放，不依赖外部 scale）。
- * 表头行高与单元格共用 cellH，总高 = (rows + 1) * cellH（见 canvasTable.js）。
+ * 列宽 / 行高为逐列 / 逐行数组（设计坐标），表头行高独立（见 canvasTable.js）。
  * @param {object} params
  * @param {number} params.clientX      屏幕 X
  * @param {number} params.clientY      屏幕 Y
  * @param {DOMRect} params.gridRect    网格容器的实测包围盒
  * @param {number} params.rows
  * @param {number} params.cols
- * @param {number} params.cellW
- * @param {number} params.cellH
+ * @param {number[]} params.colWidths  逐列宽度（设计坐标）
+ * @param {number[]} params.rowHeights 逐行高度（设计坐标）
+ * @param {number} params.headerH      列标表头行高
  * @param {boolean} [params.clamp]     true 时越界夹到最近边缘（拖拽框选保持扩展到末行/末列）
  * @returns {{r:number, c:number}|null} 不在网格内且未开启 clamp 时返回 null
  */
-export function cellFromPoint({ clientX, clientY, gridRect, rows, cols, cellW, cellH, clamp = false }) {
-  const kx = gridRect.width / (TABLE_ROW_HEADER_W + cols * cellW)
-  const ky = gridRect.height / ((rows + 1) * cellH)
+export function cellFromPoint({
+  clientX,
+  clientY,
+  gridRect,
+  rows,
+  cols,
+  colWidths,
+  rowHeights,
+  headerH,
+  clamp = false,
+}) {
+  const totalW = TABLE_ROW_HEADER_W + sizesTotal(colWidths)
+  const totalH = headerH + sizesTotal(rowHeights)
+  const kx = gridRect.width / totalW
+  const ky = gridRect.height / totalH
   if (!kx || !ky) return null
-  const c = Math.floor(((clientX - gridRect.left) / kx - TABLE_ROW_HEADER_W) / cellW)
-  const r = Math.floor(((clientY - gridRect.top) / ky - cellH) / cellH)
-  const inside = r >= 0 && r < rows && c >= 0 && c < cols
+  const localX = (clientX - gridRect.left) / kx
+  const localY = (clientY - gridRect.top) / ky
+  const colOffsets = sizeOffsets(colWidths)
+  const rowOffsets = sizeOffsets(rowHeights)
+  const inside =
+    localX >= TABLE_ROW_HEADER_W &&
+    localX < totalW &&
+    localY >= headerH &&
+    localY < totalH
   if (!inside && !clamp) return null
   return {
-    r: Math.min(rows - 1, Math.max(0, r)),
-    c: Math.min(cols - 1, Math.max(0, c)),
+    r: indexFromOffset(localY - headerH, rowOffsets.slice(1), rows),
+    c: indexFromOffset(localX - TABLE_ROW_HEADER_W, colOffsets.slice(1), cols),
   }
 }
 

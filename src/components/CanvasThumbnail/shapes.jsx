@@ -9,8 +9,10 @@ import PropTypes from 'prop-types'
 import {
   TABLE_ROW_HEADER_W,
   getTableSize,
-  tableCellH,
-  tableCellW,
+  sizeOffsets,
+  tableColWidths,
+  tableHeaderH,
+  tableRowHeights,
 } from '../../constants/canvasTable'
 import styles from './CanvasThumbnail.module.css'
 
@@ -69,20 +71,21 @@ NodeShape.propTypes = {
   }).isRequired,
 }
 
-/** 表格：外框 + 行头/列头底纹 + 网格线 */
+/** 表格：外框 + 行头/列头底纹 + 网格线（列宽 / 行高与画布同源，逐列逐行绘制） */
 export function TableShape({ table }) {
   const { w, h } = getTableSize(table)
-  const cellW = tableCellW(table)
-  const cellH = tableCellH(table)
-  const headBottom = table.y + cellH // 表头行高与单元格共用 cellH
+  const colOffsets = sizeOffsets(tableColWidths(table))
+  const rowOffsets = sizeOffsets(tableRowHeights(table))
+  const headerH = tableHeaderH(table)
+  const headBottom = table.y + headerH
 
   const colLines = Array.from(
     { length: table.cols + 1 },
-    (_, c) => table.x + TABLE_ROW_HEADER_W + c * cellW,
+    (_, c) => table.x + TABLE_ROW_HEADER_W + colOffsets[c],
   )
   const rowLines = Array.from(
     { length: table.rows + 1 },
-    (_, r) => headBottom + r * cellH,
+    (_, r) => headBottom + rowOffsets[r],
   )
 
   return (
@@ -107,7 +110,7 @@ export function TableShape({ table }) {
         x={table.x}
         y={table.y}
         width={w}
-        height={cellH}
+        height={headerH}
         className={styles.tableHead}
       />
       {colLines.map((x, i) => (

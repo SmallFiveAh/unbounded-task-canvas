@@ -10,7 +10,7 @@
 
 import { useLayoutEffect, useMemo, useRef, useState } from 'react'
 import { buildSelectionRects } from '../lib/selectionRects'
-import { resolveResizeGeometry, tableCellSizeFromBox } from '../lib/resizeGeometry'
+import { resolveResizeGeometry, scaleTableFromBox } from '../lib/resizeGeometry'
 import { useResizeEdgePin } from './useResizeEdgePin'
 
 export function useSelectionResize({
@@ -86,15 +86,18 @@ export function useSelectionResize({
       return
     }
 
-    // 表格：外框尺寸换算成统一的单元格宽 / 高，并按拟合尺寸反推左上角
-    const { cellW, cellH, fittedW, fittedH } = tableCellSizeFromBox(g.w, g.h, rz.rows, rz.cols)
+    // 表格：外框尺寸整体等比缩放逐列宽 / 逐行高（表头行高固定），并按拟合尺寸反推左上角。
+    // rz 里是手势起点的行列尺寸快照（见 selectionRects.buildSelectionRects），
+    // 每帧从快照重算而不是在上一帧结果上累加 —— 不会跳动、闪烁或与选中框错位
+    const { colWidths, rowHeights, headerH, fittedW, fittedH } = scaleTableFromBox(g.w, g.h, rz)
     setTables((ts) =>
       ts.map((t) =>
         t.id === rz.id
           ? {
               ...t,
-              cellW,
-              cellH,
+              colWidths,
+              rowHeights,
+              headerH,
               x: rz.fromWest ? rz.x + rz.w - fittedW : rz.x,
               y: rz.fromNorth ? rz.y + rz.h - fittedH : rz.y,
             }

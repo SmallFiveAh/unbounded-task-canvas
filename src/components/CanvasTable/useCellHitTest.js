@@ -18,10 +18,11 @@ const DOUBLE_PRESS_MS = 400
  * @param {object} wrapRef 表格容器 ref（查询 [data-grid] 实测网格尺寸）
  * @param {number} rows 行数
  * @param {number} cols 列数
- * @param {number} cellW 单元格宽
- * @param {number} cellH 单元格高
+ * @param {number[]} colWidths  逐列宽度（设计坐标）
+ * @param {number[]} rowHeights 逐行高度（设计坐标）
+ * @param {number} headerH 列标表头行高
  */
-export function useCellHitTest({ wrapRef, rows, cols, cellW, cellH }) {
+export function useCellHitTest({ wrapRef, rows, cols, colWidths, rowHeights, headerH }) {
   const dblPressRef = useRef({ key: null, time: 0 }) // 自实现的双击判定基准
 
   /** 屏幕坐标 → 单元格坐标（clampToEdges：越界时夹到表格边缘，用于拖拽框选） */
@@ -34,8 +35,9 @@ export function useCellHitTest({ wrapRef, rows, cols, cellW, cellH }) {
       gridRect: grid.getBoundingClientRect(),
       rows,
       cols,
-      cellW,
-      cellH,
+      colWidths,
+      rowHeights,
+      headerH,
       clamp: clampToEdges,
     })
   }

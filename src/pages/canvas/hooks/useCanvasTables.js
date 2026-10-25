@@ -7,7 +7,15 @@
    ============================================================ */
 
 import { useCallback, useState } from 'react'
-import { getTableSize } from '../../../constants/canvasTable'
+import {
+  extendSizes,
+  getTableSize,
+  tableColWidths,
+  TABLE_CELL_W,
+  TABLE_COL_HEADER_H,
+  TABLE_CELL_H,
+  tableRowHeights,
+} from '../../../constants/canvasTable'
 import { createEmptyCells, clearCellsInMatrix, pasteBlockIntoTable } from '../lib/tableCells'
 
 /**
@@ -50,6 +58,10 @@ export function useCanvasTables({
           rows,
           cols,
           cells: createEmptyCells(rows, cols),
+          // 逐列宽 / 逐行高 + 独立表头行高：表头可拖拽调整，见 resizeTableCol / resizeTableRow
+          colWidths: Array.from({ length: cols }, () => TABLE_CELL_W),
+          rowHeights: Array.from({ length: rows }, () => TABLE_CELL_H),
+          headerH: TABLE_COL_HEADER_H,
         },
       ])
       onSelect(id)
@@ -106,7 +118,39 @@ export function useCanvasTables({
       ts.map((t) => {
         if (t.id !== tableId) return t
         const { rows, cols, cells } = pasteBlockIntoTable(t, r0, c0, block)
-        return { ...t, rows, cols, cells }
+        return {
+          ...t,
+          rows,
+          cols,
+          cells,
+          // 扩行 / 扩列时行列尺寸数组跟着补齐（沿用最后一个值，视觉连续）
+          colWidths: extendSizes(tableColWidths(t), cols),
+          rowHeights: extendSizes(tableRowHeights(t), rows),
+        }
+      }),
+    )
+  }, [])
+
+  // 拖拽列标右缘：调整单列宽度（逐帧写回，见 CanvasTable 的 useHeaderResize）
+  const resizeTableCol = useCallback((tableId, index, width) => {
+    setTables((ts) =>
+      ts.map((t) => {
+        if (t.id !== tableId) return t
+        const colWidths = tableColWidths(t).slice()
+        colWidths[index] = width
+        return { ...t, colWidths }
+      }),
+    )
+  }, [])
+
+  // 拖拽行号下缘：调整单行高度
+  const resizeTableRow = useCallback((tableId, index, height) => {
+    setTables((ts) =>
+      ts.map((t) => {
+        if (t.id !== tableId) return t
+        const rowHeights = tableRowHeights(t).slice()
+        rowHeights[index] = height
+        return { ...t, rowHeights }
       }),
     )
   }, [])
@@ -120,5 +164,7 @@ export function useCanvasTables({
     updateTableCell,
     clearTableCells,
     pasteTableCells,
+    resizeTableCol,
+    resizeTableRow,
   }
 }

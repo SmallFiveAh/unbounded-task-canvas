@@ -16,12 +16,16 @@ import {
   TABLE_MIN_CELL_H,
   TABLE_MIN_CELL_W,
   TABLE_ROW_HEADER_W,
+  sizesTotal,
+  tableColWidths,
+  tableHeaderH,
+  tableRowHeights,
 } from '../../../constants/canvasTable'
 import { NODE_MIN_H, NODE_MIN_W } from './constants'
 import { clamp, pinOppositeEdge } from './geometry'
 import { noteHeight, resolveContentHeight } from './noteSize'
 
-/** 按元素种类给出最小外框尺寸（表格总高 = 表头行 + rows 行，表头行高与单元格共用 cellH） */
+/** 按元素种类给出最小外框尺寸（表格：行头列 + 逐列最小宽 / 表头 + 逐行最小高） */
 export function minBoxSize(kind, rows, cols) {
   return {
     minW: kind === 'table' ? TABLE_ROW_HEADER_W + cols * TABLE_MIN_CELL_W : NODE_MIN_W,
@@ -56,19 +60,37 @@ export function resolveResizeGeometry(rz, dx, dy, liveNode) {
 }
 
 /**
- * 表格外框尺寸换算成统一的单元格宽 / 高。
- * 只改行列尺寸、不缩放内容 —— 字不会被拉扁，语义上等于「拉宽列、拉高行」。
- * @returns {{ cellW, cellH, fittedW, fittedH }} 单元格尺寸与按其拟合出的外框尺寸
+ * 表格外框尺寸 → 整体等比缩放逐列宽 / 逐行高（只缩放表格节点，不缩放画布）。
+ * 语义仍是「拉宽列、拉高行」：文字不跟着缩放，表头行高固定不动。
+ *
+ * 平滑关键：缩放系数每帧都以「手势起点快照」整体重算（k = 目标尺寸 / 起点尺寸），
+ * 不在上一帧结果上做增量累加 —— 舍入误差不会逐帧漂移；
+ * 取整与夹取对给定 k 是确定性的，同一帧永远算出同一组值，网格不会抖。
+ * @param {number} w 缩放手势意图的外框宽（世界坐标）
+ * @param {number} h 缩放手势意图的外框高
+ * @param {object} table 手势起点快照（含 cols / colWidths / rowHeights / headerH）
+ * @returns {{ colWidths, rowHeights, headerH, fittedW, fittedH }}
  */
-export function tableCellSizeFromBox(w, h, rows, cols) {
-  const cellW = Math.round(
-    clamp((w - TABLE_ROW_HEADER_W) / cols, TABLE_MIN_CELL_W, TABLE_MAX_CELL_W),
+export function scaleTableFromBox(w, h, table) {
+  const colWidths = tableColWidths(table)
+  const rowHeights = tableRowHeights(table)
+  const headerH = tableHeaderH(table)
+  const totalW = sizesTotal(colWidths)
+  const totalH = sizesTotal(rowHeights)
+  const kx = totalW > 0 ? (w - TABLE_ROW_HEADER_W) / totalW : 1
+  const ky = totalH > 0 ? (h - headerH) / totalH : 1
+  const nextColWidths = colWidths.map((cw) =>
+    Math.round(clamp(cw * kx, TABLE_MIN_CELL_W, TABLE_MAX_CELL_W)),
   )
-  const cellH = Math.round(clamp(h / (rows + 1), TABLE_MIN_CELL_H, TABLE_MAX_CELL_H))
+  const nextRowHeights = rowHeights.map((rh) =>
+    Math.round(clamp(rh * ky, TABLE_MIN_CELL_H, TABLE_MAX_CELL_H)),
+  )
   return {
-    cellW,
-    cellH,
-    fittedW: TABLE_ROW_HEADER_W + cols * cellW,
-    fittedH: (rows + 1) * cellH,
+    colWidths: nextColWidths,
+    rowHeights: nextRowHeights,
+    headerH,
+    // 拟合外框 = 缩放后数组的实际总尺寸，选中框 / 固定边反推都用它，永不与渲染错位
+    fittedW: TABLE_ROW_HEADER_W + sizesTotal(nextColWidths),
+    fittedH: headerH + sizesTotal(nextRowHeights),
   }
 }

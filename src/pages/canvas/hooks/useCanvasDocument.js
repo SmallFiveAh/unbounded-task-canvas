@@ -120,5 +120,7 @@ export function useCanvasDocument({
     updateTableCell: tableApi.updateTableCell,
     clearTableCells: tableApi.clearTableCells,
     pasteTableCells: tableApi.pasteTableCells,
+    resizeTableCol: tableApi.resizeTableCol,
+    resizeTableRow: tableApi.resizeTableRow,
   }
 }

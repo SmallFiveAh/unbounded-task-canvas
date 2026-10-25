@@ -64,6 +64,8 @@ function CanvasWorld({
           onCellChange={doc.updateTableCell}
           onClearCells={doc.clearTableCells}
           onPasteCells={doc.pasteTableCells}
+          onResizeCol={doc.resizeTableCol}
+          onResizeRow={doc.resizeTableRow}
           scale={scale}
         />
       ))}

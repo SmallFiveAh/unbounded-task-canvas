@@ -20,8 +20,9 @@ export function useTablePointer({
   table,
   rows,
   cols,
-  cellW,
-  cellH,
+  colWidths,
+  rowHeights,
+  headerH,
   editing,
   commitEditing,
   onPointerDown,
@@ -35,7 +36,7 @@ export function useTablePointer({
   wrapRef,
 }) {
   // 命中测试：屏幕坐标 → 单元格 + 自实现双击判定
-  const hitTest = useCellHitTest({ wrapRef, rows, cols, cellW, cellH })
+  const hitTest = useCellHitTest({ wrapRef, rows, cols, colWidths, rowHeights, headerH })
   // 拖拽框选：起点登记 / 实时扩展 / 松手收口
   const marquee = useCellMarquee({
     wrapRef,

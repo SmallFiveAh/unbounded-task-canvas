@@ -19,8 +19,9 @@ import { useTableSelection } from './useTableSelection'
  * @param {object}   table        表格数据（id / rows / cols / cells …）
  * @param {boolean}  selected     表格是否被选中
  * @param {boolean}  primary      是否为主选中元素
- * @param {number}   cellW        单元格宽（控制点拖动可改）
- * @param {number}   cellH        单元格高
+ * @param {number[]} colWidths    逐列宽度（设计坐标，表头拖拽 / 节点缩放可改）
+ * @param {number[]} rowHeights   逐行高度
+ * @param {number}   headerH      列标表头行高
  * @param {Function} onPointerDown 未命中单元格时交回父级的整表拖拽
  * @param {Function} onActivate    选中单元格后激活表格（键盘事件接管）
  * @param {Function} onCellChange  单元格内容变更
@@ -32,8 +33,9 @@ export function useTableController({
   table,
   selected,
   primary,
-  cellW,
-  cellH,
+  colWidths,
+  rowHeights,
+  headerH,
   onPointerDown,
   onActivate,
   onCellChange,
@@ -72,8 +74,9 @@ export function useTableController({
     table,
     rows,
     cols,
-    cellW,
-    cellH,
+    colWidths,
+    rowHeights,
+    headerH,
     editing: sel.editing,
     commitEditing: sel.commitEditing,
     onPointerDown,

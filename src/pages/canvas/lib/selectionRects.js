@@ -5,7 +5,12 @@
    屏幕空间的选中框因此能用同一套代码画出来。
    ============================================================ */
 
-import { getTableSize } from '../../../constants/canvasTable'
+import {
+  getTableSize,
+  tableColWidths,
+  tableHeaderH,
+  tableRowHeights,
+} from '../../../constants/canvasTable'
 import { NODE_RADIUS } from './constants'
 import { resolveContentHeight } from './noteSize'
 
@@ -48,6 +53,10 @@ export function buildSelectionRects(selectedIds, nodes, tables) {
         baseRadius: 5,
         rows: table.rows,
         cols: table.cols,
+        // 行列尺寸快照进缩放手势状态：整个手势期间以起点为基准重算，不增量累加
+        colWidths: tableColWidths(table),
+        rowHeights: tableRowHeights(table),
+        headerH: tableHeaderH(table),
       })
     }
   }
