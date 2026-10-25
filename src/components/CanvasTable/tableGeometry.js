@@ -55,10 +55,16 @@ export function selectionBox(selection) {
   return { r1, r2, c1, c2 }
 }
 
-/** 按前缀和偏移把局部坐标换算成行 / 列下标（越界停在最后一位，clamp 与 inside 由调用方区分） */
-function indexFromOffset(offset, offsets, count) {
+/**
+ * 局部偏移 → 行 / 列下标。
+ * @param {number} offset   相对数据区左/上边缘的局部坐标（可为负或越界）
+ * @param {number[]} ends   累计边界数组：ends[i] = 第 i 列/行的右/下边界（sizeOffsets 去掉首位 0）
+ * @param {number} count    行 / 列总数
+ * 下标 = 边界 ≤ offset 的个数；越界停在最后一位（clamp 语义由调用方的 inside 区分）
+ */
+function indexFromOffset(offset, ends, count) {
   let i = 0
-  while (i < count - 1 && offsets[i + 1] <= offset) i += 1
+  while (i < count - 1 && ends[i] <= offset) i += 1
   return i
 }
 
