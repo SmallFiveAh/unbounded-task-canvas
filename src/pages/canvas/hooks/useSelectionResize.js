@@ -61,6 +61,11 @@ export function useSelectionResize({
     viewport.setPointerCapture(e.pointerId)
   }
 
+  // 实时尺寸徽标：值不变时复用上一帧的引用，
+  // 节点尺寸被 clamp 固定后指针继续移动不再触发重渲染（文本稳定显示）
+  const setResizeLabelIfChanged = (w, h) =>
+    setResizeLabel((prev) => (prev && prev.w === w && prev.h === h ? prev : { w, h }))
+
   // 拖动控制点：把屏幕位移换算回世界坐标，再按「对边固定」重算矩形
   const applyResize = (e) => {
     const rz = resizeRef.current
@@ -72,9 +77,8 @@ export function useSelectionResize({
     const live = nodesRef.current.find((n) => n.id === rz.id)
     const g = resolveResizeGeometry(rz, dx, dy, live)
 
-    setResizeLabel({ w: Math.round(g.w), h: Math.round(g.h) })
-
     if (rz.kind === 'node') {
+      setResizeLabelIfChanged(Math.round(g.w), Math.round(g.h))
       setNodes((ns) =>
         ns.map((n) => {
           if (n.id !== rz.id) return n
@@ -88,8 +92,11 @@ export function useSelectionResize({
 
     // 表格：外框尺寸整体等比缩放逐列宽 / 逐行高（表头行高固定），并按拟合尺寸反推左上角。
     // rz 里是手势起点的行列尺寸快照（见 selectionRects.buildSelectionRects），
-    // 每帧从快照重算而不是在上一帧结果上累加 —— 不会跳动、闪烁或与选中框错位
+    // 每帧从快照重算而不是在上一帧结果上累加 —— 不会跳动、闪烁或与选中框错位。
+    // 徽标必须显示「拟合后的实际外框」而不是指针意图 g.w/g.h：
+    // 逐项 clamp 生效后节点尺寸已固定，指针意图还在变，显示意图值就会持续重算且与实际不符
     const { colWidths, rowHeights, headerH, fittedW, fittedH } = scaleTableFromBox(g.w, g.h, rz)
+    setResizeLabelIfChanged(Math.round(fittedW), Math.round(fittedH))
     setTables((ts) =>
       ts.map((t) =>
         t.id === rz.id
