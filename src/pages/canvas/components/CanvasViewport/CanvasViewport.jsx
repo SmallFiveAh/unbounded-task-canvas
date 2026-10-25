@@ -32,6 +32,8 @@ import CanvasSelectionLayer from '../CanvasSelectionLayer'
  * @param {object|null} linkTargetRect      拉线悬停目标元素矩形（亮框提示）
  * @param {object} resize                   useSelectionResize 返回值（选中框与控制点缩放）
  * @param {object} edgeDrag                 useEdgeDrag 返回值（边框拉线）
+ * @param {object} mind                     思维导图渲染数据与动作包
+ *   （branchViews / metas / measure / toggleCollapse / addChild / onNodeClick）
  */
 function CanvasViewport({
   viewportRef,
@@ -52,6 +54,7 @@ function CanvasViewport({
   linkTargetRect,
   resize,
   edgeDrag,
+  mind,
 }) {
   return (
     <div
@@ -84,6 +87,7 @@ function CanvasViewport({
         doc={doc}
         commitNodeEdit={commitNodeEdit}
         onDraftChange={onDraftChange}
+        mind={mind}
       />
 
       {/* 选中框层（屏幕坐标）：1px 定宽橙框 + 四角控制点 + 四边拉线命中条 + 框选矩形 */}
@@ -130,6 +134,7 @@ CanvasViewport.propTypes = {
   linkTargetRect: PropTypes.object,
   resize: PropTypes.object.isRequired,
   edgeDrag: PropTypes.object.isRequired,
+  mind: PropTypes.object,
 }
 
 export default CanvasViewport

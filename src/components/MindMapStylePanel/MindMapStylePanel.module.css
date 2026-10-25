@@ -54,38 +54,10 @@
   outline-offset: 2px;
 }
 
-/* ---------- 迷你导图（SVG）：根节点 — 三条弧线分支 — 文本条 ---------- */
+/* ---------- 缩略图占位（SVG 骨架与配色统一在 MindMapStyles.module.css） ---------- */
 
 .thumb {
   display: block;
   width: 100%;
   height: 100%;
-}
-
-.root {
-  fill: var(--mm-root-fill, #ffffff);
-  stroke: var(--mm-root, var(--color-accent));
-  stroke-width: 2.5;
-}
-
-.branch {
-  fill: none;
-  stroke-width: 2;
-  stroke-linecap: round;
-}
-
-.branchB1 {
-  stroke: var(--mm-b1, var(--color-border));
-}
-
-.branchB2 {
-  stroke: var(--mm-b2, var(--color-border));
-}
-
-.branchB3 {
-  stroke: var(--mm-b3, var(--color-border));
-}
-
-.bar {
-  fill: var(--mm-bar, var(--color-border));
 }

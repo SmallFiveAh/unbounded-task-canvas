@@ -6,6 +6,7 @@
    ============================================================ */
 
 import { isCardKind } from '../../constants/cardStyles'
+import { isMindKind } from '../../constants/mindMap'
 import { isNoteKind, LEGACY_NOTE_DEFAULT_TEXT } from '../../constants/noteStyles'
 import { isListCardKind } from '../../constants/listCardStyles'
 import {
@@ -32,12 +33,14 @@ function normalizeListItems(raw) {
 function normalizeNode(raw) {
   if (!raw || typeof raw.id !== 'string') return null
   if (![raw.x, raw.y, raw.w, raw.h].every(isNum)) return null
-  // kind 白名单：合法便签（note-<样式id>）、卡片（card-<样式id>）与
-  // 列表卡片（list-<样式id>）原样保留，其余只认 accent / muted
+  // kind 白名单：合法便签（note-<样式id>）、卡片（card-<样式id>）、
+  // 列表卡片（list-<样式id>）与思维导图（mind-<样式id>）原样保留，其余只认 accent / muted
   const isNote = isNoteKind(raw.kind)
   const isCard = isCardKind(raw.kind)
   const isListCard = isListCardKind(raw.kind)
-  const kind = isNote || isCard || isListCard ? raw.kind : raw.kind === 'accent' ? 'accent' : 'muted'
+  const isMind = isMindKind(raw.kind)
+  const kind =
+    isNote || isCard || isListCard || isMind ? raw.kind : raw.kind === 'accent' ? 'accent' : 'muted'
   // 旧版便签的默认文案「便签」迁移为空：与新建便签一致，显示占位符
   const text = typeof raw.text === 'string' ? raw.text : ''
   const node = {
@@ -74,6 +77,15 @@ function normalizeNode(raw) {
     node.items = normalizeListItems(raw.items)
     const last = node.items[node.items.length - 1]
     if (!last || last.text !== '') node.items.push({ text: '', done: false })
+  }
+  // 思维导图独有字段：树结构（父 id / 有序子 id 列表 / 收起态）。
+  // 缺字段按「无树」兜底 —— 丢了 children，整棵子树刷新后就再也渲染不出来
+  if (isMind) {
+    node.parentId = typeof raw.parentId === 'string' ? raw.parentId : null
+    node.children = Array.isArray(raw.children)
+      ? raw.children.filter((id) => typeof id === 'string')
+      : []
+    node.collapsed = raw.collapsed === true
   }
   return node
 }

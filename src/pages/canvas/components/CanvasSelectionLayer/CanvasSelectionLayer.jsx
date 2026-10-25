@@ -40,7 +40,10 @@ function CanvasSelectionLayer({
             radius={
               cornerRadius(rect.baseRadius, rect.w, rect.h, view.scale) * view.scale
             }
-            showHandles={single && rect.id === selectedId && !editingId}
+            // 思维导图节点：不画选中框、不出缩放控制点（不允许缩放），
+            // 四边拉线命中条保留 —— 节点边框处可以拉出连线
+            showFrame={!rect.isMind}
+            showHandles={single && rect.id === selectedId && !editingId && !rect.isMind}
             showLinkStrips={!editingId}
             label={single && resizeLabel ? `${resizeLabel.w} × ${resizeLabel.h}` : null}
             onResizeStart={onResizeStart}
@@ -110,6 +113,8 @@ CanvasSelectionLayer.propTypes = {
       // 便签专用：是否便签 / 内容实测高度
       isNote: PropTypes.bool,
       contentH: PropTypes.number,
+      // 思维导图节点：选中时无框无控制点（只保留拉线命中条）
+      isMind: PropTypes.bool,
       rows: PropTypes.number,
       cols: PropTypes.number,
     }),

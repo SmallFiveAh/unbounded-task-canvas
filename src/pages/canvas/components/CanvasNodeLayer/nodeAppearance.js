@@ -12,9 +12,11 @@
 import { cardStyleIdFromKind } from '../../../../constants/cardStyles'
 import { noteStyleIdFromKind, NOTE_BORDERED_STYLE_IDS } from '../../../../constants/noteStyles'
 import { listCardStyleIdFromKind } from '../../../../constants/listCardStyles'
+import { mindStyleIdFromKind, MIND_NODE_PLACEHOLDER } from '../../../../constants/mindMap'
 import cardVisualStyles from '../../../../components/CardStyles/CardStyles.module.css'
 import noteVisualStyles from '../../../../components/NoteStyles/NoteStyles.module.css'
 import listVisualStyles from '../../../../components/ListCardStyles/ListCardStyles.module.css'
+import mindVisualStyles from '../../../../components/MindMapStyles/MindMapStyles.module.css'
 import {
   CARD_PLACEHOLDER,
   EDIT_FIELD_TEXT,
@@ -48,8 +50,12 @@ export function resolveNodeAppearance(node, editing, editingField) {
   // 列表卡片节点：kind 形如 list-<样式id>（--lc-* 变量与面板缩略图同一套）
   const listStyleId = listCardStyleIdFromKind(node.kind)
   const isListCard = listStyleId !== null
+  // 思维导图节点：kind 形如 mind-<样式id>（--mm-* 变量与面板缩略图同一套）。
+  // 导图是独立结构：视觉只是胶囊 / 文本条，容器不画底色不画框
+  const mindStyleId = mindStyleIdFromKind(node.kind)
+  const isMind = mindStyleId !== null
   // 普通节点（muted 及其 accent 变体）：左边缘挂竖边带作视觉抓手（.nodeBand）
-  const isPlain = !isNote && !isCard && !isListCard
+  const isPlain = !isNote && !isCard && !isListCard && !isMind
   // 列表卡片的行编辑态：editingField 形如 item-<下标>，下标越界（行已被删）
   // 视为不在编辑，避免渲染出一行悬空输入框
   const editingItemIndex = editing ? listItemIndexFromField(editingField) : null
@@ -59,14 +65,22 @@ export function resolveNodeAppearance(node, editing, editingField) {
     isNote,
     isCard,
     isListCard,
+    isMind,
     isPlain,
     hasBorderDecor,
     // 各类型的共享视觉类（CSS Modules 哈希类名；未知样式 id 回落空串）
     noteVisual: noteVisualStyles[noteStyleId || ''],
     cardVisual: cardVisualStyles[cardStyleId || ''],
     listVisual: listVisualStyles[listStyleId || ''],
+    mindVisual: mindVisualStyles[mindStyleId || ''],
     // 空内容节点显示占位文案（仅展示，不写入数据）：便签 / 卡片 / 普通节点各有专属文案
-    placeholder: isNote ? NOTE_PLACEHOLDER : isCard ? CARD_PLACEHOLDER : NODE_PLACEHOLDER,
+    placeholder: isNote
+      ? NOTE_PLACEHOLDER
+      : isCard
+        ? CARD_PLACEHOLDER
+        : isMind
+          ? MIND_NODE_PLACEHOLDER
+          : NODE_PLACEHOLDER,
     showPlaceholder: !node.text,
     // 卡片 / 列表卡片标题带与正文区的内容（列表卡片正文区不使用 text）
     cardTitle: node.title || '',
@@ -101,6 +115,9 @@ export function buildNodeClassName(node, appearance, selected, primary) {
     appearance.isCard && styles.cardNode,
     appearance.listVisual,
     appearance.isListCard && styles.listNode,
+    appearance.mindVisual,
+    // 导图容器剥掉普通节点的底色 / 投影 / 内边距：独立结构不加框
+    appearance.isMind && styles.mindNode,
     selected && styles.selected,
     primary && styles.primary,
   ]

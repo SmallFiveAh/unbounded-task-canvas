@@ -11,6 +11,7 @@ import {
   tableHeaderH,
   tableRowHeights,
 } from '../../../constants/canvasTable'
+import { isMindKind } from '../../../constants/mindMap'
 import { NODE_RADIUS } from './constants'
 import { resolveContentHeight } from './noteSize'
 
@@ -37,6 +38,9 @@ export function buildSelectionRects(selectedIds, nodes, tables) {
         h: node.h,
         baseRadius: NODE_RADIUS,
         contentH: resolveContentHeight(node),
+        // 思维导图节点：选中态不画框不出控制点（不允许缩放），
+        // 只保留四边拉线命中条
+        isMind: isMindKind(node.kind),
       })
       continue
     }

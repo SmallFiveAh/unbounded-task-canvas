@@ -27,6 +27,14 @@
   opacity: 0.9;
 }
 
+/* 思维导图分支线：实线弧，颜色由样式类注入的 --mm-b1/b2/b3 变量决定
+   （内联 stroke 按分支取色，见 CanvasNodeLayer 渲染处） */
+.mindBranch {
+  stroke-width: 1.5;
+  stroke-linecap: round;
+  opacity: 0.9;
+}
+
 /* ---------- 节点 ---------- */
 
 /* 默认态：无边框。
@@ -138,6 +146,28 @@
    避免文字 / 占位符压在虚线框上（声明顺序在 .noteNode 之后，覆盖其 padding） */
 .noteFramed {
   padding: 8px;
+}
+
+/* ---------- 思维导图节点 ----------
+   导图是独立结构，不是一个大节点对象：容器剥掉普通节点的
+   底色 / 投影 / 内边距，只保留定位与事件；视觉完全交给内部的
+   MindNodeFace（根胶囊 / 文本条，颜色由 --mm-* 样式类供给）。
+   宽度 max-content：节点宽度随内容自适应（实测后回写，
+   自动布局据此排列，见 lib/mindLayout.js）。
+   ⚠️ 不能用 fit-content：世界层是 0×0 的绝对定位容器，绝对定位
+   子元素在可用宽度为 0 时 fit-content 会收缩到 min-content，
+   「分支」被逐字换行、文本条被撑成圆球 —— 与拖拽幽灵不一致。 */
+.mindNode {
+  width: max-content;
+  padding: 0;
+  background: transparent;
+  box-shadow: none;
+  overflow: visible;
+  border-radius: 0;
+}
+
+.mindNode:hover {
+  box-shadow: none;
 }
 
 /* ---------- 文本（显示态 / 编辑态共用一套排版基线） ----------

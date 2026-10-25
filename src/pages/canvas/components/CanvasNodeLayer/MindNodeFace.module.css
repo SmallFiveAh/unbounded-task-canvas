@@ -1,0 +1,207 @@
+/* ============================================
+   MindNodeFace —— 思维导图节点外观
+   --------------------------------------------
+   · 根节点 = 描边胶囊（--mm-root / --mm-root-fill）
+   · 分支节点 = 圆角文本条（--mm-bar），文字用固定深墨保证
+     在浅色文本条上的可读性（明暗主题下文本条都是浅色）
+   · 小圆球：悬停节点时出现在右侧 2px（收起/展开 + 加节点），
+     鼠标同时离开节点与圆球后隐藏（.group:hover 控制）
+   · 节点宽度随内容自适应：展示态由内容撑开；编辑态用
+     「镜像文本」撑宽（textarea 绝对定位盖在镜像上，排版逐项一致）
+   ============================================ */
+
+/* 悬停容器：包住视觉胶囊与圆球 —— 悬停判定以它为单位，
+   移入圆球不算离开（圆球是它的子元素） */
+.group {
+  position: relative;
+  display: inline-flex;
+}
+
+/* ---------- 节点视觉（根胶囊 / 分支文本条） ---------- */
+
+.visual {
+  display: inline-flex;
+  align-items: center;
+  box-sizing: border-box;
+  border-radius: 999px;
+}
+
+.rootPill {
+  min-width: 76px;
+  min-height: 34px;
+  padding: 5px 16px;
+  justify-content: center;
+  background: var(--mm-root-fill, #ffffff);
+  border: 1.5px solid var(--mm-root, var(--color-accent));
+}
+
+.branchBar {
+  min-width: 48px;
+  min-height: 28px;
+  padding: 4px 12px;
+  background: var(--mm-bar, var(--color-border));
+}
+
+/* ---------- 文本排版（展示态 / 镜像 / 输入框三处逐项一致） ----------
+   textarea 不继承 letter-spacing 等排版属性，镜像与输入框必须
+   显式共用同一套声明，宽度与换行点才会逐像素对齐。 */
+.typeface {
+  font-family: var(--font-body);
+  font-size: var(--text-sm);
+  font-style: normal;
+  line-height: 1.4;
+  letter-spacing: 0.02em;
+  white-space: pre-wrap;
+  overflow-wrap: break-word;
+  word-break: normal;
+  text-align: left;
+}
+
+.text {
+  display: block;
+  /* 自适应宽度：内容多宽节点多宽，超过上限换行增高 */
+  max-width: 200px;
+  color: var(--color-text);
+}
+
+.textRoot {
+  color: var(--mm-root, var(--color-accent));
+  font-weight: 600;
+}
+
+.textBranch {
+  /* 文本条是各样式下的浅色底：用固定深墨，明暗主题都可读 */
+  color: #2b2f36;
+  font-weight: 500;
+}
+
+.textPlaceholder {
+  opacity: 0.45;
+}
+
+/* ---------- 编辑态：镜像撑宽 + 输入框覆盖 ---------- */
+
+.editBox {
+  position: relative;
+  display: inline-block;
+  max-width: 200px;
+}
+
+/* 镜像文本：不可见但占位，撑出输入框（进而撑出胶囊）的宽度与高度 */
+.mirror {
+  display: block;
+  visibility: hidden;
+  /* 收尾零宽空格由 JSX 传入：保住末尾空格 / 换行不被折叠 */
+}
+
+.input {
+  position: absolute;
+  inset: 0;
+  display: block;
+  width: 100%;
+  height: 100%;
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+  border: 0;
+  outline: none;
+  resize: none;
+  overflow: hidden;
+  background: transparent;
+  cursor: text;
+  user-select: text;
+  border-radius: 0;
+}
+
+.inputRoot {
+  color: var(--mm-root, var(--color-accent));
+  font-weight: 600;
+}
+
+.inputBranch {
+  color: #2b2f36;
+  font-weight: 500;
+}
+
+.input::placeholder {
+  opacity: 0.45;
+}
+
+.input:focus-visible {
+  border-radius: 0;
+  outline: none;
+}
+
+/* ---------- 小圆球（收起/展开 与 加节点） ----------
+   默认隐藏，悬停 .group 时显形；圆球自身另有悬停放大效果 */
+
+.balls {
+  position: absolute;
+  /* 节点右缘外 2px 起排；两球之间同样 2px 间距（flex gap） */
+  left: calc(100% + 2px);
+  top: 50%;
+  transform: translateY(-50%);
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity var(--dur-fast) var(--ease-out);
+}
+
+.group:hover .balls {
+  opacity: 1;
+  pointer-events: auto;
+}
+
+.ball {
+  flex: none;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 16px;
+  height: 16px;
+  padding: 0;
+  box-sizing: border-box;
+  border: 1px solid var(--color-border);
+  border-radius: 50%;
+  background: var(--color-surface);
+  color: var(--color-text);
+  font-family: var(--font-body);
+  font-size: 9px;
+  font-weight: 700;
+  line-height: 1;
+  font-variant-numeric: tabular-nums;
+  cursor: pointer;
+  transition:
+    transform var(--dur-fast) var(--ease-out),
+    background var(--dur-fast) var(--ease-out),
+    border-color var(--dur-fast) var(--ease-out),
+    color var(--dur-fast) var(--ease-out);
+}
+
+/* 圆球悬停效果：轻微放大 + 强调色 */
+.ball:hover {
+  border-color: var(--color-accent);
+  color: var(--color-accent);
+  transform: scale(1.2);
+}
+
+/* 收起态的收起/展开圆球：强调色填充 + 白字数字（被收起的后代数量） */
+.ballCollapsed {
+  background: var(--color-accent);
+  border-color: var(--color-accent);
+  color: #ffffff;
+}
+
+.ballCollapsed:hover {
+  color: #ffffff;
+  transform: scale(1.2);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .ball,
+  .balls {
+    transition: none;
+  }
+}

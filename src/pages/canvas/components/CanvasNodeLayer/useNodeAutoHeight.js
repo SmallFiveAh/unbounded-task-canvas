@@ -16,28 +16,39 @@ import { measureNoteContentHeight, resolveContentHeight } from '../../lib/noteSi
 
 /**
  * @param {object} node               画布节点
- * @param {(id: string, patch: object) => void} onNodeSizeChange 实测高度回写
+ * @param {(id: string, patch: object) => void} onNodeSizeChange 实测尺寸回写
+ * @param {object} [options]          可选项
+ * @param {boolean} [options.measureWidth] 同时实测宽度并回写
+ *   （思维导图节点：宽度也随内容自适应，自动布局需要真实 w/h）
  * @returns {import('react').MutableRefObject} 挂在节点容器上的 ref
  */
-export function useNodeAutoHeight(node, onNodeSizeChange) {
+export function useNodeAutoHeight(node, onNodeSizeChange, { measureWidth = false } = {}) {
   const nodeRef = useRef(null)
 
   // 已落库的度量经 ref 读取：effect 只依赖节点身份，打字引起的高度变化
   // 全部走测量回调，不重建 ResizeObserver。
   // 用 useLayoutEffect：观察器回调在绘制前触发，必须在此之前拿到最新值，
   // 否则每帧都会拿旧值重复回写一次（缩放拖拽时等于每帧多渲染一轮）
-  const metricsRef = useRef({ h: node.h, contentH: resolveContentHeight(node) })
+  const metricsRef = useRef({ w: node.w, h: node.h, contentH: resolveContentHeight(node) })
   useLayoutEffect(() => {
-    metricsRef.current = { h: node.h, contentH: resolveContentHeight(node) }
-  }, [node.h, node.contentH])
+    metricsRef.current = { w: node.w, h: node.h, contentH: resolveContentHeight(node) }
+  }, [node.w, node.h, node.contentH])
 
   useEffect(() => {
     const el = nodeRef.current
     if (!el) return undefined
     const syncMetrics = () => {
+      const prev = metricsRef.current
+      if (measureWidth) {
+        // 宽高一起量（思维导图）：宽度随内容自适应，两个方向都可能变
+        const boxW = el.offsetWidth
+        const boxH = el.offsetHeight
+        if (boxW === prev.w && boxH === prev.h) return
+        onNodeSizeChange(node.id, { w: boxW, h: boxH })
+        return
+      }
       const boxH = el.offsetHeight
       const contentH = measureNoteContentHeight(el)
-      const prev = metricsRef.current
       // 取整比较：亚像素差异（字体度量）不落库，防止高频抖动
       if (boxH === prev.h && Math.abs(contentH - prev.contentH) < 1) return
       onNodeSizeChange(node.id, { h: boxH, contentH })
@@ -46,9 +57,9 @@ export function useNodeAutoHeight(node, onNodeSizeChange) {
     observer.observe(el)
     // 内容节点单独观察：容器被 minH 撑住时，文字增减不会改变容器尺寸，
     // 只盯着容器就量不到内容高度 —— 拖控制点时的下限判定会因此失准
-    if (el.firstElementChild) observer.observe(el.firstElementChild)
+    if (el.firstElementChild && !measureWidth) observer.observe(el.firstElementChild)
     return () => observer.disconnect()
-  }, [node.id, onNodeSizeChange])
+  }, [node.id, onNodeSizeChange, measureWidth])
 
   return nodeRef
 }

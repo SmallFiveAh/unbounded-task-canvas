@@ -18,8 +18,14 @@ import { useCanvasViewport } from './canvas/hooks/useCanvasViewport'
 import { useCommitNodeEdit } from './canvas/hooks/useCommitNodeEdit'
 import { useCardDragCreate } from './canvas/hooks/useCardDragCreate'
 import { useListCardDragCreate } from './canvas/hooks/useListCardDragCreate'
+import { useMindMapDragCreate } from './canvas/hooks/useMindMapDragCreate'
 import { useNoteDragCreate } from './canvas/hooks/useNoteDragCreate'
 import { previewEdgePath, resolveEdgePath } from './canvas/lib/edges'
+import {
+  buildMindBranchViews,
+  buildMindMeta,
+  collectHiddenMindIds,
+} from './canvas/lib/mindLayout'
 import { EDIT_FIELD_TEXT, EDIT_FIELD_TITLE, listItemIndexFromField } from './canvas/lib/constants'
 import { useLatestPropsRef } from './canvas/hooks/useLatestPropsRef'
 import styles from './CanvasPage.module.css'
@@ -74,6 +80,14 @@ export default function CanvasPage({ taskId }) {
     clearSelection: selection.clearSelection,
   })
 
+  // 思维导图派生数据：被收起隐藏的后代 id 集合 + 可见节点列表
+  // （连线命中 / 框选 / 渲染都只在可见节点上进行）
+  const hiddenMindIds = useMemo(() => collectHiddenMindIds(doc.nodes), [doc.nodes])
+  const visibleNodes = useMemo(
+    () => doc.nodes.filter((n) => !hiddenMindIds.has(n.id)),
+    [doc.nodes, hiddenMindIds],
+  )
+
   // 指针交互编排：元素拖拽 / 控制点缩放 / 边框拉线 / 视口收口
   const { drag, resize, edgeDrag, pointer } = useCanvasInteractions({
     doc,
@@ -85,6 +99,14 @@ export default function CanvasPage({ taskId }) {
     viewportRef,
     screenToWorld,
     addNode: doc.addNode,
+    visibleNodes,
+  })
+
+  // 思维导图拖拽创建：按住「思维导图」按钮 / 面板缩略图拖到画布落一棵默认导图
+  const mindDrag = useMindMapDragCreate({
+    viewportRef,
+    viewRef,
+    addMindMap: doc.addMindMap,
   })
 
   // 便签拖拽创建：按住「便签」按钮 / 面板缩略图拖到画布落节点
@@ -188,6 +210,42 @@ export default function CanvasPage({ taskId }) {
     ? edgeDrag.elementIndex.get(edgeDrag.preview.targetId)
     : null
 
+  // 思维导图：每节点派生信息（收起数量 / 分支颜色）与父 → 子分支线路径
+  const mindMetas = useMemo(() => buildMindMeta(nodes), [nodes])
+  const mindBranchViews = useMemo(
+    () => buildMindBranchViews(nodes, hiddenMindIds),
+    [nodes, hiddenMindIds],
+  )
+
+  // 单击画布上的思维导图节点 → 弹出导图样式面板（从面板可再拖拽创建）。
+  // 拖拽整树松手后的残余 click 在这里被 wasDragged 判定吞掉。
+  // 回调身份只在面板开合时变化（toggleMindPanel 稳定），memo 节点不被牵连
+  const { mindPanelOpen, toggleMindPanel } = toolbar
+  const handleMindNodeClick = useCallback(() => {
+    if (drag.wasDraggedRef.current) return
+    if (!mindPanelOpen) toggleMindPanel()
+  }, [drag.wasDraggedRef, mindPanelOpen, toggleMindPanel])
+
+  // 视口层的思维导图渲染数据与动作包（CanvasViewport → CanvasWorld → CanvasNodeLayer）
+  const mind = useMemo(
+    () => ({
+      branchViews: mindBranchViews,
+      metas: mindMetas,
+      measure: doc.measureMindNode,
+      toggleCollapse: doc.toggleMindCollapse,
+      addChild: doc.addMindChild,
+      onNodeClick: handleMindNodeClick,
+    }),
+    [
+      mindBranchViews,
+      mindMetas,
+      doc.measureMindNode,
+      doc.toggleMindCollapse,
+      doc.addMindChild,
+      handleMindNodeClick,
+    ],
+  )
+
   if (!task) return <TaskNotFound />
 
   return (
@@ -218,13 +276,18 @@ export default function CanvasPage({ taskId }) {
         cardBtnRef={toolbar.cardBtnRef}
         toolbarRef={toolbar.sideToolbarRef}
         onToggleTablePanel={toolbar.toggleTablePanel}
-        onToggleMindPanel={toolbar.toggleMindPanel}
         onToggleFlowPanel={toolbar.toggleFlowPanel}
         onNotePress={(e) => noteDrag.press(e, toolbar.noteStyleId, toolbar.toggleNotePanel)}
         onNoteClick={(e) => {
           // 指针点击已在 pointerup 阶段由 useNoteDragCreate 的 onClick 处理；
           // 这里只响应键盘激活的 click（detail === 0），否则会开→关双切换
           if (e.detail === 0) toolbar.toggleNotePanel()
+        }}
+        onMindPress={(e) => mindDrag.press(e, toolbar.mindStyleId, toolbar.toggleMindPanel)}
+        onMindClick={(e) => {
+          // 指针点击已在 pointerup 阶段由 useMindMapDragCreate 的 onClick 处理；
+          // 这里只响应键盘激活的 click（detail === 0），否则会开→关双切换
+          if (e.detail === 0) toolbar.toggleMindPanel()
         }}
         onCardPress={(e) => cardDrag.press(e, toolbar.cardStyleId, toolbar.toggleCardPanel)}
         onCardClick={(e) => {
@@ -250,7 +313,7 @@ export default function CanvasPage({ taskId }) {
         spaceDown={spaceDown}
         pointer={pointer}
         onPointerDownCapture={commitEditOnPointerDown}
-        nodes={nodes}
+        nodes={visibleNodes}
         tables={tables}
         drag={drag}
         selection={selection}
@@ -262,14 +325,16 @@ export default function CanvasPage({ taskId }) {
         linkTargetRect={linkTargetRect}
         resize={resize}
         edgeDrag={edgeDrag}
+        mind={mind}
       />
 
-      {/* 全部插入 / 样式面板 + 便签 / 卡片 / 列表卡片拖拽幽灵（展示层，见 CanvasPanels） */}
+      {/* 全部插入 / 样式面板 + 便签 / 卡片 / 列表卡片 / 思维导图拖拽幽灵（展示层，见 CanvasPanels） */}
       <CanvasPanels
         toolbar={toolbar}
         noteDrag={noteDrag}
         cardDrag={cardDrag}
         listDrag={listDrag}
+        mindDrag={mindDrag}
         view={view}
         onInsertTable={doc.addTable}
       />

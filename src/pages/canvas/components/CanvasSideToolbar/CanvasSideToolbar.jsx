@@ -6,10 +6,11 @@ import styles from './CanvasSideToolbar.module.css'
  * 左侧中间工具栏：便签 / 表格 / 思维导图 / 流程图 / 卡片 / 列表卡片
  * · 每个按钮控制各自面板显隐（「再点一次取消」），并把
  *   自己的 DOM 节点作为面板锚点
- * · 便签 / 卡片 / 列表卡片按钮特殊：按住可直接拖到画布创建节点
- *   （onNotePress / onCardPress / onListPress 交接给对应的
- *   useXxxDragCreate），普通点击弹出样式面板（onNoteClick /
- *   onCardClick / onListClick，拖拽结束后的残余 click 由 CanvasPage 吞掉）
+ * · 便签 / 思维导图 / 卡片 / 列表卡片按钮特殊：按住可直接拖到画布
+ *   创建元素（onNotePress / onMindPress / onCardPress / onListPress
+ *   交接给对应的 useXxxDragCreate），普通点击弹出样式面板
+ *   （onNoteClick / onMindClick / onCardClick / onListClick，
+ *   拖拽结束后的残余 click 由 CanvasPage 吞掉）
  * 纯展示组件：只做点击 → 回调，不碰画布数据。
  */
 function CanvasSideToolbar({
@@ -27,10 +28,11 @@ function CanvasSideToolbar({
   cardBtnRef,
   toolbarRef,
   onToggleTablePanel,
-  onToggleMindPanel,
   onToggleFlowPanel,
   onNotePress,
   onNoteClick,
+  onMindPress,
+  onMindClick,
   onCardPress,
   onCardClick,
   onListPress,
@@ -62,7 +64,8 @@ function CanvasSideToolbar({
         ref={mindBtnRef}
         className={`${styles.sideToolBtn}${mindPanelOpen ? ` ${styles.active}` : ''}`}
         title="思维导图"
-        onClick={onToggleMindPanel}
+        onPointerDown={onMindPress}
+        onClick={onMindClick}
       >
         <i className="bi bi-diagram-3" aria-hidden="true"></i>
       </button>
@@ -114,10 +117,11 @@ CanvasSideToolbar.propTypes = {
   cardBtnRef: PropTypes.object.isRequired,
   toolbarRef: PropTypes.object.isRequired,
   onToggleTablePanel: PropTypes.func.isRequired,
-  onToggleMindPanel: PropTypes.func.isRequired,
   onToggleFlowPanel: PropTypes.func.isRequired,
   onNotePress: PropTypes.func.isRequired,
   onNoteClick: PropTypes.func.isRequired,
+  onMindPress: PropTypes.func.isRequired,
+  onMindClick: PropTypes.func.isRequired,
   onCardPress: PropTypes.func.isRequired,
   onCardClick: PropTypes.func.isRequired,
   onListPress: PropTypes.func.isRequired,

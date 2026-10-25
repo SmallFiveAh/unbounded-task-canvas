@@ -26,6 +26,7 @@ function CanvasWorld({
   doc,
   commitNodeEdit,
   onDraftChange,
+  mind,
 }) {
   return (
     <div
@@ -39,12 +40,18 @@ function CanvasWorld({
         nodes={nodes}
         edgeViews={edgeViews}
         previewPath={previewPath}
+        mindBranchViews={mind?.branchViews}
         selectedIds={selectedIds}
         selectedId={selectedId}
         editingId={editingId}
         editingField={selection.editingField}
         draft={draft}
         scale={scale}
+        mindMetas={mind?.metas}
+        onMindMeasure={mind?.measure}
+        onToggleMindCollapse={mind?.toggleCollapse}
+        onAddMindChild={mind?.addChild}
+        onMindNodeClick={mind?.onNodeClick}
         onNodePointerDown={drag.onNodePointerDown}
         onStartEdit={selection.startEditNode}
         // 草稿变化走编排层回调（列表卡片行输入时自动追加空行），
@@ -102,6 +109,8 @@ CanvasWorld.propTypes = {
   doc: PropTypes.object.isRequired,
   commitNodeEdit: PropTypes.func.isRequired,
   onDraftChange: PropTypes.func.isRequired,
+  // 思维导图渲染数据与动作包（可选：无导图数据的调用方可省略）
+  mind: PropTypes.object,
 }
 
 export default memo(CanvasWorld)

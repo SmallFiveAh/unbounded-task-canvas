@@ -26,6 +26,8 @@ import { useViewportPointer } from './useViewportPointer'
  * @param {import('react').MutableRefObject} params.viewportRef
  * @param {Function} params.screenToWorld 屏幕坐标 → 世界坐标
  * @param {Function} params.addNode  双击空白添加节点
+ * @param {Array} params.visibleNodes 可见节点（收起隐藏的导图后代已剔除）：
+ *   连线命中 / 框选都只在可见元素上进行
  */
 export function useCanvasInteractions({
   doc,
@@ -37,6 +39,7 @@ export function useCanvasInteractions({
   viewportRef,
   screenToWorld,
   addNode,
+  visibleNodes,
 }) {
   const drag = useItemDrag({
     nodes: doc.nodes,
@@ -62,7 +65,7 @@ export function useCanvasInteractions({
   })
 
   const edgeDrag = useEdgeDrag({
-    nodes: doc.nodes,
+    nodes: visibleNodes ?? doc.nodes,
     tables: doc.tables,
     viewportRef,
     screenToWorld,
@@ -72,7 +75,7 @@ export function useCanvasInteractions({
   const pointer = useViewportPointer({
     view,
     setView,
-    nodes: doc.nodes,
+    nodes: visibleNodes ?? doc.nodes,
     tables: doc.tables,
     tool,
     spaceDown,

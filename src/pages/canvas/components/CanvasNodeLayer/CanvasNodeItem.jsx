@@ -5,6 +5,7 @@ import { resolveMinHeight } from '../../lib/noteSize'
 import { cornerRadius } from '../../../../utils/canvasRadius'
 import CardNodeFace from './CardNodeFace'
 import ListCardNodeFace from './ListCardNodeFace'
+import MindNodeFace from './MindNodeFace'
 import NodeEditTextarea from './NodeEditTextarea'
 import {
   buildNodeClassName,
@@ -39,6 +40,11 @@ function CanvasNodeItem({
   editingField,
   draft,
   scale,
+  mindMeta,
+  onMindMeasure,
+  onToggleMindCollapse,
+  onAddMindChild,
+  onMindNodeClick,
   onNodePointerDown,
   onStartEdit,
   onDraftChange,
@@ -48,7 +54,13 @@ function CanvasNodeItem({
   onToggleListItem,
 }) {
   const appearance = resolveNodeAppearance(node, editing, editingField)
-  const nodeRef = useNodeAutoHeight(node, onNodeSizeChange)
+  // 思维导图节点：宽度也随内容自适应，实测（w + h）经 onMindMeasure
+  // 回写并触发整树自动布局；其余节点只量高度
+  const nodeRef = useNodeAutoHeight(
+    node,
+    (appearance.isMind && onMindMeasure) || onNodeSizeChange,
+    { measureWidth: appearance.isMind },
+  )
   const { inputRef, titleInputRef } = useEditAutoGrow(editing, draft)
 
   // 双击 → 编辑字段判定在 nodeAppearance 里按命中坐标完成（卡片 /
@@ -109,22 +121,48 @@ function CanvasNodeItem({
         // 用 transform 定位而不是 left/top：拖拽每帧只动 x/y，
         // transform 走合成器，跳过整层 reflow + 重绘（box-shadow 很贵）
         transform: `translate3d(${node.x}px, ${node.y}px, 0)`,
-        width: node.w,
+        // 思维导图节点不能钉内联宽度：内联 style 会压过 .mindNode 的
+        // width:max-content，容器被钉在落库值上，实测回写（offsetWidth）
+        // 量到的永远是 node.w 自身，宽度永远不收敛 —— 分支线起点会落在
+        // 可见胶囊右缘之外的空白处。让 CSS 的 max-content 生效即可
+        // （世界层是 0×0 容器，fit-content 会收缩到 min-content，不能用）
+        width: appearance.isMind ? undefined : node.w,
         // 高度交给内容撑开（minHeight 用「用户下限 minH」兜住手动拉大的下限），
         // 全部节点统一走内容自适应（机制见 lib/noteSize.js）。
         // 注意这里不能再用 node.h —— h 是测量结果，若拿它当 minHeight，
         // 高度就只会增不会减，且与缩放拖拽互相覆盖造成漂移。
+        // 思维导图节点不设下限：宽高完全由内容决定（不允许缩放）
         height: 'auto',
-        minHeight: resolveMinHeight(node),
+        minHeight: appearance.isMind ? undefined : resolveMinHeight(node),
         // 圆角随缩放补偿：缩小时至少保留 3.5 个屏幕像素，避免「看起来是直角」
         borderRadius: cornerRadius(NODE_RADIUS, node.w, node.h, scale),
       }}
       onPointerDown={(e) => onNodePointerDown(e, node)}
+      // 思维导图节点：单击弹出导图样式面板（拖拽后的残余 click 由
+      // onMindNodeClick 内部的 wasDragged 判定吞掉）
+      onClick={
+        appearance.isMind && onMindNodeClick ? () => onMindNodeClick(node) : undefined
+      }
       // move / up 不挂在这里：按下时指针捕获在节点上，事件会冒泡到视口，
       // 由 useViewportPointer 统一收口（挂两遍会把每次 move 跑两遍）
       onDoubleClick={handleDoubleClick}
     >
-      {appearance.isCard ? (
+      {appearance.isMind ? (
+        /* 思维导图节点：根胶囊 / 分支文本条 + 悬停小圆球
+           （收起/展开 与 加节点，交互细节见 MindNodeFace）。
+           mindMeta 是画布层的导图派生信息（后代数量 / 分支颜色） */
+        <MindNodeFace
+          node={node}
+          meta={mindMeta}
+          editing={editing}
+          draft={draft}
+          onDraftChange={onDraftChange}
+          onCommitEdit={onCommitEdit}
+          onCancelEdit={onCancelEdit}
+          onToggleCollapse={onToggleMindCollapse}
+          onAddChild={onAddMindChild}
+        />
+      ) : appearance.isCard ? (
         /* 卡片节点：两个可编辑区域交给 CardNodeFace ——
            外层 cardInner 是容器的第一个子元素，内容高度测量以它为单位
            （见 noteSize.js）；编辑中的区域经插槽换成输入框，不拆散包裹层。
@@ -189,6 +227,10 @@ CanvasNodeItem.propTypes = {
     // 高度自适应度量：用户高度下限 / 内容实测高度（见 lib/noteSize.js）
     minH: PropTypes.number,
     contentH: PropTypes.number,
+    // 思维导图独有：树结构（parentId 为 null 即根）与收起态
+    parentId: PropTypes.string,
+    children: PropTypes.arrayOf(PropTypes.string),
+    collapsed: PropTypes.bool,
   }).isRequired,
   selected: PropTypes.bool.isRequired,
   primary: PropTypes.bool.isRequired,
@@ -197,6 +239,16 @@ CanvasNodeItem.propTypes = {
   editingField: PropTypes.string,
   draft: PropTypes.string,
   scale: PropTypes.number.isRequired,
+  // 思维导图专属（非导图节点传 null / undefined，memo 浅比较恒稳定）：
+  // · mindMeta           buildMindMeta 里该节点的派生信息（后代数量 / 分支颜色）
+  // · onMindMeasure      实测宽高回写 + 整树自动布局
+  // · onToggleMindCollapse / onAddMindChild  小圆球的收展 / 衍生子节点
+  // · onMindNodeClick    单击导图节点弹出样式面板（内部吞掉拖拽残余 click）
+  mindMeta: PropTypes.object,
+  onMindMeasure: PropTypes.func,
+  onToggleMindCollapse: PropTypes.func,
+  onAddMindChild: PropTypes.func,
+  onMindNodeClick: PropTypes.func,
   onNodePointerDown: PropTypes.func.isRequired,
   onStartEdit: PropTypes.func.isRequired,
   onDraftChange: PropTypes.func.isRequired,

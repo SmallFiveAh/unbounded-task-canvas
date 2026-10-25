@@ -3,6 +3,7 @@ import PropTypes from 'prop-types'
 import { createPortal } from 'react-dom'
 import { MIND_MAP_STYLES } from '../../constants/mindMapStyles'
 import visualStyles from '../MindMapStyles/MindMapStyles.module.css'
+import MindMapThumb from '../MindMapStyles/MindMapThumb'
 import { usePanelDismiss } from './usePanelDismiss'
 import styles from './MindMapStylePanel.module.css'
 
@@ -13,6 +14,8 @@ import styles from './MindMapStylePanel.module.css'
  * · 水平在工具栏右侧，垂直以工具栏中间为锚点
  * · 点击缩略图选中样式（外部记忆，关面板不丢）；
  *   选中效果只有样式本身的高亮描边，不附加对勾等元素
+ * · 按住缩略图可直接拖到画布创建导图（拖拽逻辑由
+ *   useMindMapDragCreate 接管，onPointerDown 即交接），拖拽中面板保持可见
  * · 点击面板外部 / Esc 关闭；窗口尺寸变化自动跟随重定位
  *
  * 注意：渲染期读取 anchorRef / toolbarRef 做定位沿用
@@ -27,6 +30,7 @@ export default function MindMapStylePanel({
   selectedId,
   onSelect,
   onClose,
+  onSwatchPress,
 }) {
   const panelRef = useRef(null)
   // Esc / 点击外部关闭；resize 时强制重渲染以重算位置
@@ -62,6 +66,7 @@ export default function MindMapStylePanel({
             styleItem={styleItem}
             selected={styleItem.id === selectedId}
             onSelect={onSelect}
+            onSwatchPress={onSwatchPress}
           />
         ))}
       </div>
@@ -70,31 +75,25 @@ export default function MindMapStylePanel({
   )
 }
 
-/** 单个样式缩略图：迷你导图预览（根节点 — 三条弧线分支 — 文本条） */
-function MindMapSwatch({ styleItem, selected, onSelect }) {
+/** 单个样式缩略图：迷你导图预览（与画布默认导图结构同源，见 MindMapThumb） */
+function MindMapSwatch({ styleItem, selected, onSelect, onSwatchPress }) {
   return (
     <button
       type="button"
       className={`${styles.swatch} ${visualStyles[styleItem.id]}${
         selected ? ` ${styles.selected}` : ''
       }`}
-      onClick={() => onSelect(styleItem.id)}
+      onPointerDown={(e) => onSwatchPress(e, styleItem.id)}
+      onClick={(e) => {
+        // 指针点击已由 onSwatchPress → useMindMapDragCreate 在 pointerup 处理；
+        // 这里只响应键盘激活的 click（detail === 0），避免重复选中
+        if (e.detail === 0) onSelect(styleItem.id)
+      }}
       aria-pressed={selected}
       aria-label={styleItem.label}
       title={styleItem.label}
     >
-      <svg className={styles.thumb} viewBox="0 0 96 56" aria-hidden="true" focusable="false">
-        {/* 三条分支：从根节点右缘出发，向右上 / 右 / 右下扇出 */}
-        <path className={`${styles.branch} ${styles.branchB1}`} d="M33 28 C 45 28, 47 10, 61 10" />
-        <path className={`${styles.branch} ${styles.branchB2}`} d="M33 28 L 61 28" />
-        <path className={`${styles.branch} ${styles.branchB3}`} d="M33 28 C 45 28, 47 46, 61 46" />
-        {/* 分支末端的文本条 */}
-        <rect className={styles.bar} x="64" y="6.5" width="28" height="7" rx="3.5" />
-        <rect className={styles.bar} x="64" y="24.5" width="28" height="7" rx="3.5" />
-        <rect className={styles.bar} x="64" y="42.5" width="28" height="7" rx="3.5" />
-        {/* 根节点：描边胶囊（最后绘制，压在分支起点之上） */}
-        <rect className={styles.root} x="3" y="19" width="30" height="18" rx="9" />
-      </svg>
+      <MindMapThumb className={styles.thumb} />
     </button>
   )
 }
@@ -106,6 +105,7 @@ MindMapSwatch.propTypes = {
   }).isRequired,
   selected: PropTypes.bool.isRequired,
   onSelect: PropTypes.func.isRequired,
+  onSwatchPress: PropTypes.func.isRequired,
 }
 
 MindMapStylePanel.propTypes = {
@@ -115,4 +115,5 @@ MindMapStylePanel.propTypes = {
   selectedId: PropTypes.string.isRequired,
   onSelect: PropTypes.func.isRequired,
   onClose: PropTypes.func.isRequired,
+  onSwatchPress: PropTypes.func.isRequired,
 }

@@ -43,6 +43,7 @@ function SelectionFrame({
   width,
   height,
   radius = 8,
+  showFrame = true,
   showHandles = true,
   showLinkStrips = false,
   label,
@@ -51,7 +52,7 @@ function SelectionFrame({
 }) {
   return (
     <div
-      className={styles.frame}
+      className={`${styles.frame}${showFrame ? '' : ` ${styles.frameless}`}`}
       style={{
         // transform 定位：拖拽/缩放时随元素同帧移动，走合成器不触发 reflow
         transform: `translate3d(${left}px, ${top}px, 0)`,
@@ -104,6 +105,8 @@ SelectionFrame.propTypes = {
   width: PropTypes.number.isRequired,
   height: PropTypes.number.isRequired,
   radius: PropTypes.number,
+  // 是否绘制可见边框（思维导图节点为 false：只留拉线命中条，不加框）
+  showFrame: PropTypes.bool,
   showHandles: PropTypes.bool,
   showLinkStrips: PropTypes.bool,
   label: PropTypes.string,

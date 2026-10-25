@@ -1,15 +1,53 @@
 /* ============================================
-   思维导图视觉原型 —— 面板缩略图用
+   思维导图视觉原型 —— 面板缩略图 / 拖拽幽灵 / 画布节点共用
    ------------------------------------------------------------
    参考经典导图缩略图：描边胶囊根节点 → 三条弧线分支
-   向右扇出 → 末端三根文本条（SVG 由面板基座绘制）。
-   每个样式类只做一件事：注入一组 CSS 变量（SVG 消费）：
+   向右扇出 → 末端三根文本条（SVG 骨架见 MindMapThumb.jsx）。
+   每个样式类只做一件事：注入一组 CSS 变量（SVG 与画布节点消费）：
    · --mm-bg          缩略图画布底色
-   · --mm-root        根节点描边色
+   · --mm-root        根节点描边色（画布上同时是根节点文字色）
    · --mm-root-fill   根节点填充色（缺省白）
-   · --mm-b1/b2/b3    上 / 中 / 下三条分支的颜色
-   · --mm-bar         文本条颜色
+   · --mm-b1/b2/b3    上 / 中 / 下三条分支的颜色（画布分支连线同色）
+   · --mm-bar         文本条颜色（画布分支节点底色）
    ============================================ */
+
+/* ---------- 缩略图 / 幽灵的 SVG 骨架 ---------- */
+
+.thumb {
+  display: block;
+  width: 100%;
+  height: 100%;
+}
+
+.root {
+  fill: var(--mm-root-fill, #ffffff);
+  stroke: var(--mm-root, var(--color-accent));
+  stroke-width: 2.5;
+}
+
+.branch {
+  fill: none;
+  stroke-width: 2;
+  stroke-linecap: round;
+}
+
+.branchB1 {
+  stroke: var(--mm-b1, var(--color-border));
+}
+
+.branchB2 {
+  stroke: var(--mm-b2, var(--color-border));
+}
+
+.branchB3 {
+  stroke: var(--mm-b3, var(--color-border));
+}
+
+.bar {
+  fill: var(--mm-bar, var(--color-border));
+}
+
+/* ---------- 10 种样式的变量注入 ---------- */
 
 .classic {
   --mm-bg: #eef1fb;

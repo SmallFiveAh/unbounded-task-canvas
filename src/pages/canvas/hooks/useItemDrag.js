@@ -19,12 +19,18 @@
    ============================================================ */
 
 import { useCallback, useMemo, useRef } from 'react'
+import { isMindKind } from '../../../constants/mindMap'
+import { collectMindTreeIds } from '../lib/mindLayout'
 import {
   commitDragMove,
   createDragState,
   resolvePressSelection,
 } from '../lib/itemDragCommit'
 import { useLatestPropsRef } from './useLatestPropsRef'
+
+/* 拖拽判定阈值（屏幕 px）：位移超过它才算「拖过」，
+   用于区分导图节点的单击（弹面板）与拖拽（移动整树） */
+const DRAGGED_THRESHOLD = 4
 
 export function useItemDrag({
   nodes,
@@ -38,6 +44,10 @@ export function useItemDrag({
   view,
 }) {
   const dragRef = useRef(null)
+  // 本次按下是否真的拖动过：pointerup 后触发的 click 事件读取它，
+  // 区分「单击导图节点」与「拖完松手落在节点上的残余 click」。
+  // 下一次按下时复位（拖拽结束不复位：click 在 up 之后才触发）
+  const wasDraggedRef = useRef(false)
   const latestRef = useLatestPropsRef({
     nodes,
     tables,
@@ -71,6 +81,12 @@ export function useItemDrag({
     if (!drag) return
     drag.latestX = e.clientX
     drag.latestY = e.clientY
+    if (
+      !wasDraggedRef.current &&
+      Math.hypot(e.clientX - drag.px, e.clientY - drag.py) >= DRAGGED_THRESHOLD
+    ) {
+      wasDraggedRef.current = true
+    }
     if (drag.raf) return
     drag.raf = requestAnimationFrame(() => {
       const d = dragRef.current
@@ -109,9 +125,26 @@ export function useItemDrag({
   const onNodePointerDown = useCallback(
     (e, node) => {
       if (latestRef.current.editingId === node.id || e.button !== 0) return
-      startItemPointerDown(e, node.id)
+      e.stopPropagation()
+      e.preventDefault()
+      wasDraggedRef.current = false
+      if (isMindKind(node.kind)) {
+        // 思维导图节点：整树一起拖（导图节点不单独挪位，位置全由
+        // 自动布局决定）。选中语义仍是「只选中点中的节点」，
+        // 但拖拽起点把整棵树的节点都登记进来，位移统一应用。
+        const latest = latestRef.current
+        latest.setSelectedIds([node.id])
+        latest.setSelectedId(node.id)
+        const treeIds = collectMindTreeIds(latest.nodes, node.id)
+        dragRef.current = createDragState(e, treeIds, latest)
+        e.currentTarget.setPointerCapture(e.pointerId)
+        return
+      }
+      beginItemDrag(e, node.id)
+      e.currentTarget.setPointerCapture(e.pointerId)
     },
-    [startItemPointerDown, latestRef],
+    // latestRef 是稳定 ref 引用：列入依赖只为满足 exhaustive-deps，不改变回调身份
+    [beginItemDrag, latestRef],
   )
 
   /* ---------- 表格 ---------- */
@@ -128,6 +161,7 @@ export function useItemDrag({
   return useMemo(
     () => ({
       dragRef,
+      wasDraggedRef,
       onNodePointerDown,
       onTablePointerDown,
       applyDragMove,
