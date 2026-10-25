@@ -159,10 +159,11 @@ export function useCanvasDocument({
     syncListCardTrailingRow: nodeApi.syncListCardTrailingRow,
     toggleListCardItem: nodeApi.toggleListCardItem,
     updateNodeSize: nodeApi.updateNodeSize,
-    // 思维导图：建图 / 衍生节点 / 收展 / 实测尺寸回写（见 useCanvasMindMaps）
+    // 思维导图：建图 / 衍生节点 / 收展 / 整树换色 / 实测尺寸回写（见 useCanvasMindMaps）
     addMindMap: mindApi.addMindMap,
     addMindChild: mindApi.addMindChild,
     toggleMindCollapse: mindApi.toggleMindCollapse,
+    setMindTreeStyle: mindApi.setMindTreeStyle,
     measureMindNode: mindApi.measureMindNode,
     addEdge,
     addTable: tableApi.addTable,

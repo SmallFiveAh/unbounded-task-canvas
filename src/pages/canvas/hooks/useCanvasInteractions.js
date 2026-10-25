@@ -28,6 +28,9 @@ import { useViewportPointer } from './useViewportPointer'
  * @param {Function} params.addNode  双击空白添加节点
  * @param {Array} params.visibleNodes 可见节点（收起隐藏的导图后代已剔除）：
  *   连线命中 / 框选都只在可见元素上进行
+ * @param {Function} [params.onMindTap] 导图节点「点按」回调（未拖动的松手），
+ *   透传给 useItemDrag —— 节点 onClick 被 pointerdown 的 preventDefault 吞掉，
+ *   单击语义只能在指针管线里收口
  */
 export function useCanvasInteractions({
   doc,
@@ -40,6 +43,7 @@ export function useCanvasInteractions({
   screenToWorld,
   addNode,
   visibleNodes,
+  onMindTap,
 }) {
   const drag = useItemDrag({
     nodes: doc.nodes,
@@ -51,6 +55,7 @@ export function useCanvasInteractions({
     setSelectedIds: selection.setSelectedIds,
     editingId: selection.editingId,
     view,
+    onMindTap,
   })
 
   const resize = useSelectionResize({

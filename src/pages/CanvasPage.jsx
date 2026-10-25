@@ -25,7 +25,9 @@ import {
   buildMindBranchViews,
   buildMindMeta,
   collectHiddenMindIds,
+  isMindNode,
 } from './canvas/lib/mindLayout'
+import { mindStyleIdFromKind } from '../constants/mindMap'
 import { EDIT_FIELD_TEXT, EDIT_FIELD_TITLE, listItemIndexFromField } from './canvas/lib/constants'
 import { useLatestPropsRef } from './canvas/hooks/useLatestPropsRef'
 import styles from './CanvasPage.module.css'
@@ -88,6 +90,28 @@ export default function CanvasPage({ taskId }) {
     [doc.nodes, hiddenMindIds],
   )
 
+  // 点按画布上的思维导图节点（未拖动的松手，判定见 useItemDrag）→
+  // 弹出导图样式面板（从面板可再拖拽创建）。面板打开时把选中值同步成
+  // 被点树的当前样式：面板里另选样式即对这棵树整树换色
+  // （handleMindStyleSelect），颜色随节点 kind 落盘。最新状态经 props
+  // 快照 ref 读取，回调身份稳定，不打扰 memo 化的节点层
+  const mindTapRef = useLatestPropsRef({
+    nodes: doc.nodes,
+    mindPanelOpen: toolbar.mindPanelOpen,
+    toggleMindPanel: toolbar.toggleMindPanel,
+    selectMindStyle: toolbar.selectMindStyle,
+  })
+  const handleMindNodeTap = useCallback(
+    (nodeId) => {
+      const snapshot = mindTapRef.current
+      const node = snapshot.nodes.find((n) => n.id === nodeId)
+      const styleId = mindStyleIdFromKind(node?.kind)
+      if (styleId) snapshot.selectMindStyle(styleId)
+      if (!snapshot.mindPanelOpen) snapshot.toggleMindPanel()
+    },
+    [mindTapRef],
+  )
+
   // 指针交互编排：元素拖拽 / 控制点缩放 / 边框拉线 / 视口收口
   const { drag, resize, edgeDrag, pointer } = useCanvasInteractions({
     doc,
@@ -100,6 +124,7 @@ export default function CanvasPage({ taskId }) {
     screenToWorld,
     addNode: doc.addNode,
     visibleNodes,
+    onMindTap: handleMindNodeTap,
   })
 
   // 思维导图拖拽创建：按住「思维导图」按钮 / 面板缩略图拖到画布落一棵默认导图
@@ -217,14 +242,25 @@ export default function CanvasPage({ taskId }) {
     [nodes, hiddenMindIds],
   )
 
-  // 单击画布上的思维导图节点 → 弹出导图样式面板（从面板可再拖拽创建）。
-  // 拖拽整树松手后的残余 click 在这里被 wasDragged 判定吞掉。
-  // 回调身份只在面板开合时变化（toggleMindPanel 稳定），memo 节点不被牵连
-  const { mindPanelOpen, toggleMindPanel } = toolbar
-  const handleMindNodeClick = useCallback(() => {
-    if (drag.wasDraggedRef.current) return
-    if (!mindPanelOpen) toggleMindPanel()
-  }, [drag.wasDraggedRef, mindPanelOpen, toggleMindPanel])
+  // 面板里选样式：先记住为「下次新建」的默认值；若当前主选中是导图节点
+  // （点按导图节点弹面板的路径），同时给整棵树换色 —— 否则颜色只进
+  // 首选项、不进画布文档，刷新后导图还是旧颜色。最新状态经 ref 读取，
+  // 回调身份稳定，不打扰 memo 化的面板
+  const mindStyleSelectRef = useLatestPropsRef({
+    nodes: doc.nodes,
+    selectedId: selection.selectedId,
+    selectMindStyle: toolbar.selectMindStyle,
+    setMindTreeStyle: doc.setMindTreeStyle,
+  })
+  const handleMindStyleSelect = useCallback(
+    (styleId) => {
+      const snapshot = mindStyleSelectRef.current
+      snapshot.selectMindStyle(styleId)
+      const target = snapshot.nodes.find((n) => n.id === snapshot.selectedId)
+      if (isMindNode(target)) snapshot.setMindTreeStyle(target.id, styleId)
+    },
+    [mindStyleSelectRef],
+  )
 
   // 视口层的思维导图渲染数据与动作包（CanvasViewport → CanvasWorld → CanvasNodeLayer）
   const mind = useMemo(
@@ -234,7 +270,6 @@ export default function CanvasPage({ taskId }) {
       measure: doc.measureMindNode,
       toggleCollapse: doc.toggleMindCollapse,
       addChild: doc.addMindChild,
-      onNodeClick: handleMindNodeClick,
     }),
     [
       mindBranchViews,
@@ -242,7 +277,6 @@ export default function CanvasPage({ taskId }) {
       doc.measureMindNode,
       doc.toggleMindCollapse,
       doc.addMindChild,
-      handleMindNodeClick,
     ],
   )
 
@@ -337,6 +371,7 @@ export default function CanvasPage({ taskId }) {
         mindDrag={mindDrag}
         view={view}
         onInsertTable={doc.addTable}
+        onSelectMindStyle={handleMindStyleSelect}
       />
     </div>
   )

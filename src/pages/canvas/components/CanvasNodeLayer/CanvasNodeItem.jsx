@@ -44,7 +44,6 @@ function CanvasNodeItem({
   onMindMeasure,
   onToggleMindCollapse,
   onAddMindChild,
-  onMindNodeClick,
   onNodePointerDown,
   onStartEdit,
   onDraftChange,
@@ -138,11 +137,8 @@ function CanvasNodeItem({
         borderRadius: cornerRadius(NODE_RADIUS, node.w, node.h, scale),
       }}
       onPointerDown={(e) => onNodePointerDown(e, node)}
-      // 思维导图节点：单击弹出导图样式面板（拖拽后的残余 click 由
-      // onMindNodeClick 内部的 wasDragged 判定吞掉）
-      onClick={
-        appearance.isMind && onMindNodeClick ? () => onMindNodeClick(node) : undefined
-      }
+      // 思维导图节点的「点按弹面板」不走 onClick：pointerdown 的 preventDefault
+      // 会吞掉后续 click（W3C 规范），单击语义由 useItemDrag 在指针管线里收口
       // move / up 不挂在这里：按下时指针捕获在节点上，事件会冒泡到视口，
       // 由 useViewportPointer 统一收口（挂两遍会把每次 move 跑两遍）
       onDoubleClick={handleDoubleClick}
@@ -243,12 +239,10 @@ CanvasNodeItem.propTypes = {
   // · mindMeta           buildMindMeta 里该节点的派生信息（后代数量 / 分支颜色）
   // · onMindMeasure      实测宽高回写 + 整树自动布局
   // · onToggleMindCollapse / onAddMindChild  小圆球的收展 / 衍生子节点
-  // · onMindNodeClick    单击导图节点弹出样式面板（内部吞掉拖拽残余 click）
   mindMeta: PropTypes.object,
   onMindMeasure: PropTypes.func,
   onToggleMindCollapse: PropTypes.func,
   onAddMindChild: PropTypes.func,
-  onMindNodeClick: PropTypes.func,
   onNodePointerDown: PropTypes.func.isRequired,
   onStartEdit: PropTypes.func.isRequired,
   onDraftChange: PropTypes.func.isRequired,

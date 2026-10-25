@@ -23,7 +23,7 @@ import {
   MIND_ROOT_TEXT,
   mindKind,
 } from '../../../constants/mindMap'
-import { applyMindLayout } from '../lib/mindLayout'
+import { applyMindLayout, collectMindTreeIds, isMindNode } from '../lib/mindLayout'
 import { useLatestPropsRef } from './useLatestPropsRef'
 
 /**
@@ -157,6 +157,32 @@ export function useCanvasMindMaps({ nodes, setNodes, nextId, onSelect }) {
   )
 
   /**
+   * 整树换样式（颜色）：把 nodeId 所在导图树全部节点的 kind 换成新样式。
+   * 单击导图节点弹出的样式面板里选样式时走这里 —— 只记默认值不改树，
+   * 颜色就永远落不了库。kind 变化经 setNodes 不可变更新随既有持久化
+   * 链路落盘；ResizeObserver 会重新实测尺寸并触发自动布局
+   * （见 measureMindNode），这里无需重排。
+   */
+  const setMindTreeStyle = useCallback(
+    (nodeId, styleId) => {
+      const { current: latest } = latestRef
+      const kind = mindKind(styleId)
+      latest.setNodes((ns) => {
+        if (!isMindNode(ns.find((n) => n.id === nodeId))) return ns
+        const treeIds = new Set(collectMindTreeIds(ns, nodeId))
+        let changed = false
+        const next = ns.map((n) => {
+          if (!treeIds.has(n.id) || n.kind === kind) return n
+          changed = true
+          return { ...n, kind }
+        })
+        return changed ? next : ns
+      })
+    },
+    [latestRef],
+  )
+
+  /**
    * 实测尺寸回写 + 自动布局：渲染层 ResizeObserver 量出节点真实
    * w / h 后走这里 —— 尺寸变化会影响整棵树的排布，所以测量与
    * 重排在同一次 setNodes 里完成。
@@ -195,5 +221,5 @@ export function useCanvasMindMaps({ nodes, setNodes, nextId, onSelect }) {
     [latestRef],
   )
 
-  return { addMindMap, addMindChild, toggleMindCollapse, measureMindNode }
+  return { addMindMap, addMindChild, toggleMindCollapse, setMindTreeStyle, measureMindNode }
 }

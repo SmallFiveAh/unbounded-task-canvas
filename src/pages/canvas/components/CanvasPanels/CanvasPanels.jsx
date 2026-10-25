@@ -24,8 +24,10 @@ import { NoteDragGhost, NoteStylePanel } from '../../../../components/NoteStyleP
  * @param {object} mindDrag      useMindMapDragCreate 返回值（press 按压发起拖拽 / ghost 幽灵位置）
  * @param {object} view          视口状态（幽灵尺寸随画布缩放同步）
  * @param {Function} onInsertTable (rows, cols) => void 在画布中央插入表格
+ * @param {Function} onSelectMindStyle (styleId) => void 面板选样式：记默认值 +
+ *        当前主选中是导图节点时整树换色（见 CanvasPage.handleMindStyleSelect）
  */
-function CanvasPanels({ toolbar, noteDrag, cardDrag, listDrag, mindDrag, view, onInsertTable }) {
+function CanvasPanels({ toolbar, noteDrag, cardDrag, listDrag, mindDrag, view, onInsertTable, onSelectMindStyle }) {
   return (
     <>
       {/* 表格插入面板（点击左侧「表格」按钮显示，紧贴按钮右侧） */}
@@ -57,16 +59,16 @@ function CanvasPanels({ toolbar, noteDrag, cardDrag, listDrag, mindDrag, view, o
       />
 
       {/* 思维导图样式面板（点击左侧「思维导图」按钮显示，紧贴按钮右侧）：
-          点缩略图记住样式；按住缩略图可直接拖到画布落一棵默认导图，
-          位置 / 关闭交互与便签面板一致 */}
+          点缩略图记住样式（主选中是导图节点时整树换色）；按住缩略图可
+          直接拖到画布落一棵默认导图，位置 / 关闭交互与便签面板一致 */}
       <MindMapStylePanel
         open={toolbar.mindPanelOpen}
         anchorRef={toolbar.mindBtnRef}
         toolbarRef={toolbar.sideToolbarRef}
         selectedId={toolbar.mindStyleId}
-        onSelect={toolbar.selectMindStyle}
+        onSelect={onSelectMindStyle}
         onClose={toolbar.closeMindPanel}
-        onSwatchPress={(e, styleId) => mindDrag.press(e, styleId, () => toolbar.selectMindStyle(styleId))}
+        onSwatchPress={(e, styleId) => mindDrag.press(e, styleId, () => onSelectMindStyle(styleId))}
       />
 
       {/* 流程图节点面板（点击左侧「流程图」按钮显示，紧贴按钮右侧）：
@@ -132,6 +134,7 @@ CanvasPanels.propTypes = {
   mindDrag: PropTypes.object.isRequired,
   view: PropTypes.object.isRequired,
   onInsertTable: PropTypes.func.isRequired,
+  onSelectMindStyle: PropTypes.func.isRequired,
 }
 
 export default CanvasPanels

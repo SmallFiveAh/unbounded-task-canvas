@@ -42,6 +42,7 @@ export function useItemDrag({
   setSelectedIds,
   editingId,
   view,
+  onMindTap,
 }) {
   const dragRef = useRef(null)
   // 本次按下是否真的拖动过：pointerup 后触发的 click 事件读取它，
@@ -58,6 +59,10 @@ export function useItemDrag({
     setSelectedIds,
     editingId,
     view,
+    // 导图节点「点按」回调（pointerup 时全程未拖动即触发）：节点 onClick 走不通 ——
+    // pointerdown 的 preventDefault 会吞掉后续 click（W3C Pointer Events 规范），
+    // 单击语义只能在指针管线里收口
+    onMindTap,
   })
 
   // 按下元素：先按点击语义算出新选区，再登记整组拖拽起点
@@ -103,11 +108,17 @@ export function useItemDrag({
       // rAF 可能还没轮到：松手时立即把最终位置落定，避免最后一段位移丢失
       commitDragMove(drag)
       dragRef.current = null
+      // 导图节点点按：全程位移未达拖拽阈值（wasDraggedRef 未置位）的松手。
+      // 经 latestRef 取回调保持本回调身份稳定（见文件头「回调身份稳定」）
+      if (drag.tapMindId && !wasDraggedRef.current) {
+        latestRef.current.onMindTap?.(drag.tapMindId)
+      }
     }
     if (e.currentTarget.hasPointerCapture(e.pointerId)) {
       e.currentTarget.releasePointerCapture(e.pointerId)
     }
-  }, [])
+    // latestRef 是稳定 ref 引用：列入依赖只为满足 exhaustive-deps，不改变回调身份
+  }, [latestRef])
 
   // 节点 / 表格按下的公共收尾：拦截冒泡与默认行为 → 发起拖拽 → 捕获指针
   const startItemPointerDown = useCallback(
@@ -137,6 +148,8 @@ export function useItemDrag({
         latest.setSelectedId(node.id)
         const treeIds = collectMindTreeIds(latest.nodes, node.id)
         dragRef.current = createDragState(e, treeIds, latest)
+        // 点按候选：松手时若全程未拖动（wasDraggedRef 未置位），按点按处理
+        dragRef.current.tapMindId = node.id
         e.currentTarget.setPointerCapture(e.pointerId)
         return
       }

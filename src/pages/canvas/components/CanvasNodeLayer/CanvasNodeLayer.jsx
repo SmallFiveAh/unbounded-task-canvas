@@ -31,7 +31,6 @@ function CanvasNodeLayer({
   onMindMeasure,
   onToggleMindCollapse,
   onAddMindChild,
-  onMindNodeClick,
   onNodePointerDown,
   onStartEdit,
   onDraftChange,
@@ -113,7 +112,6 @@ function CanvasNodeLayer({
           onMindMeasure={onMindMeasure}
           onToggleMindCollapse={onToggleMindCollapse}
           onAddMindChild={onAddMindChild}
-          onMindNodeClick={onMindNodeClick}
           onNodePointerDown={onNodePointerDown}
           onStartEdit={onStartEdit}
           onDraftChange={onDraftChange}
@@ -160,7 +158,6 @@ CanvasNodeLayer.propTypes = {
   onMindMeasure: PropTypes.func,
   onToggleMindCollapse: PropTypes.func,
   onAddMindChild: PropTypes.func,
-  onMindNodeClick: PropTypes.func,
   selectedIds: PropTypes.arrayOf(PropTypes.string).isRequired,
   selectedId: PropTypes.string,
   editingId: PropTypes.string,

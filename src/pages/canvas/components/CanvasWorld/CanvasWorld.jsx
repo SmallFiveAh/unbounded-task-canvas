@@ -51,7 +51,6 @@ function CanvasWorld({
         onMindMeasure={mind?.measure}
         onToggleMindCollapse={mind?.toggleCollapse}
         onAddMindChild={mind?.addChild}
-        onMindNodeClick={mind?.onNodeClick}
         onNodePointerDown={drag.onNodePointerDown}
         onStartEdit={selection.startEditNode}
         // 草稿变化走编排层回调（列表卡片行输入时自动追加空行），

@@ -33,7 +33,8 @@ import CanvasSelectionLayer from '../CanvasSelectionLayer'
  * @param {object} resize                   useSelectionResize 返回值（选中框与控制点缩放）
  * @param {object} edgeDrag                 useEdgeDrag 返回值（边框拉线）
  * @param {object} mind                     思维导图渲染数据与动作包
- *   （branchViews / metas / measure / toggleCollapse / addChild / onNodeClick）
+ *   （branchViews / metas / measure / toggleCollapse / addChild；
+ *   导图节点的「点按弹面板」不走 onClick，由 useItemDrag 在指针管线里收口）
  */
 function CanvasViewport({
   viewportRef,
