@@ -137,16 +137,38 @@
 
 .balls {
   position: absolute;
-  /* 节点右缘外 2px 起排；两球之间同样 2px 间距（flex gap） */
-  left: calc(100% + 2px);
+  /* 节点右缘外 2px 起排；两球之间 6px 间距（flex gap）——
+     间距同时是两球扩大后的命中区边界，不重叠也不留缝 */
+  left: calc(100%);
   top: 50%;
   transform: translateY(-50%);
   display: flex;
   align-items: center;
-  gap: 2px;
+  gap: 6px;
   opacity: 0;
   pointer-events: none;
   transition: opacity var(--dur-fast) var(--ease-out);
+}
+
+/* 悬停桥：圆球与节点右缘之间有 2px 空隙，鼠标横穿时节点会先失去
+   :hover（圆球随即隐藏），导致圆球「够不到」。这块透明区域属于
+   圆球组自身，圆球显形时可被命中 —— 悬停连续性因此不断档。
+   横向从节点右缘内 18px 一直盖到球组起点右侧 2px、纵向比球组上下
+   各外扩 14px：斜向接近、手抖都能稳稳落在桥面上。
+
+   关键：pointer-events 单独设为 auto，不随父级 .balls 的 none 切换。
+   否则圆球隐藏时桥也一起失效，鼠标从右侧 / 上方 / 下方接近圆球时
+   无法触发 .group:hover，圆球永远不出现 —— 表现为「有时够不到圆球」。
+   桥始终可命中，任何方向接近都能先点亮 .group:hover，圆球随即显形并
+   接管交互。桥本身无点击回调，点击仅冒泡到节点（与点节点本体一致）。 */
+.balls::before {
+  content: '';
+  position: absolute;
+  top: -14px;
+  bottom: -14px;
+  left: -18px;
+  width: 20px;
+  pointer-events: auto;
 }
 
 .group:hover .balls {
@@ -155,6 +177,7 @@
 }
 
 .ball {
+  position: relative;
   flex: none;
   display: flex;
   align-items: center;
@@ -163,6 +186,8 @@
   height: 16px;
   padding: 0;
   box-sizing: border-box;
+  /* 放开裁剪：命中区靠外扩 3px 的伪元素实现，不能被按钮自身裁掉 */
+  overflow: visible;
   border: 1px solid var(--color-border);
   border-radius: 50%;
   background: var(--color-surface);
@@ -178,6 +203,16 @@
     background var(--dur-fast) var(--ease-out),
     border-color var(--dur-fast) var(--ease-out),
     color var(--dur-fast) var(--ease-out);
+}
+
+/* 视觉直径只有 16px，裸点命中率低：用透明伪元素把命中区外扩到
+   22px（四周各 3px）。两球间距 6px 恰好让两块命中区相接而不重叠，
+   鼠标从任一方向靠近都能稳定停在球上 */
+.ball::before {
+  content: '';
+  position: absolute;
+  inset: -3px;
+  border-radius: 50%;
 }
 
 /* 圆球悬停效果：轻微放大 + 强调色 */
