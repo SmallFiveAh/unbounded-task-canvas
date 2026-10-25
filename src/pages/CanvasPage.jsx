@@ -17,6 +17,7 @@ import { useCanvasToolbar } from './canvas/hooks/useCanvasToolbar'
 import { useCanvasViewport } from './canvas/hooks/useCanvasViewport'
 import { useCommitNodeEdit } from './canvas/hooks/useCommitNodeEdit'
 import { useCardDragCreate } from './canvas/hooks/useCardDragCreate'
+import { useListCardDragCreate } from './canvas/hooks/useListCardDragCreate'
 import { useNoteDragCreate } from './canvas/hooks/useNoteDragCreate'
 import { previewEdgePath, resolveEdgePath } from './canvas/lib/edges'
 import { EDIT_FIELD_TEXT, EDIT_FIELD_TITLE } from './canvas/lib/constants'
@@ -112,6 +113,15 @@ export default function CanvasPage({ taskId }) {
     },
   })
 
+  // 列表卡片拖拽创建：按住「列表卡片」按钮 / 面板缩略图拖到画布落节点
+  // （交互约定与卡片完全同构，见 useListCardDragCreate；
+  //   落库即带默认标题 + 默认待办项，无需进入编辑态）
+  const listDrag = useListCardDragCreate({
+    viewportRef,
+    viewRef,
+    addNode: doc.addNode,
+  })
+
   const { savedHintRef } = useCanvasPersistence({
     task,
     initial,
@@ -184,7 +194,6 @@ export default function CanvasPage({ taskId }) {
         onToggleTablePanel={toolbar.toggleTablePanel}
         onToggleMindPanel={toolbar.toggleMindPanel}
         onToggleFlowPanel={toolbar.toggleFlowPanel}
-        onToggleListPanel={toolbar.toggleListPanel}
         onNotePress={(e) => noteDrag.press(e, toolbar.noteStyleId, toolbar.toggleNotePanel)}
         onNoteClick={(e) => {
           // 指针点击已在 pointerup 阶段由 useNoteDragCreate 的 onClick 处理；
@@ -196,6 +205,12 @@ export default function CanvasPage({ taskId }) {
           // 指针点击已在 pointerup 阶段由 useCardDragCreate 的 onClick 处理；
           // 这里只响应键盘激活的 click（detail === 0），否则会开→关双切换
           if (e.detail === 0) toolbar.toggleCardPanel()
+        }}
+        onListPress={(e) => listDrag.press(e, toolbar.listStyleId, toolbar.toggleListPanel)}
+        onListClick={(e) => {
+          // 指针点击已在 pointerup 阶段由 useListCardDragCreate 的 onClick 处理；
+          // 这里只响应键盘激活的 click（detail === 0），否则会开→关双切换
+          if (e.detail === 0) toolbar.toggleListPanel()
         }}
       />
       <CanvasZoomBadge scale={view.scale} onReset={() => zoomByStep(1 / view.scale)} />
@@ -222,11 +237,12 @@ export default function CanvasPage({ taskId }) {
         edgeDrag={edgeDrag}
       />
 
-      {/* 全部插入 / 样式面板 + 便签 / 卡片拖拽幽灵（展示层，见 CanvasPanels） */}
+      {/* 全部插入 / 样式面板 + 便签 / 卡片 / 列表卡片拖拽幽灵（展示层，见 CanvasPanels） */}
       <CanvasPanels
         toolbar={toolbar}
         noteDrag={noteDrag}
         cardDrag={cardDrag}
+        listDrag={listDrag}
         view={view}
         onInsertTable={doc.addTable}
       />

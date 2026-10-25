@@ -1,7 +1,7 @@
 import PropTypes from 'prop-types'
 import InsertTablePanel from '../../../../components/InsertTablePanel/InsertTablePanel'
 import { CardDragGhost, CardStylePanel } from '../../../../components/CardStylePanel'
-import { ListCardStylePanel } from '../../../../components/ListCardStylePanel'
+import { ListCardDragGhost, ListCardStylePanel } from '../../../../components/ListCardStylePanel'
 import { MindMapStylePanel } from '../../../../components/MindMapStylePanel'
 import FlowChartStylePanel from '../../../../components/FlowChartStylePanel'
 import { NoteDragGhost, NoteStylePanel } from '../../../../components/NoteStylePanel'
@@ -11,7 +11,8 @@ import { NoteDragGhost, NoteStylePanel } from '../../../../components/NoteStyleP
  * ------------------------------------------------------------
  * 从 CanvasPage 拆出的纯编排展示块：面板显隐与选中值都来自
  * useCanvasToolbar（toolbar），按住拖拽创建分别来自
- * useNoteDragCreate（noteDrag）与 useCardDragCreate（cardDrag）。
+ * useNoteDragCreate（noteDrag）、useCardDragCreate（cardDrag）与
+ * useListCardDragCreate（listDrag）。
  * 返回 Fragment：不改变 .canvasPage 下的 DOM 结构，样式命中与拆分前一致。
  */
 
@@ -19,10 +20,11 @@ import { NoteDragGhost, NoteStylePanel } from '../../../../components/NoteStyleP
  * @param {object} toolbar       useCanvasToolbar 返回值（面板显隐 / 选中值 / 锚点 ref / 开关回调）
  * @param {object} noteDrag      useNoteDragCreate 返回值（press 按压发起拖拽 / ghost 幽灵位置）
  * @param {object} cardDrag      useCardDragCreate 返回值（press 按压发起拖拽 / ghost 幽灵位置）
+ * @param {object} listDrag      useListCardDragCreate 返回值（press 按压发起拖拽 / ghost 幽灵位置）
  * @param {object} view          视口状态（幽灵尺寸随画布缩放同步）
  * @param {Function} onInsertTable (rows, cols) => void 在画布中央插入表格
  */
-function CanvasPanels({ toolbar, noteDrag, cardDrag, view, onInsertTable }) {
+function CanvasPanels({ toolbar, noteDrag, cardDrag, listDrag, view, onInsertTable }) {
   return (
     <>
       {/* 表格插入面板（点击左侧「表格」按钮显示，紧贴按钮右侧） */}
@@ -76,7 +78,7 @@ function CanvasPanels({ toolbar, noteDrag, cardDrag, view, onInsertTable }) {
       />
 
       {/* 列表卡片样式面板（点击左侧「列表卡片」按钮显示，紧贴按钮右侧）：
-          点缩略图记住样式，交互与便签面板一致 */}
+          点缩略图记住样式；按住缩略图可直接拖到画布，位置 / 关闭交互与便签面板一致 */}
       <ListCardStylePanel
         open={toolbar.listPanelOpen}
         anchorRef={toolbar.listBtnRef}
@@ -84,6 +86,7 @@ function CanvasPanels({ toolbar, noteDrag, cardDrag, view, onInsertTable }) {
         selectedId={toolbar.listStyleId}
         onSelect={toolbar.selectListStyle}
         onClose={toolbar.closeListPanel}
+        onSwatchPress={(e, styleId) => listDrag.press(e, styleId, () => toolbar.selectListStyle(styleId))}
       />
 
       {/* 卡片样式面板（点击左侧「卡片」按钮显示，紧贴按钮右侧）：
@@ -103,6 +106,9 @@ function CanvasPanels({ toolbar, noteDrag, cardDrag, view, onInsertTable }) {
 
       {/* 卡片拖拽幽灵：按住拖动时钉在光标下方，尺寸随画布缩放同步 */}
       <CardDragGhost ghost={cardDrag.ghost} scale={view.scale} />
+
+      {/* 列表卡片拖拽幽灵：按住拖动时钉在光标下方，尺寸随画布缩放同步 */}
+      <ListCardDragGhost ghost={listDrag.ghost} scale={view.scale} />
     </>
   )
 }
@@ -111,6 +117,7 @@ CanvasPanels.propTypes = {
   toolbar: PropTypes.object.isRequired,
   noteDrag: PropTypes.object.isRequired,
   cardDrag: PropTypes.object.isRequired,
+  listDrag: PropTypes.object.isRequired,
   view: PropTypes.object.isRequired,
   onInsertTable: PropTypes.func.isRequired,
 }

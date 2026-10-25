@@ -50,6 +50,7 @@ function CanvasWorld({
         onCommitEdit={commitNodeEdit}
         onCancelEdit={selection.stopEditing}
         onNodeSizeChange={doc.updateNodeSize}
+        onToggleListItem={doc.toggleListCardItem}
       />
 
       {/* 表格层（Excel 风格） */}

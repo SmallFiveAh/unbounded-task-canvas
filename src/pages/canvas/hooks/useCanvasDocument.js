@@ -113,6 +113,7 @@ export function useCanvasDocument({
     // 批量删除：一次删掉框选命中的全部节点 + 表格
     removeElements,
     commitNodeText: nodeApi.commitNodeText,
+    toggleListCardItem: nodeApi.toggleListCardItem,
     updateNodeSize: nodeApi.updateNodeSize,
     addEdge,
     addTable: tableApi.addTable,

@@ -28,6 +28,7 @@ function CanvasNodeLayer({
   onCommitEdit,
   onCancelEdit,
   onNodeSizeChange,
+  onToggleListItem,
 }) {
   return (
     <>
@@ -91,6 +92,7 @@ function CanvasNodeLayer({
           onCommitEdit={onCommitEdit}
           onCancelEdit={onCancelEdit}
           onNodeSizeChange={onNodeSizeChange}
+          onToggleListItem={onToggleListItem}
         />
       ))}
     </>
@@ -129,6 +131,8 @@ CanvasNodeLayer.propTypes = {
   onCommitEdit: PropTypes.func.isRequired,
   onCancelEdit: PropTypes.func.isRequired,
   onNodeSizeChange: PropTypes.func.isRequired,
+  // 列表卡片待办项勾选切换：(nodeId, itemIndex) => void
+  onToggleListItem: PropTypes.func.isRequired,
 }
 
 export default memo(CanvasNodeLayer)

@@ -12,6 +12,8 @@ import {
   CARD_W,
   EDIT_FIELD_TEXT,
   EDIT_FIELD_TITLE,
+  LIST_CARD_H,
+  LIST_CARD_W,
   NOTE_H,
   NOTE_W,
   NODE_H,
@@ -19,6 +21,11 @@ import {
 } from '../lib/constants'
 import { cardStyleIdFromKind } from '../../../constants/cardStyles'
 import { noteStyleIdFromKind } from '../../../constants/noteStyles'
+import {
+  LIST_CARD_DEFAULT_ITEMS,
+  LIST_CARD_DEFAULT_TITLE,
+  listCardStyleIdFromKind,
+} from '../../../constants/listCardStyles'
 
 /**
  * @param {object} params
@@ -43,16 +50,23 @@ export function useCanvasNodes({
     // 初始内容留空：画布上显示占位符（与便签一致），不写入默认文案
     (x, y, text = '', kind = 'muted') => {
       const id = nextId('n')
-      // 节点默认尺寸按 kind 分派：便签 200×200、卡片 240×180，其余 176×76
+      // 节点默认尺寸按 kind 分派：便签 200×200、卡片 240×180、列表卡片 240×184，其余 176×76
       const isNote = noteStyleIdFromKind(kind) !== null
       const isCard = cardStyleIdFromKind(kind) !== null
-      const w = isNote ? NOTE_W : isCard ? CARD_W : NODE_W
-      const h = isNote ? NOTE_H : isCard ? CARD_H : NODE_H
+      const isListCard = listCardStyleIdFromKind(kind) !== null
+      const w = isNote ? NOTE_W : isCard ? CARD_W : isListCard ? LIST_CARD_W : NODE_W
+      const h = isNote ? NOTE_H : isCard ? CARD_H : isListCard ? LIST_CARD_H : NODE_H
       // 全部节点都走「内容自适应」：h 是测量结果，初始下限取默认尺寸，
       // 内容高度待实测（minH / contentH 的含义见 lib/noteSize.js）
       const node = { id, x, y, w, h, minH: h, contentH: 0, kind, text }
       // 卡片节点独有的标题字段（封面色带内编辑），正文仍走 text
       if (isCard) node.title = ''
+      // 列表卡片落库即带默认内容（标题 + 待办项拷贝），
+      // 待办项按行渲染、勾选框可点击切换（见 ListCardNodeFace）
+      if (isListCard) {
+        node.title = LIST_CARD_DEFAULT_TITLE
+        node.items = LIST_CARD_DEFAULT_ITEMS.map((item) => ({ ...item }))
+      }
       setNodes((ns) => [...ns, node])
       // 选中集合与主选中同步：新节点落地即带选中框
       onSelect(id)
@@ -106,6 +120,20 @@ export function useCanvasNodes({
     )
   }, [])
 
+  // 列表卡片待办项勾选切换：按行下标取反 done，其余项引用原样保留
+  // （数组浅拷贝一层，未命中的项不重建，memo 节点只重渲染被点的卡片）
+  const toggleListCardItem = useCallback((id, index) => {
+    setNodes((ns) =>
+      ns.map((n) => {
+        if (n.id !== id || !Array.isArray(n.items)) return n
+        return {
+          ...n,
+          items: n.items.map((item, i) => (i === index ? { ...item, done: !item.done } : item)),
+        }
+      }),
+    )
+  }, [])
+
   return {
     nodes,
     setNodes,
@@ -114,6 +142,7 @@ export function useCanvasNodes({
     removeNode,
     removeNodes,
     commitNodeText,
+    toggleListCardItem,
     updateNodeSize,
   }
 }

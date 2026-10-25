@@ -19,6 +19,10 @@ export const CARD_H = 180 // 卡片节点默认高度（世界坐标）
 export const CARD_PLACEHOLDER = '内容...' // 卡片正文为空时展示的占位文案（仅展示，不落库）
 export const CARD_TITLE_PLACEHOLDER = '标题...' // 卡片标题为空时编辑框内的占位文案（仅展示，不落库）
 
+export const LIST_CARD_W = 240 // 列表卡片默认宽度（世界坐标）：与卡片同宽，纵向排待办项
+export const LIST_CARD_H = 152 // 列表卡片默认高度（世界坐标）：标题带 + 三行待办贴合内容，留一行余量
+export const LIST_CARD_TITLE_PLACEHOLDER = '清单名...' // 列表卡片标题为空时编辑框内的占位文案（仅展示，不落库）
+
 export const NOTE_DEFAULT_TEXT = '' // 新便签的初始内容：留空，画布上显示占位符
 export const NOTE_PLACEHOLDER = '便签...' // 便签内容为空时展示的占位文案（仅展示，不落库）
 export const NODE_PLACEHOLDER = '默认节点...' // 普通节点内容为空时展示的占位文案（仅展示，不落库）

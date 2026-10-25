@@ -7,6 +7,7 @@
 
 import { isCardKind } from '../../constants/cardStyles'
 import { isNoteKind, LEGACY_NOTE_DEFAULT_TEXT } from '../../constants/noteStyles'
+import { isListCardKind } from '../../constants/listCardStyles'
 import {
   TABLE_CELL_H,
   TABLE_CELL_W,
@@ -19,14 +20,24 @@ import { MAX_SCALE, MIN_SCALE, VERSION } from './constants'
 
 const isNum = (v) => typeof v === 'number' && Number.isFinite(v)
 
+/** 列表卡片待办项：脏数据按「空文本 / 未完成」处理而不是报错，条数封顶防炸 */
+function normalizeListItems(raw) {
+  if (!Array.isArray(raw)) return []
+  return raw.slice(0, 50).map((item) => ({
+    text: typeof item?.text === 'string' ? item.text : '',
+    done: item?.done === true,
+  }))
+}
+
 function normalizeNode(raw) {
   if (!raw || typeof raw.id !== 'string') return null
   if (![raw.x, raw.y, raw.w, raw.h].every(isNum)) return null
-  // kind 白名单：合法便签（note-<样式id>）与卡片（card-<样式id>）原样保留，
-  // 其余只认 accent / muted
+  // kind 白名单：合法便签（note-<样式id>）、卡片（card-<样式id>）与
+  // 列表卡片（list-<样式id>）原样保留，其余只认 accent / muted
   const isNote = isNoteKind(raw.kind)
   const isCard = isCardKind(raw.kind)
-  const kind = isNote || isCard ? raw.kind : raw.kind === 'accent' ? 'accent' : 'muted'
+  const isListCard = isListCardKind(raw.kind)
+  const kind = isNote || isCard || isListCard ? raw.kind : raw.kind === 'accent' ? 'accent' : 'muted'
   // 旧版便签的默认文案「便签」迁移为空：与新建便签一致，显示占位符
   const text = typeof raw.text === 'string' ? raw.text : ''
   const node = {
@@ -54,6 +65,12 @@ function normalizeNode(raw) {
       node.title = breakAt === -1 ? legacy : legacy.slice(0, breakAt)
       node.text = breakAt === -1 ? '' : legacy.slice(breakAt + 1)
     }
+  }
+  // 列表卡片独有字段：标题 + 待办项（items 里每项 { text, done }）。
+  // 缺字段 / 脏数据按「空标题 / 空清单」处理，样式 id 不合法的 kind 已在上面降级
+  if (isListCard) {
+    node.title = typeof raw.title === 'string' ? raw.title : ''
+    node.items = normalizeListItems(raw.items)
   }
   return node
 }

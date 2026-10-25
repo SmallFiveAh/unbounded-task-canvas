@@ -402,3 +402,102 @@
   word-spacing: normal;
   text-align: justify;
 }
+
+/* ---------- 列表卡片节点 ----------
+   标题带 + 待办行清单，颜色全部由 ListCardStyles.module.css 的
+   样式类注入 --lc-* 变量（与面板缩略图同一套），这里只搭骨架。
+   标题带复用卡片的 .cardCover / .cardCoverTitle / .cardTitleInput，
+   只按 --lc 变量换配色 —— 画布节点、面板缩略图、拖拽幽灵三处同源。
+   声明顺序在 .card* 之后，稳定覆盖。 */
+
+/* 容器：底色取 --lc-bg（星夜等深底样式自带深色纸面） */
+.listNode {
+  flex-direction: column;
+  align-items: stretch;
+  padding: 0;
+  background-color: var(--lc-bg, var(--color-surface));
+}
+
+/* 标题带：配色换到 --lc 体系；带高比卡片封面矮一档（清单标题单行足够） */
+.listNode .cardCover {
+  min-height: 40px;
+  background: var(--lc-title, var(--color-border));
+}
+
+/* 标题墨色：色带上的文字取底色自身（--lc-bg），任何样式下对比度都够 */
+.listNode .cardCoverTitle,
+.listNode .cardTitleInput {
+  color: var(--lc-bg, #ffffff);
+}
+
+/* 待办区：纵向排列每行「勾选框 + 文本」，贴左右内边距 */
+.listItems {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  padding: 8px 12px 10px;
+}
+
+.listItem {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-height: 24px;
+}
+
+/* 勾选框：描边 / 选中填充走 --lc-box；按下即截停（见 ListCardNodeFace） */
+.listCheck {
+  flex: none;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 14px;
+  height: 14px;
+  padding: 0;
+  border: 1.5px solid var(--lc-box, var(--color-border));
+  border-radius: 4px;
+  background: transparent;
+  cursor: pointer;
+}
+
+.listCheck svg {
+  display: block;
+  width: 10px;
+  height: 10px;
+}
+
+/* 对勾默认隐藏，勾选后显形：填充色与面板缩略图同款（底色勾在色块上） */
+.listCheckMark {
+  fill: none;
+  stroke: var(--lc-bg, #ffffff);
+  stroke-width: 1.8;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  opacity: 0;
+}
+
+.listItemDone .listCheck {
+  background: var(--lc-box, var(--color-border));
+}
+
+.listItemDone .listCheckMark {
+  opacity: 1;
+}
+
+/* 待办文本：墨色取 --lc-title（各样式下都与其标题条同源、可读） */
+.listItemText {
+  font-family: var(--font-body);
+  font-size: var(--text-sm);
+  font-weight: 400;
+  line-height: 1.45;
+  letter-spacing: 0.02em;
+  color: var(--lc-title, var(--color-text));
+  overflow-wrap: break-word;
+  word-break: normal;
+}
+
+/* 已完成项：压淡 + 删除线，与面板缩略图「文本条压淡」同一语义 */
+.listItemDone .listItemText {
+  opacity: 0.45;
+  text-decoration: line-through;
+}
