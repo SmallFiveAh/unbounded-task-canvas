@@ -19,9 +19,7 @@
 
 ## 🎬 演示
 
-<video src="public/out/unbounded-canvas-mg.mp4" controls muted playsinline width="100%"></video>
-
-> 视频无法内嵌播放时，可直接[观看 / 下载演示视频](public/out/unbounded-canvas-mg.mp4)。
+▶ **[点击播放 3 分钟演示视频](https://github.com/SmallFiveAh/unbounded-task-canvas/raw/main/public/out/unbounded-canvas-mg-compressed.mp4)**
 
 ## ✨ 功能特性
 
@@ -146,7 +144,7 @@ public/
 │   ├── logo.svg · logo-dark.svg
 │   └── logo-mark.svg · logo-mark-dark.svg
 └── out/                      # README 演示视频
-    └── unbounded-canvas-mg.mp4
+    └── unbounded-canvas-mg-compressed.mp4  # 压缩版（6 MB，演示链接使用这个）
 ```
 
 目录约定：**图片按用途分流**——参与构建、需要被 `import` 的资源放 `src/assets/`；README、分享图等原样发布的静态图片放 `public/images/`。全局样式统一放 `src/styles/`，组件样式仍用 CSS Modules 就近维护。
