@@ -9,13 +9,19 @@
 
 **把任务摊开在一张无限大的画布上 —— 节点、连线、Excel 风格表格，随想随画，本地即存。**
 
-[功能特性](#-功能特性) · [快速开始](#-快速开始) · [交互与快捷键](#-交互与快捷键) · [配置说明](#-配置说明) · [参与贡献](#-参与贡献)
+[演示](#-演示) · [功能特性](#-功能特性) · [快速开始](#-快速开始) · [交互与快捷键](#-交互与快捷键) · [配置说明](#-配置说明) · [参与贡献](#-参与贡献)
 
 <img alt="React 19" src="https://img.shields.io/badge/React-19-61dafb?logo=react&amp;logoColor=white"> <img alt="Vite 8" src="https://img.shields.io/badge/Vite-8-646cff?logo=vite&amp;logoColor=white"> <img alt="License MIT" src="https://img.shields.io/badge/License-MIT-green"> <img alt="PRs Welcome" src="https://img.shields.io/badge/PRs-welcome-ff4d00">
 
 </div>
 
 ---
+
+## 🎬 演示
+
+<video src="public/out/unbounded-canvas-mg.mp4" controls muted playsinline width="100%"></video>
+
+> 视频无法内嵌播放时，可直接[观看 / 下载演示视频](public/out/unbounded-canvas-mg.mp4)。
 
 ## ✨ 功能特性
 
@@ -136,9 +142,11 @@ src/
 public/
 ├── favicon.svg               # 标签页图标（与 logo 同源）
 ├── icons.svg                 # 公共图标
-└── images/                   # 原样发布的静态图片（README / 分享图 / logo）
-    ├── logo.svg · logo-dark.svg
-    └── logo-mark.svg · logo-mark-dark.svg
+├── images/                   # 原样发布的静态图片（README / 分享图 / logo）
+│   ├── logo.svg · logo-dark.svg
+│   └── logo-mark.svg · logo-mark-dark.svg
+└── out/                      # README 演示视频
+    └── unbounded-canvas-mg.mp4
 ```
 
 目录约定：**图片按用途分流**——参与构建、需要被 `import` 的资源放 `src/assets/`；README、分享图等原样发布的静态图片放 `public/images/`。全局样式统一放 `src/styles/`，组件样式仍用 CSS Modules 就近维护。
