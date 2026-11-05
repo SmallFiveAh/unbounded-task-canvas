@@ -70,7 +70,7 @@
 # 环境要求：Node.js ≥ 20.19（或 ≥ 22.12）
 
 # 1. 克隆仓库
-git clone https://github.com/<your-name>/unbounded-task-canvas.git
+git clone https://github.com/SmallFiveAh/unbounded-task-canvas.git
 cd unbounded-task-canvas
 
 # 2. 安装依赖
