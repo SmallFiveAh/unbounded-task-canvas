@@ -10,6 +10,7 @@ import {
 import { cornerRadius } from '../../utils/canvasRadius'
 import TableGrid from './TableGrid'
 import TableFlash from './TableFlash'
+import TableInsertGaps from './TableInsertGaps'
 import { useTableController } from './useTableController'
 import { useHeaderResize } from './useHeaderResize'
 import styles from './CanvasTable.module.css'
@@ -23,6 +24,9 @@ import styles from './CanvasTable.module.css'
  * - 按住表头 / 空白区域拖拽可移动表格（由父级 CanvasPage 处理拖拽）
  * - 拖列标右缘改列宽、拖行号下缘改行高（useHeaderResize）
  * - 拖四角控制点整体缩放表格节点（逐列宽 / 逐行高等比缩放，父级 applyResize）
+ * - 表格 hover 时上缘 / 左缘浮现小圆球（骑在边线上）：悬停高亮插入位置的
+ *   网格线，点击在圆球右侧 / 下方插入一列 / 一行（只在列间 / 行间，
+ *   无末尾追加圆球，见 TableInsertGaps）
  * - 键盘操作通过窗口捕获阶段监听，不依赖元素焦点
  *
  * 单元格多选（三套状态：anchor 锚点 / cursor 光标 / selection 选中集合）
@@ -46,6 +50,7 @@ import styles from './CanvasTable.module.css'
  * - useTableClipboard    复制 / 剪切 / 粘贴
  * - TableGrid.jsx        网格与单元格渲染
  * - TableFlash.jsx       复制/剪切的蚂蚁线虚线框
+ * - TableInsertGaps.jsx  插入行列的悬停圆球感应层
  */
 function CanvasTable({
   table,
@@ -58,6 +63,8 @@ function CanvasTable({
   onPasteCells,
   onResizeCol,
   onResizeRow,
+  onInsertCol,
+  onInsertRow,
   scale = 1,
 }) {
   // 行列尺寸可由表头拖拽（单列/单行）或四角控制点（整体等比）改变
@@ -93,6 +100,15 @@ function CanvasTable({
   const handleResizeRow = useMemo(
     () => (index, height) => onResizeRow(table.id, index, height),
     [onResizeRow, table.id],
+  )
+  // 插入行列（TableInsertGaps 圆球点击）：同样补自身 id 保持引用稳定
+  const handleInsertCol = useMemo(
+    () => (index) => onInsertCol(table.id, index),
+    [onInsertCol, table.id],
+  )
+  const handleInsertRow = useMemo(
+    () => (index) => onInsertRow(table.id, index),
+    [onInsertRow, table.id],
   )
   const headerResize = useHeaderResize({
     wrapRef,
@@ -167,6 +183,16 @@ function CanvasTable({
         rowOffsets={rowOffsets}
         headerH={headerH}
       />
+
+      <TableInsertGaps
+        cols={table.cols}
+        rows={table.rows}
+        colOffsets={colOffsets}
+        rowOffsets={rowOffsets}
+        headerH={headerH}
+        onInsertCol={handleInsertCol}
+        onInsertRow={handleInsertRow}
+      />
     </div>
   )
 }
@@ -194,6 +220,8 @@ CanvasTable.propTypes = {
   onPasteCells: PropTypes.func.isRequired,
   onResizeCol: PropTypes.func.isRequired,
   onResizeRow: PropTypes.func.isRequired,
+  onInsertCol: PropTypes.func.isRequired,
+  onInsertRow: PropTypes.func.isRequired,
   scale: PropTypes.number,
 }
 

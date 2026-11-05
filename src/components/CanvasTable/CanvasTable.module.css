@@ -17,7 +17,9 @@
   top: 0;
   background: var(--color-surface);
   border-radius: 5px;
-  overflow: hidden;
+  /* overflow 必须 visible：插入行列的感应圆球要骑在表格边线上
+     （一半在表外，见 TableInsertGaps）；圆角内的内容裁剪由 .grid 负责 */
+  overflow: visible;
   box-shadow: var(--shadow-1);
   cursor: grab;
   pointer-events: auto;
@@ -61,6 +63,10 @@
 .grid {
   display: grid;
   width: 100%;
+  /* 圆角裁剪从 .table 移交到这里：表头 / 末行列的底色在四角
+     沿表格圆角收口；radius inherit 拿到 .table 的缩放补偿值 */
+  overflow: hidden;
+  border-radius: inherit;
 }
 
 /* 列标 / 行号表头：高度由 .grid 的 gridTemplateRows 显式定轨
@@ -177,7 +183,7 @@
 /* 复制 / 剪切反馈：选区四周一圈流动虚线「蚂蚁线」。
    SVG rect 的 stroke-dashoffset 每个周期推进一个「dash+gap」长度（4+3=7），
    虚线便沿边框无缝流动；1px 描边由 JSX 里 x/y=0.5 居中在网格线上。
-   表格 overflow:hidden，超出的部分会被裁掉 —— 框不会画出表格外。 */
+   蚂蚁线只框选区（永远在表格尺寸内），不会画出表格外。 */
 .ants {
   position: absolute;
   z-index: 3;
@@ -203,4 +209,76 @@
   .antsRect {
     animation: none;
   }
+}
+
+/* ============================================
+   插入行列感应层（见 TableInsertGaps.jsx）
+   表格 hover 时浮现的列界 / 行界圆球 + 高亮预览线
+   ============================================ */
+
+/* 感应层：不接指针事件，只有圆球可点 —— 网格选区 / 拖拽管线不受影响。
+   默认隐藏，鼠标进入表格（.table:hover）后浮现 */
+.gapLayer {
+  position: absolute;
+  inset: 0;
+  z-index: 4;
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity 0.15s ease;
+}
+
+.table:hover .gapLayer {
+  opacity: 1;
+}
+
+/* 圆球：16px 命中区 + 6px 视觉圆点（::after）。
+   命中区以「距表格边缘 6px 的圆点中心」为中心（left/top 由 JSX 注入），
+   圆点整体落在表格外、与边缘留 3px 间隙，不贴边 */
+.gapDot {
+  position: absolute;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 16px;
+  height: 16px;
+  padding: 0;
+  border: none;
+  background: none;
+  pointer-events: auto;
+  cursor: pointer;
+}
+
+.gapDot::after {
+  content: '';
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--color-accent);
+  /* 圆点压在网格线上时与底色分离，避免橙点融进边框线 */
+  box-shadow: 0 0 0 1px var(--color-surface);
+  transition: transform 0.15s ease;
+}
+
+.gapDot:hover::after {
+  transform: scale(1.4);
+}
+
+/* 悬停预览：插入位置对应的那条网格线整条高亮（2px 橙线骑在边界上，
+   定位由 JSX 注入 left / top，-1 让 2px 线居中在网格线上） */
+.gapLineV {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  width: 2px;
+  background: var(--color-accent);
+  pointer-events: none;
+}
+
+.gapLineH {
+  position: absolute;
+  left: 0;
+  right: 0;
+  height: 2px;
+  background: var(--color-accent);
+  pointer-events: none;
 }

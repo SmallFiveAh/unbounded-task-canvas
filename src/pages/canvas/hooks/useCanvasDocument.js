@@ -173,5 +173,7 @@ export function useCanvasDocument({
     pasteTableCells: tableApi.pasteTableCells,
     resizeTableCol: tableApi.resizeTableCol,
     resizeTableRow: tableApi.resizeTableRow,
+    insertTableCol: tableApi.insertTableCol,
+    insertTableRow: tableApi.insertTableRow,
   }
 }

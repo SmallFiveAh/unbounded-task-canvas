@@ -10,13 +10,20 @@ import { useCallback, useState } from 'react'
 import {
   extendSizes,
   getTableSize,
+  insertSize,
   tableColWidths,
   TABLE_CELL_W,
   TABLE_COL_HEADER_H,
   TABLE_CELL_H,
   tableRowHeights,
 } from '../../../constants/canvasTable'
-import { createEmptyCells, clearCellsInMatrix, pasteBlockIntoTable } from '../lib/tableCells'
+import {
+  createEmptyCells,
+  clearCellsInMatrix,
+  insertColInCells,
+  insertRowInCells,
+  pasteBlockIntoTable,
+} from '../lib/tableCells'
 
 /**
  * @param {object} params
@@ -155,6 +162,39 @@ export function useCanvasTables({
     )
   }, [])
 
+  // 在 index 位置插入一列（圆球点击触发，见 TableInsertGaps）：
+  // cells 每行补空格子，新列宽用默认值；index = cols 时追加到最右
+  const insertTableCol = useCallback((tableId, index) => {
+    setTables((ts) =>
+      ts.map((t) => {
+        if (t.id !== tableId) return t
+        const at = Math.max(0, Math.min(index, t.cols))
+        return {
+          ...t,
+          cols: t.cols + 1,
+          colWidths: insertSize(tableColWidths(t), at, TABLE_CELL_W),
+          cells: insertColInCells(t.cells, at),
+        }
+      }),
+    )
+  }, [])
+
+  // 在 index 位置插入一行：新行高用默认值；index = rows 时追加到最下
+  const insertTableRow = useCallback((tableId, index) => {
+    setTables((ts) =>
+      ts.map((t) => {
+        if (t.id !== tableId) return t
+        const at = Math.max(0, Math.min(index, t.rows))
+        return {
+          ...t,
+          rows: t.rows + 1,
+          rowHeights: insertSize(tableRowHeights(t), at, TABLE_CELL_H),
+          cells: insertRowInCells(t.cells, at, t.cols),
+        }
+      }),
+    )
+  }, [])
+
   return {
     tables,
     setTables,
@@ -166,5 +206,7 @@ export function useCanvasTables({
     pasteTableCells,
     resizeTableCol,
     resizeTableRow,
+    insertTableCol,
+    insertTableRow,
   }
 }

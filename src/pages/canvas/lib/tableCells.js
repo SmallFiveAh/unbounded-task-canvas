@@ -55,3 +55,33 @@ export function pasteBlockIntoTable(table, r0, c0, block) {
 export function createEmptyCells(rows, cols) {
   return Array.from({ length: rows }, () => Array.from({ length: cols }, () => ''))
 }
+
+/** 下标夹取：越界时收到首 / 末尾（插入行列时 index 可能 = 行列数，表示追加） */
+const clampIndex = (index, length) => Math.max(0, Math.min(index, length))
+
+/**
+ * 在 index 位置插入一列：每行对应位置补一个空格子
+ * @param {string[][]} cells 原矩阵
+ * @param {number} index     插入位置（0 在最左，cells 行长 = 追加到最右）
+ * @returns {string[][]} 新矩阵
+ */
+export function insertColInCells(cells, index) {
+  return cells.map((row) => {
+    const next = row.slice()
+    next.splice(clampIndex(index, next.length), 0, '')
+    return next
+  })
+}
+
+/**
+ * 在 index 位置插入一行：空行按 cols 宽度补齐
+ * @param {string[][]} cells 原矩阵
+ * @param {number} index     插入位置（0 在最上，cells 行数 = 追加到最下）
+ * @param {number} cols      行宽（与表格列数一致）
+ * @returns {string[][]} 新矩阵
+ */
+export function insertRowInCells(cells, index, cols) {
+  const next = cells.map((row) => [...row])
+  next.splice(clampIndex(index, next.length), 0, Array.from({ length: cols }, () => ''))
+  return next
+}

@@ -21,7 +21,9 @@
   border-color: transparent;
 }
 
-/* 四边拉线命中条：透明，贴住边框内外各 5px，悬停时光标变为十字线提示可拉线。
+/* 四边拉线命中条：透明，贴住边框内外各 3px，悬停时光标变为十字线提示可拉线。
+   条带必须窄于表格插入圆球的外移距离（圆点中心距边缘 6px、内缘 3px），
+   否则选中表格时条带会抢走圆球的点击 —— 见 CanvasTable/TableInsertGaps。
    两端缩进 14px 避开四角控制点的 19px 命中区 —— 角上永远优先缩放 */
 .linkStrip {
   position: absolute;
@@ -33,29 +35,29 @@
 .linkN {
   left: 14px;
   right: 14px;
-  top: -5px;
-  height: 10px;
+  top: -3px;
+  height: 6px;
 }
 
 .linkS {
   left: 14px;
   right: 14px;
-  bottom: -5px;
-  height: 10px;
+  bottom: -3px;
+  height: 6px;
 }
 
 .linkW {
-  left: -5px;
+  left: -3px;
   top: 14px;
   bottom: 14px;
-  width: 10px;
+  width: 6px;
 }
 
 .linkE {
-  right: -5px;
+  right: -3px;
   top: 14px;
   bottom: 14px;
-  width: 10px;
+  width: 6px;
 }
 
 /* 四角控制点：中心对准选中框角点，一半盖在框内、一半探出框外 */

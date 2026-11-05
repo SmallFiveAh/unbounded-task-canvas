@@ -76,6 +76,8 @@ function CanvasWorld({
           onPasteCells={doc.pasteTableCells}
           onResizeCol={doc.resizeTableCol}
           onResizeRow={doc.resizeTableRow}
+          onInsertCol={doc.insertTableCol}
+          onInsertRow={doc.insertTableRow}
           scale={scale}
         />
       ))}

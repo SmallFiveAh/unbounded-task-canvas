@@ -65,6 +65,13 @@ export function extendSizes(sizes, length) {
   return Array.from({ length }, (_, i) => sizes[i] ?? last)
 }
 
+/** 尺寸数组按位插入（插入行/列时在 index 处落一个默认尺寸；越界夹取，index = 长度即追加） */
+export function insertSize(sizes, index, value) {
+  const next = sizes.slice()
+  next.splice(Math.max(0, Math.min(index, next.length)), 0, value)
+  return next
+}
+
 /** 表格整体世界坐标尺寸（行头列 + 列标表头 + 数据区） */
 export function getTableSize(table) {
   return {
