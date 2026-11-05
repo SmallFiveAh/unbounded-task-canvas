@@ -7,6 +7,9 @@
      面板通用语义见 usePanelState；表格插入面板见 useTableInsertPanel）
    · 以及面板定位用的左侧工具栏 ref
    返回值键名与拆分前完全一致，消费方（CanvasPage 等）无需改动。
+
+   面板显隐统一由 useActivePanel 的「唯一激活槽位」驱动：六个面板共享
+   同一个 activePanel 值，点 B 即顶掉 A，任意时刻只有一个按钮激活。
    ============================================================ */
 
 import { useCallback, useRef, useState } from 'react'
@@ -30,8 +33,20 @@ import {
   loadStoredFlowChartNodeId,
   saveStoredFlowChartNodeId,
 } from '../../../constants/flowchartStyles'
+import { PANEL_ID } from '../lib/panelIds'
+import { useActivePanel } from './useActivePanel'
 import { usePanelState } from './usePanelState'
 import { useTableInsertPanel } from './useTableInsertPanel'
+
+/* 各面板「选中值」的持久化读写对（localStorage）：按面板标识归类，
+   让下面的面板注册保持一行一个，不把参数铺成参数墙。 */
+const PANEL_PERSIST = {
+  [PANEL_ID.NOTE]: { loadStored: loadStoredNoteStyleId, saveStored: saveStoredNoteStyleId },
+  [PANEL_ID.MIND]: { loadStored: loadStoredMindMapStyleId, saveStored: saveStoredMindMapStyleId },
+  [PANEL_ID.LIST]: { loadStored: loadStoredListCardStyleId, saveStored: saveStoredListCardStyleId },
+  [PANEL_ID.CARD]: { loadStored: loadStoredCardStyleId, saveStored: saveStoredCardStyleId },
+  [PANEL_ID.FLOW]: { loadStored: loadStoredFlowChartNodeId, saveStored: saveStoredFlowChartNodeId },
+}
 
 export function useCanvasToolbar() {
   const [tool, setTool] = useState('select')
@@ -39,13 +54,16 @@ export function useCanvasToolbar() {
   // 面板都是「紧贴按钮右侧」弹出：统一记录各自的锚点按钮
   const sideToolbarRef = useRef(null)
 
-  // 五个样式面板：显隐 + 选中值（localStorage 持久化）+ 锚点 ref
-  const note = usePanelState({ loadStored: loadStoredNoteStyleId, saveStored: saveStoredNoteStyleId })
-  const mind = usePanelState({ loadStored: loadStoredMindMapStyleId, saveStored: saveStoredMindMapStyleId })
-  const list = usePanelState({ loadStored: loadStoredListCardStyleId, saveStored: saveStoredListCardStyleId })
-  const card = usePanelState({ loadStored: loadStoredCardStyleId, saveStored: saveStoredCardStyleId })
-  const flow = usePanelState({ loadStored: loadStoredFlowChartNodeId, saveStored: saveStoredFlowChartNodeId })
-  const tablePanel = useTableInsertPanel()
+  // 唯一激活槽位：六个面板互斥显隐的唯一数据源
+  const slot = useActivePanel()
+
+  // 五个样式面板：显隐读共享槽位，只各自保留「选中值 + 锚点 ref」
+  const note = usePanelState({ ...slot, panelId: PANEL_ID.NOTE, ...PANEL_PERSIST[PANEL_ID.NOTE] })
+  const mind = usePanelState({ ...slot, panelId: PANEL_ID.MIND, ...PANEL_PERSIST[PANEL_ID.MIND] })
+  const list = usePanelState({ ...slot, panelId: PANEL_ID.LIST, ...PANEL_PERSIST[PANEL_ID.LIST] })
+  const card = usePanelState({ ...slot, panelId: PANEL_ID.CARD, ...PANEL_PERSIST[PANEL_ID.CARD] })
+  const flow = usePanelState({ ...slot, panelId: PANEL_ID.FLOW, ...PANEL_PERSIST[PANEL_ID.FLOW] })
+  const tablePanel = useTableInsertPanel(slot)
 
   const selectTool = useCallback(() => setTool('select'), [])
 

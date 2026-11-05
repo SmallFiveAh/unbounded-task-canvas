@@ -4,7 +4,7 @@
    ============================================ */
 
 .panel {
-  width: 240px;
+  width: fit-content;
   padding: var(--space-3);
   background: var(--color-surface);
   border: 1px solid var(--color-border);
