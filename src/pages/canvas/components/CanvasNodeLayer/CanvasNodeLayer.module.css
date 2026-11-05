@@ -137,7 +137,7 @@
 /* 便签节点专属：内边距收紧到 2px（顶对齐 flex-start 已由基础 .node 提供）。
    高度随内容自适应（内联 height:auto）：不裁剪、不滚动、不溢出隐藏 */
 .noteNode {
-  padding: 2px;
+  padding: 5px;
   overflow: visible;
 }
 
