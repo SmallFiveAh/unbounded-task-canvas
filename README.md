@@ -19,7 +19,7 @@
 
 ## 🎬 演示
 
-▶ **[点击播放 3 分钟演示视频](https://github.com/SmallFiveAh/unbounded-task-canvas/raw/main/public/out/unbounded-canvas-mg-compressed.mp4)**
+▶ **[点击播放 1 分钟演示视频](https://github.com/SmallFiveAh/unbounded-task-canvas/raw/main/public/out/unbounded-canvas-mg.mp4)**
 
 ## ✨ 功能特性
 
